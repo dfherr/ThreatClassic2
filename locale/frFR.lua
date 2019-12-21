@@ -1,5 +1,5 @@
-local CTM, C, L, _ = unpack(select(2, ...))
-if CTM.locale ~= "frFR" then return end
+local CTM2, C, L, _ = unpack(select(2, ...))
+if CTM2.locale ~= "frFR" then return end
 
 -----------------------------
 --	frFR client

@@ -5,7 +5,7 @@
 ## X-Curse-Project-ID: TODO
 ## X-WoWI-ID: TODO
 ## Version: 2.01
-## SavedVariables: CTM_Options
+## SavedVariables: CTM2_Options
 
 ## OptionalDeps: LibStub, CallbackHandler-1.0, AceAddon-3.0, AceEvent-3.0, AceTimer-3.0, AceBucket-3.0, AceGUI-3.0, AceConfig-3.0, AceComm-3.0, AceSerializer-3.0, LibSharedMedia-3.0, AceGUI-3.0-SharedMediaWidgets, LibThreatClassic2
 ## X-Embeds: LibStub, CallbackHandler-1.0, Ace3, LibSharedMedia-3.0, AceGUI-3.0-SharedMediaWidgets, LibThreatClassic2

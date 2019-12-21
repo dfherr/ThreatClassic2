@@ -1,4 +1,4 @@
-local CTM, C, L, _ = unpack(select(2, ...))
+local CTM2, C, L, _ = unpack(select(2, ...))
 
 -----------------------------
 -- VARIABLES
@@ -39,32 +39,30 @@ local FACTION_BAR_COLORS	= _G.FACTION_BAR_COLORS
 local RAID_CLASS_COLORS		= _G.RAID_CLASS_COLORS
 
 -- other
-CTM.bars = {}
-CTM.threatData = {}
-CTM.colorFallback = {}
-CTM.colorMarker = {}
-CTM.threatColors = {}
-CTM.numGroupMembers = 0
-CTM.playerName = ""
-CTM.playerTarget = ""
+CTM2.bars = {}
+CTM2.threatData = {}
+CTM2.colorFallback = {}
+CTM2.colorMarker = {}
+CTM2.threatColors = {}
+CTM2.numGroupMembers = 0
+CTM2.playerName = ""
+CTM2.playerTarget = ""
 
 -----------------------------
 -- WOW CLASSIC
 -----------------------------
--- CTM.classic = _G.WOW_PROJECT_ID ~= _G.WOW_PROJECT_CLASSIC -- for testing in retail
-CTM.classic = _G.WOW_PROJECT_ID == _G.WOW_PROJECT_CLASSIC
+-- CTM2.classic = _G.WOW_PROJECT_ID ~= _G.WOW_PROJECT_CLASSIC -- for testing in retail
+CTM2.classic = _G.WOW_PROJECT_ID == _G.WOW_PROJECT_CLASSIC
 
-local ThreatLib = CTM.classic and LibStub:GetLibrary("LibThreatClassic2")
+local ThreatLib = CTM2.classic and LibStub:GetLibrary("LibThreatClassic2")
 assert(ThreatLib, "ClassicThreaterMeter2 requires LibThreatClassic2")
-ThreatLib.registerAddon("ClassicThreatMeter2")
+ThreatLib:RegisterAddon("ClassicThreatMeter2")
 
-end
-
-local UnitThreatSituation = CTM.classic and function(unit, mob)
+local UnitThreatSituation = CTM2.classic and function(unit, mob)
 	return ThreatLib:UnitThreatSituation(unit, mob)
 end or _G.UnitThreatSituation
 
-local UnitDetailedThreatSituation = CTM.classic and function(unit, mob)
+local UnitDetailedThreatSituation = CTM2.classic and function(unit, mob)
 	return ThreatLib:UnitDetailedThreatSituation(unit, mob)
 end or _G.UnitDetailedThreatSituation
 
@@ -198,7 +196,7 @@ local function GetColor(unit)
 	if unit then
 		local colorUnit = {}
 		if C.bar.marker and unit == "player" then
-			return CTM.colorMarker
+			return CTM2.colorMarker
 		elseif UnitIsPlayer(unit) then
 			colorUnit = RAID_CLASS_COLORS[select(2, UnitClass(unit))]
 		else
@@ -207,11 +205,11 @@ local function GetColor(unit)
 		colorUnit = {colorUnit.r, colorUnit.g, colorUnit.b, C.bar.alpha}
 		return colorUnit
 	else
-		return CTM.colorFallback
+		return CTM2.colorFallback
 	end
 end
 
-function CTM:UpdateThreatBars()
+function CTM2:UpdateThreatBars()
 	-- sort the threat table
 	sort(self.threatData, Compare)
 
@@ -241,22 +239,22 @@ end
 
 local function CheckVisibility()
 	local instanceType = select(2, GetInstanceInfo())
-	local hide = (C.general.hideOOC and not InCombatLockdown()) or (C.general.hideSolo and CTM.numGroupMembers == 0) or (C.general.hideInPVP and (instanceType == "arena" or instanceType == "pvp"))
+	local hide = (C.general.hideOOC and not InCombatLockdown()) or (C.general.hideSolo and CTM2.numGroupMembers == 0) or (C.general.hideInPVP and (instanceType == "arena" or instanceType == "pvp"))
 
 	if hide then
-		return CTM.frame:Hide()
+		return CTM2.frame:Hide()
 	else
-		return CTM.frame:Show()
+		return CTM2.frame:Show()
 	end
 end
 
 local function UpdateThreatData(unit)
 	if not UnitExists(unit) then return end
-	local _, _, scaledPercent, _, threatValue = UnitDetailedThreatSituation(unit, CTM.playerTarget)
+	local _, _, scaledPercent, _, threatValue = UnitDetailedThreatSituation(unit, CTM2.playerTarget)
 	if threatValue and threatValue < 0 then
 		threatValue = threatValue + 410065408
 	end
-	tinsert(CTM.threatData, {
+	tinsert(CTM2.threatData, {
 		unit			= unit,
 		scaledPercent	= scaledPercent or 0,
 		threatValue		= threatValue or 0,
@@ -268,20 +266,20 @@ local function CheckStatus()
 
 	CheckVisibility()
 
-	if UnitExists(CTM.playerTarget) then -- and UnitAffectingCombat(CTM.playerTarget) then
+	if UnitExists(CTM2.playerTarget) then -- and UnitAffectingCombat(CTM2.playerTarget) then
 		-- wipe
-		wipe(CTM.threatData)
+		wipe(CTM2.threatData)
 
 		if IsInRaid() then
-			for i = 1, CTM.numGroupMembers do
-				UpdateThreatData(CTM.raidUnits[i])
-				UpdateThreatData(CTM.raidPetUnits[i])
+			for i = 1, CTM2.numGroupMembers do
+				UpdateThreatData(CTM2.raidUnits[i])
+				UpdateThreatData(CTM2.raidPetUnits[i])
 			end
 		else
-			if CTM.numGroupMembers > 0 then
-				for i = 1, CTM.numGroupMembers do
-					UpdateThreatData(CTM.partyUnits[i])
-					UpdateThreatData(CTM.partyPetUnits[i])
+			if CTM2.numGroupMembers > 0 then
+				for i = 1, CTM2.numGroupMembers do
+					UpdateThreatData(CTM2.partyUnits[i])
+					UpdateThreatData(CTM2.partyPetUnits[i])
 				end
 			end
 			-- solo / party player & pet units
@@ -289,18 +287,18 @@ local function CheckStatus()
 			UpdateThreatData("pet")
 		end
 
-		CTM:UpdateThreatBars()
+		CTM2:UpdateThreatBars()
 
 		-- set header unit name
-		local targetName = (": " .. UnitName(CTM.playerTarget)) or ""
-		targetName = TruncateString(targetName, floor(CTM.frame.header:GetWidth() / (C.font.size * 0.85)), true)
-		CTM.frame.header.text:SetText(format("%s%s", L.gui_threat, targetName))
+		local targetName = (": " .. UnitName(CTM2.playerTarget)) or ""
+		targetName = TruncateString(targetName, floor(CTM2.frame.header:GetWidth() / (C.font.size * 0.85)), true)
+		CTM2.frame.header.text:SetText(format("%s%s", L.gui_threat, targetName))
 	else
 		-- clear header text of unit name
-		CTM.frame.header.text:SetText(format("%s%s", L.gui_threat, ""))
+		CTM2.frame.header.text:SetText(format("%s%s", L.gui_threat, ""))
 		-- hide bars when no target
 		for i = 1, 40 do
-			CTM.bars[i]:Hide()
+			CTM2.bars[i]:Hide()
 		end
 	end
 end
@@ -333,28 +331,28 @@ local function UpdateSize(f)
 	C.bar.count = maxBarCount
 
 	for i = 1, 40 do
-		if i <= C.bar.count and CTM.threatData[i] then
-			CTM.bars[i]:Show()
+		if i <= C.bar.count and CTM2.threatData[i] then
+			CTM2.bars[i]:Show()
 		else
-			CTM.bars[i]:Hide()
+			CTM2.bars[i]:Hide()
 		end
 	end
 
-	CTM:UpdateFrame()
+	CTM2:UpdateFrame()
 end
 
 local function OnMouseDown(f)
 	f = f:GetParent()
 	f:SetMinResize(64, 64)
 	f:SetMaxResize(512, 1024)
-	CTM.sizing = true
+	CTM2.sizing = true
 	f:SetScript("OnSizeChanged", UpdateSize)
 	f:StartSizing()
 end
 
 local function OnMouseUp(f)
 	f = f:GetParent()
-	CTM.sizing = false
+	CTM2.sizing = false
 	f:SetScript("OnSizeChanged", nil)
 	f:StopMovingOrSizing()
 end
@@ -365,10 +363,10 @@ local function UpdateFont(fs)
 	fs:SetShadowOffset(C.font.shadow and 1 or 0, C.font.shadow and -1 or 0)
 end
 
-function CTM:UpdateFrame()
+function CTM2:UpdateFrame()
 	local frame = self.frame
 
-	if not CTM.sizing then
+	if not CTM2.sizing then
 		frame:SetSize(C.frame.width + 2, C.frame.height)
 	end
 	frame:ClearAllPoints()
@@ -428,7 +426,7 @@ function CTM:UpdateFrame()
 	self:UpdateBars()
 end
 
-function CTM:UpdateBars()
+function CTM2:UpdateBars()
 	for i = 1, 40 do
 		if not self.bars[i] then
 			self.bars[i] = CreateStatusBar(self.frame)
@@ -465,11 +463,11 @@ end
 -----------------------------
 -- TEST MODE
 -----------------------------
-function CTM:TestMode()
+function CTM2:TestMode()
 	if InCombatLockdown() then return end
 
 	C.frame.test = true
-	wipe(CTM.threatData)
+	wipe(CTM2.threatData)
 	for i = 1, C.bar.count do
 		self.threatData[i] = {
 			unit = self.playerName,
@@ -501,11 +499,11 @@ local function UpdateNameplateThreat(self)
 				status = 3
 			end
 		end
-		self.healthBar:SetStatusBarColor(unpack(CTM.threatColors[status]))
+		self.healthBar:SetStatusBarColor(unpack(CTM2.threatColors[status]))
 	end
 end
 
-if CTM.classic then
+if CTM2.classic then
 	-- since UNIT_THREAT_LIST_UPDATE isn't a thing in Classic, health color doesn't update nearly as frequently
 	-- we'll instead hook the range check since it is OnUpdate - gross, but it works for now
 	hooksecurefunc("CompactUnitFrame_UpdateInRange", UpdateNameplateThreat)
@@ -532,9 +530,9 @@ local function CheckVersion(onlyOutdated)
 	for k, _ in pairs(group) do
 		group[k] = nil
 	end
-	if CTM.numGroupMembers > 0 then
+	if CTM2.numGroupMembers > 0 then
 		local unit = IsInRaid() and "raid" or "party"
-		for i = 1, CTM.numGroupMembers do
+		for i = 1, CTM2.numGroupMembers do
 			local name = UnitName(unit .. i)
 			if name then
 				group[name] = true
@@ -564,9 +562,9 @@ local function NotifyOldClients()
 	local latestRevision = ThreatLib.latestSeenRevision
 	local revisions = ThreatLib.partyMemberRevisions
 	local agents = ThreatLib.partyMemberAgents
-	if CTM.numGroupMembers > 0 then
+	if CTM2.numGroupMembers > 0 then
 		local unit = IsInRaid() and "raid" or "party"
-		for i = 1, CTM.numGroupMembers do
+		for i = 1, CTM2.numGroupMembers do
 			local name = UnitName(unit .. i)
 			if name then
 				if ThreatLib:IsCompatible(name) then
@@ -584,20 +582,20 @@ end
 --[[
 local function CheckVersionOLD(self, event, prefix, msg, channel, sender)
 	if event == "CHAT_MSG_ADDON" then
-		if prefix ~= "CTMVer" or sender == playerName then return end
-		if tonumber(msg) ~= nil and tonumber(msg) > tonumber(CTM.version) then
+		if prefix ~= "CTM2Ver" or sender == playerName then return end
+		if tonumber(msg) ~= nil and tonumber(msg) > tonumber(CTM2.version) then
 			print("|cffff0000"..L.outdated.."|r")
 			self.frame:UnregisterEvent("CHAT_MSG_ADDON")
 		end
 	else
 		if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-			C_ChatInfo.SendAddonMessage("CTMVer", tonumber(CTM.version), "INSTANCE_CHAT")
+			C_ChatInfo.SendAddonMessage("CTM2Ver", tonumber(CTM2.version), "INSTANCE_CHAT")
 		elseif IsInRaid(LE_PARTY_CATEGORY_HOME) then
-			C_ChatInfo.SendAddonMessage("CTMVer", tonumber(CTM.version), "RAID")
+			C_ChatInfo.SendAddonMessage("CTM2Ver", tonumber(CTM2.version), "RAID")
 		elseif IsInGroup(LE_PARTY_CATEGORY_HOME) then
-			C_ChatInfo.SendAddonMessage("CTMVer", tonumber(CTM.version), "PARTY")
+			C_ChatInfo.SendAddonMessage("CTM2Ver", tonumber(CTM2.version), "PARTY")
 		elseif IsInGuild() then
-			C_ChatInfo.SendAddonMessage("CTMVer", tonumber(CTM.version), "GUILD")
+			C_ChatInfo.SendAddonMessage("CTM2Ver", tonumber(CTM2.version), "GUILD")
 		end
 	end
 end
@@ -606,14 +604,14 @@ end
 -----------------------------
 -- EVENTS
 -----------------------------
-CTM.frame = CreateFrame("Frame", CTM.addonName.."BarFrame", UIParent)
+CTM2.frame = CreateFrame("Frame", CTM2.addonName.."BarFrame", UIParent)
 
-CTM.frame:RegisterEvent("PLAYER_LOGIN")
-CTM.frame:SetScript("OnEvent", function(self, event, ...)
-	return CTM[event] and CTM[event](CTM, event, ...)
+CTM2.frame:RegisterEvent("PLAYER_LOGIN")
+CTM2.frame:SetScript("OnEvent", function(self, event, ...)
+	return CTM2[event] and CTM2[event](CTM2, event, ...)
 end)
 
-function CTM:PLAYER_ENTERING_WORLD(...)
+function CTM2:PLAYER_ENTERING_WORLD(...)
 	self.playerName = UnitName("player")
 
 	self.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
@@ -622,43 +620,43 @@ function CTM:PLAYER_ENTERING_WORLD(...)
 	CheckStatus()
 end
 
-function CTM:PLAYER_TARGET_CHANGED(...)
+function CTM2:PLAYER_TARGET_CHANGED(...)
 	self.playerTarget = UnitExists("target") and (UnitIsFriend("player", "target") and "targettarget" or "target")
 
 	C.frame.test = false
 	CheckStatus()
 end
 
-function CTM:GROUP_ROSTER_UPDATE(...)
+function CTM2:GROUP_ROSTER_UPDATE(...)
 	self.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
 
 	-- CheckVersionOLD(self, ...)
 	CheckStatus()
 end
 
-function CTM:PLAYER_REGEN_DISABLED(...)
+function CTM2:PLAYER_REGEN_DISABLED(...)
 	C.frame.test = false
 	ThreatLib.RegisterCallback(self, "ThreatUpdated", CheckStatus)
 	CheckStatus()
 end
 
-function CTM:PLAYER_REGEN_ENABLED(...)
+function CTM2:PLAYER_REGEN_ENABLED(...)
 	-- collectgarbage()
 	C.frame.test = false
 	ThreatLib.UnregisterCallback(self, "ThreatUpdated", CheckStatus)
 	CheckStatus()
 end
 
-function CTM:UNIT_THREAT_LIST_UPDATE(...)
+function CTM2:UNIT_THREAT_LIST_UPDATE(...)
 	C.frame.test = false
 	CheckStatus()
 end
 
-function CTM:PLAYER_LOGIN()
-	-- C_ChatInfo.RegisterAddonMessagePrefix("CTMVer")
+function CTM2:PLAYER_LOGIN()
+	-- C_ChatInfo.RegisterAddonMessagePrefix("CTM2Ver")
 
-	CTM_Options = CTM_Options or {}
-	C = CopyDefaults(self.defaultConfig, CTM_Options)
+	CTM2_Options = CTM2_Options or {}
+	C = CopyDefaults(self.defaultConfig, CTM2_Options)
 
 	-- Minimum of 1 Row
 	if not C.bar.count or C.bar.count < 1 then
@@ -679,10 +677,10 @@ function CTM:PLAYER_LOGIN()
 	self:SetupMenu()
 
 	-- Get Colors
-	CTM.colorFallback = {0.8, 0, 0.8, C.bar.alpha}
-	CTM.colorMarker = {0.8, 0, 0, C.bar.alpha}
+	CTM2.colorFallback = {0.8, 0, 0.8, C.bar.alpha}
+	CTM2.colorMarker = {0.8, 0, 0, C.bar.alpha}
 
-	CTM.threatColors = {
+	CTM2.threatColors = {
 		[0] = C.general.threatColors.good,
 		[1] = C.general.threatColors.neutral,
 		[2] = C.general.threatColors.neutral,
@@ -722,7 +720,7 @@ end
 -----------------------------
 -- SETUP
 -----------------------------
-function CTM:SetupUnits()
+function CTM2:SetupUnits()
 	self.partyUnits = {}
 	self.partyPetUnits = {}
 	self.raidUnits = {}
@@ -737,7 +735,7 @@ function CTM:SetupUnits()
 	end
 end
 
-function CTM:SetupFrame()
+function CTM2:SetupFrame()
 	self.frame:SetFrameLevel(1)
 	self.frame:ClearAllPoints()
 	self.frame:SetPoint(unpack(C.frame.position))
@@ -758,7 +756,7 @@ function CTM:SetupFrame()
 	self.frame.header = CreateStatusBar(self.frame, true)
 	self.frame.header:SetScript("OnMouseUp", function(self, button)
 		if button == "RightButton" then
-			EasyMenu(CTM.menuTable, CTM.menu, "cursor", 0, 0, "MENU")
+			EasyMenu(CTM2.menuTable, CTM2.menu, "cursor", 0, 0, "MENU")
 		end
 	end)
 	self.frame.header:EnableMouse(true)
@@ -770,18 +768,18 @@ function CTM:SetupFrame()
 	self:UpdateFrame()
 end
 
-function CTM:SetupMenu()
+function CTM2:SetupMenu()
 	self.menu = CreateFrame("Frame", self.addonName.."MenuFrame", UIParent, "UIDropDownMenuTemplate")
 
-	CTM.menuTable = {
+	CTM2.menuTable = {
 		{text = L.frame_lock, notCheckable = false, checked = function() return C.frame.locked end, func = function()
 			C.frame.locked = not C.frame.locked
-			CTM:UpdateFrame()
+			CTM2:UpdateFrame()
 		end},
 		{text = L.frame_test, notCheckable = false, checked = function() return C.frame.test end, func = function()
 			C.frame.test = not C.frame.test
 			if C.frame.test then
-				CTM:TestMode()
+				CTM2:TestMode()
 			else
 				CheckStatus()
 			end
@@ -801,20 +799,20 @@ end
 -----------------------------
 -- CONFIG
 -----------------------------
-function CTM:SetupConfig()
-	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(CTM.addonName, self.configTable)
+function CTM2:SetupConfig()
+	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(CTM2.addonName, self.configTable)
 
 	local ACD = LibStub("AceConfigDialog-3.0")
 	self.config = {}
-	self.config.general = ACD:AddToBlizOptions(CTM.addonName, CTM.addonName, nil, "general")
-	self.config.appearance = ACD:AddToBlizOptions(CTM.addonName, L.appearance, CTM.addonName, "appearance")
-	-- self.config.warnings = ACD:AddToBlizOptions(CTM.addonName, L.warnings, CTM.addonName, "warnings")
-	self.config.version = ACD:AddToBlizOptions(CTM.addonName, L.version, CTM.addonName, "version")
+	self.config.general = ACD:AddToBlizOptions(CTM2.addonName, CTM2.addonName, nil, "general")
+	self.config.appearance = ACD:AddToBlizOptions(CTM2.addonName, L.appearance, CTM2.addonName, "appearance")
+	-- self.config.warnings = ACD:AddToBlizOptions(CTM2.addonName, L.warnings, CTM2.addonName, "warnings")
+	self.config.version = ACD:AddToBlizOptions(CTM2.addonName, L.version, CTM2.addonName, "version")
 end
 
-CTM.configTable = {
+CTM2.configTable = {
 	type = "group",
-	name = CTM.addonName,
+	name = CTM2.addonName,
 	get = function(info)
 		return C[info[1]][info[2]]
 	end,
@@ -952,7 +950,7 @@ CTM.configTable = {
 			set = function(info, value)
 				C[info[2]][info[3]] = value
 				C.frame.height = ((C.bar.height + C.bar.padding - 1) * C.bar.count) - C.bar.padding
-				CTM:UpdateFrame()
+				CTM2:UpdateFrame()
 			end,
 			args = {
 				frame = {
@@ -968,7 +966,7 @@ CTM.configTable = {
 							func = function(info, value)
 								C.frame.test = not C.frame.test
 								if C.frame.test then
-									CTM:TestMode()
+									CTM2:TestMode()
 								else
 									CheckStatus()
 								end
@@ -1014,7 +1012,7 @@ CTM.configTable = {
 							end,
 							set = function(info, value)
 								C[info[2]][info[3]] = value / 100
-								CTM:UpdateFrame()
+								CTM2:UpdateFrame()
 							end,
 						},
 						frameColors = {
@@ -1031,7 +1029,7 @@ CTM.configTable = {
 								cfg[2] = g
 								cfg[3] = b
 								cfg[4] = a
-								CTM:UpdateFrame()
+								CTM2:UpdateFrame()
 							end,
 
 							args = {
@@ -1069,11 +1067,11 @@ CTM.configTable = {
 								C[info[2]][info[3]] = value
 								if prev > value then
 									for i = value + 1, prev do
-										CTM.bars[i]:Hide()
+										CTM2.bars[i]:Hide()
 									end
 								end
 								C.frame.height = ((C.bar.height + C.bar.padding - 1) * C.bar.count) - C.bar.padding
-								CTM:UpdateFrame()
+								CTM2:UpdateFrame()
 							end,
 						},
 						-- growth direction
@@ -1139,9 +1137,9 @@ CTM.configTable = {
 					name = L.reset,
 					type = "execute",
 					func = function(info, value)
-						CTM_Options = {}
-						C = CopyDefaults(CTM.defaultConfig, CTM_Options)
-						CTM:UpdateFrame()
+						CTM2_Options = {}
+						C = CopyDefaults(CTM2.defaultConfig, CTM2_Options)
+						CTM2:UpdateFrame()
 					end,
 				},
 			},
@@ -1228,7 +1226,7 @@ CTM.configTable = {
 	},
 }
 
-SLASH_CLASSICTHREATMETER1 = "/ctm"
+SLASH_CLASSICTHREATMETER1 = "/ctm2"
 SLASH_CLASSICTHREATMETER2 = "/threat"
 SLASH_CLASSICTHREATMETER3 = "/classicthreatmeter"
 SlashCmdList["CLASSICTHREATMETER"] = function()

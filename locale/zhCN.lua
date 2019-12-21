@@ -1,5 +1,5 @@
-local CTM, C, L, _ = unpack(select(2, ...))
-if CTM.locale ~= "zhCN" then return end
+local CTM2, C, L, _ = unpack(select(2, ...))
+if CTM2.locale ~= "zhCN" then return end
 
 -----------------------------
 --	zhCN client (by Qcat of 60Addons)
@@ -12,10 +12,10 @@ L.gui_config			= "打开配置"
 L.reset					= "重置为默认"
 
 -- messages
-L.message_welcome		= "输入 /ctm 进入设置"
+L.message_welcome		= "输入 /ctm2 进入设置"
 L.message_leader		= "你必须是队长或者有A"
-L.message_outdated		= "新版本CTM发现! 请下载最新版本."
-L.message_incompatible	= "CTM 已过期或不兼容.请立即升级."
+L.message_outdated		= "新版本CTM2发现! 请下载最新版本."
+L.message_incompatible	= "CTM2 已过期或不兼容.请立即升级."
 
 -- version check
 L.version				= "版本检查"

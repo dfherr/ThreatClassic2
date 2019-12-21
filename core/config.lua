@@ -1,4 +1,4 @@
-local CTM, C, L, _ = unpack(select(2, ...))
+local CTM2, C, L, _ = unpack(select(2, ...))
 
 -----------------------------
 -- Default Config
@@ -6,10 +6,10 @@ local CTM, C, L, _ = unpack(select(2, ...))
 local defaultTexture	= [[Interface\ChatFrame\ChatFrameBackground]]
 local defaultFont		= [[Interface\AddOns\ClassicThreatMeter2\media\NotoSans-SemiCondensedBold.ttf]] or _G.STANDARD_TEXT_FONT
 
-CTM.defaultConfig = {}
+CTM2.defaultConfig = {}
 
 -- general
-CTM.defaultConfig.general = {
+CTM2.defaultConfig.general = {
 	welcome				= true,									-- display welcome message
 	update				= 0.1,									-- time (in seconds) between updates
 	minimap				= false,								-- toggle for minimap icon
@@ -27,7 +27,7 @@ CTM.defaultConfig.general = {
 }
 
 -- frame settings
-CTM.defaultConfig.frame = {
+CTM2.defaultConfig.frame = {
 	test				= false,								-- toggle for test mode
 	scale				= 1,									-- global scale
 	width				= 217,									-- frame width
@@ -41,7 +41,7 @@ CTM.defaultConfig.frame = {
 }
 
 -- backdrop settings
-CTM.defaultConfig.backdrop = {
+CTM2.defaultConfig.backdrop = {
 	bgFile				= defaultTexture,						-- backdrop file location
 	bgColor				= {1, 1, 1, 0.1},						-- backdrop color
 	edgeFile			= defaultTexture,						-- backdrop edge file location
@@ -53,7 +53,7 @@ CTM.defaultConfig.backdrop = {
 }
 
 -- threat bar settings
-CTM.defaultConfig.bar = {
+CTM2.defaultConfig.bar = {
 	count				= 9,									-- maximum amount of bars to show
 	descend				= true,									-- sort bars descending / ascending
 	height				= 18,									-- bar height
@@ -67,7 +67,7 @@ CTM.defaultConfig.bar = {
 }
 
 -- font settings
-CTM.defaultConfig.font = {
+CTM2.defaultConfig.font = {
 	family				= defaultFont,							-- font file location
 	size				= 12,									-- font size
 	style				= "OUTLINE",							-- font style
@@ -76,7 +76,7 @@ CTM.defaultConfig.font = {
 }
 
 -- warning settings
-CTM.defaultConfig.warnings = {
+CTM2.defaultConfig.warnings = {
 	visual				= true,									-- enable screen flash
 	sounds				= true,									-- enable sounds
 	threshold			= 80,									-- alert threshold (of normalized percentage 0-100)

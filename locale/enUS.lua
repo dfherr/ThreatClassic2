@@ -1,4 +1,4 @@
-local CTM, C, L, _ = unpack(select(2, ...))
+local CTM2, C, L, _ = unpack(select(2, ...))
 
 -----------------------------
 --	enUS and enGB clients
@@ -11,10 +11,10 @@ L.gui_config			= "Open Config"
 L.reset					= "Reset to Defaults"
 
 -- messages
-L.message_welcome		= "Type /ctm for options."
+L.message_welcome		= "Type /ctm2 for options."
 L.message_leader		= "You must be the group leader or have assist to do this."
-L.message_outdated		= "New version of CTM/LibThreatClassic2 available! Please download the latest version."
-L.message_incompatible	= "CTM/LibThreatClassic2 is out of date and will not be compatible for this group. Please upgrade immediately."
+L.message_outdated		= "New version of CTM2/LibThreatClassic2 available! Please download the latest version."
+L.message_incompatible	= "CTM2/LibThreatClassic2 is out of date and will not be compatible for this group. Please upgrade immediately."
 
 -- version check
 L.version				= "Version Check"

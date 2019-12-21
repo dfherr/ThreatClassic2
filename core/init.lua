@@ -2,7 +2,7 @@
 --	Init
 -----------------------------
 local parent, ns = ...
-ns[1] = {} -- CTM, Functions
+ns[1] = {} -- CTM2, Functions
 ns[2] = {} -- C, Config
 ns[3] = {} -- L, Localization
 
