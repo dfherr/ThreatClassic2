@@ -206,7 +206,7 @@ function Warrior:ScanTalents()
 	-- Defiance
 	if ThreatLib.Classic then
 		local rank = _G.select(5, GetTalentInfo(3, 9))
-		self.defianceMod = 1 + (0.05 * rank)
+		self.defianceMod = 1 + (0.03 * rank)
 	else
 		self.defianceMod = 1 -- for when testing in retail
 	end

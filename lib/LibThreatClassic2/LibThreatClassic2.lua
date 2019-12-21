@@ -478,7 +478,7 @@ function ThreatLib:GetSpellID(spellName, unit, auraType)
 	end
 end
 
-ThreatLib.prefix = "TC1"
+ThreatLib.prefix = "LTC2"
 ThreatLib.userAgent = "LibThreatClassic2"
 ThreatLib:RegisterMemoizations({
 	CLIENT_INFO 			= "CI",
