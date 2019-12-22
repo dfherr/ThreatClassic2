@@ -56,7 +56,6 @@ CTM2.classic = _G.WOW_PROJECT_ID == _G.WOW_PROJECT_CLASSIC
 
 local ThreatLib = CTM2.classic and LibStub:GetLibrary("LibThreatClassic2")
 assert(ThreatLib, "ClassicThreaterMeter2 requires LibThreatClassic2")
-ThreatLib:RegisterAddon("ClassicThreatMeter2")
 
 local UnitThreatSituation = CTM2.classic and function(unit, mob)
 	return ThreatLib:UnitThreatSituation(unit, mob)
