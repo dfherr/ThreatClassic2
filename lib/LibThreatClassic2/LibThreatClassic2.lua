@@ -230,7 +230,9 @@ function ThreatLib:Debug(msg, ...)
 end
 
 function ThreatLib:GroupDistribution()
-	if GetNumGroupMembers() > 0 and IsInRaid() then
+	if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
+		return "INSTANCE_CHAT"
+	elseif GetNumGroupMembers() > 0 and IsInRaid() then
 		return "RAID"
 	else
 		return "PARTY"

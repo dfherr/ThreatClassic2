@@ -21,9 +21,12 @@ end
 * fix Execute threat multiplier for Warriors
 * fix Revenge rank 5 bonus threat
 * fix Maul threat multiplier for Druids
+* Druid catform threat reduction
+* Druid Feral instincts fixed
+* Warrior defiance 3% instead of 5% per talent point
 
 ## TODO
-* Druid cat form
+
 * Paladin blessings
 * Onyxia boss module
 * Ragnaros boss module

@@ -156,8 +156,6 @@ local strsplit = _G.string.split
 
 local GetSpellInfo = _G.GetSpellInfo
 local GetInventoryItemLink = _G.GetInventoryItemLink
-local UnitHealth = _G.UnitHealth
-local UnitHealthMax = _G.UnitHealthMax
 local UnitIsDead = _G.UnitIsDead
 local UnitAffectingCombat = _G.UnitAffectingCombat
 local UnitExists = _G.UnitExists
@@ -512,13 +510,9 @@ function cleuHandlers:SPELL_CAST_SUCCESS(timestamp, subEvent, hideCaster, source
 end
 
 function cleuHandlers:SPELL_HEAL(timestamp, subEvent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags,
-				 spellId, spellName, spellSchool, amount, critical)
+				 spellId, spellName, spellSchool, amount, overhealing, absorbed, critical)
 	if bit_band(sourceFlags, self.unitTypeFilter) == self.unitTypeFilter then
-		local max_potential_heal = UnitHealthMax(destName) - UnitHealth(destName)
-		local effective_heal = math_min(max_potential_heal, amount)
-		if UnitHealthMax(destName) == 0 then -- They aren't in our party so we can't really get overheal for them
-			effective_heal = amount
-		end
+		local effective_heal = amount - overhealing
 		self:parseHeal(destGUID, destName, effective_heal, spellId, spellName, spellSchool, critical)
 	end
 end

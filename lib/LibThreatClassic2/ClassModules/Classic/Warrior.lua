@@ -234,6 +234,8 @@ function Warrior:SunderArmor(spellID)
 	return threat * sunderMod * self:threatMods()
 end
 
+local pendingTauntTarget = nil
+local pendingTauntOffset = nil
 function Warrior:Taunt(spellID, target)
 	local targetThreat = ThreatLib:GetThreat(UnitGUID("targettarget"), target)
 	local myThreat = ThreatLib:GetThreat(UnitGUID("player"), target)
