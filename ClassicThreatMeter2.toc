@@ -2,9 +2,9 @@
 ## Title: ClassicThreatMeter2
 ## Notes: Simple threat meter for WoW Classic.
 ## Author: Dennis-Florian Herr (dfherr)
-## X-Curse-Project-ID: TODO
+## X-Curse-Project-ID: 355497
 ## X-WoWI-ID: TODO
-## Version: 2.01
+## Version: 2.02
 ## SavedVariables: CTM2_Options
 
 ## OptionalDeps: LibStub, AceGUI-3.0, AceConfig-3.0, LibSharedMedia-3.0, AceGUI-3.0-SharedMediaWidgets, LibThreatClassic2
