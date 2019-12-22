@@ -88,7 +88,7 @@ if _G.WOW_PROJECT_ID ~= _G.WOW_PROJECT_CLASSIC then return end
 
 _G.THREATLIB_LOAD_MODULES = false -- don't load modules unless we update this file
 
-local MAJOR, MINOR = "LibThreatClassic2", 1 -- Bump minor on changes, Major is constant lib identifier
+local MAJOR, MINOR = "LibThreatClassic2", 2 -- Bump minor on changes, Major is constant lib identifier
 assert(LibStub, MAJOR .. " requires LibStub")
 
 -- if this version or a newer one is already installed, go no further
@@ -113,7 +113,7 @@ LibStub.minors[MAJOR] = MINOR
 _G.THREATLIB_LOAD_MODULES = true 
 
 -- Update this when backwards incompatible changes are made
-local LAST_BACKWARDS_COMPATIBLE_REVISION = 1
+local LAST_BACKWARDS_COMPATIBLE_REVISION = 2
 
 local CBH = LibStub:GetLibrary("CallbackHandler-1.0")
 

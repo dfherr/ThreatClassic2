@@ -56,7 +56,7 @@ function Rogue:ClassInit()
 end
 
 function Rogue:ClassEnable()
-	self.passiveThreatModifiers = 0.8
+	self.passiveThreatModifiers = 0.71
 end
 
 function Rogue:ClassDisable()

@@ -58,9 +58,6 @@ function Druid:ClassInit()
 	for k, v in pairs(threatValues.faerieFire) do
 		self.CastLandedHandlers[k] = self.FaerieFire
 	end
-	for k, v in pairs(threatValues.maul) do
-		self.CastLandedHandlers[k] = self.Maul
-	end
 	for k, v in pairs(threatValues.cower) do
 		self.CastLandedHandlers[k] = self.Cower
 	end
@@ -121,7 +118,7 @@ function Druid:GetStanceThreatMod()
 	if form == 1 then
 		self.passiveThreatModifiers = 1.3 * self.feralinstinctMod
 		self.isTanking = true
-	elseif form == 3 then
+	elseif form == 2 then
 		self.passiveThreatModifiers = 0.8
 	else
 		self.passiveThreatModifiers = 1

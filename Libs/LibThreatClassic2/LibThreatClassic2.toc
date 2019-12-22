@@ -5,5 +5,4 @@
 ## OptionalDeps: Ace3, CallbackHandler-1.0
 ## X-Category: Library
 
-embeds.xml
 lib.xml

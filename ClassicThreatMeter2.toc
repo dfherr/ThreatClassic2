@@ -4,7 +4,7 @@
 ## Author: Dennis-Florian Herr (dfherr)
 ## X-Curse-Project-ID: 355497
 ## X-WoWI-ID: TODO
-## Version: 2.02
+## Version: 2.03
 ## SavedVariables: CTM2_Options
 
 ## OptionalDeps: LibStub, AceGUI-3.0, AceConfig-3.0, LibSharedMedia-3.0, AceGUI-3.0-SharedMediaWidgets, LibThreatClassic2

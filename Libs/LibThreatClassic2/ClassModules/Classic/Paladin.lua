@@ -10,6 +10,7 @@ local UnitInRange = _G.UnitInRange
 local UnitIsGhost = _G.UnitIsGhost
 local UnitIsConnected = _G.UnitIsConnected
 local IsInRaid = _G.IsInRaid
+local righteousFuryMod = 1
 
 local _G = _G
 local select = _G.select
@@ -186,9 +187,14 @@ end
 function Paladin:ScanTalents()
 	-- Scan talents	
 	if ThreatLib.Classic then
-		self.righteousFuryMod = 1.6 + (0.6 * irfRanks[select(5, GetTalentInfo(2, 7)) + 1])
+		local rank = select(5, GetTalentInfo(2, 7))
+		righteousFuryMod = 1.6
+		if rank then
+			righteousFuryMod = righteousFuryMod * (1 + irfRanks[rank+1])
+		end
+		
 	else
-		self.righteousFuryMod = 1.6 -- for when testing in retail
+		righteousFuryMod = 1.6 -- for when testing in retail
 	end
 
 	self:calcBuffMods()
@@ -253,7 +259,7 @@ end
 
 function Paladin:RighteousFury(amt)
 	if rfOn then
-		return amt * self.righteousFuryMod
+		return amt * righteousFuryMod
 	else
 		return amt
 	end
