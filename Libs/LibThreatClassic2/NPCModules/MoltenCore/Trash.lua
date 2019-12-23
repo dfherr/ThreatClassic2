@@ -7,7 +7,7 @@ local KNOCK_AWAY_ID = 18945
 
 ThreatLib:GetModule("NPCCore"):RegisterModule(MOLTEN_GIANT_ID, function(MoltenGiant)
 	function MoltenGiant:Init()
-		self:RegisterCombatant(RAGNAROS_ID, true)
+		self:RegisterCombatant(MOLTEN_GIANT_ID, true)
 		self:RegisterSpellDamageHandler(MOLTEN_GIANT_ID, KNOCK_AWAY_ID, self.KnockAway)
 	end
 
