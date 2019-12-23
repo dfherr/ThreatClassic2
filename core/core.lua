@@ -1225,9 +1225,9 @@ CTM2.configTable = {
 	},
 }
 
-SLASH_CLASSICTHREATMETER1 = "/ctm2"
-SLASH_CLASSICTHREATMETER2 = "/threat"
-SLASH_CLASSICTHREATMETER3 = "/classicthreatmeter"
-SlashCmdList["CLASSICTHREATMETER"] = function()
+SLASH_CTM2_SLASHCMD1 = "/ctm2"
+SLASH_CTM2_SLASHCMD2 = "/threat"
+SLASH_CTM2_SLASHCMD2 = "/classicthreatmeter2"
+SlashCmdList["CTM2_SLASHCMD"] = function()
 	LibStub("AceConfigDialog-3.0"):Open("ClassicThreatMeter2")
 end
