@@ -17,6 +17,7 @@ CTM2.defaultConfig.general = {
 	hideOOC				= false,								-- hide frame when out of combat
 	hideSolo			= false,								-- hide frame when not in a group
 	hideInPVP			= true,									-- hide frame when in battlegrounds
+	hideAlways			= false,								-- hide frame always
 	nameplateThreat		= false,								-- color nameplates by threat
 	invertColors		= false,								-- invert threat coloring (for tanks)
 	threatColors		= {										-- colors for nameplateThreat

@@ -238,7 +238,7 @@ end
 
 local function CheckVisibility()
 	local instanceType = select(2, GetInstanceInfo())
-	local hide = (C.general.hideOOC and not InCombatLockdown()) or (C.general.hideSolo and CTM2.numGroupMembers == 0) or (C.general.hideInPVP and (instanceType == "arena" or instanceType == "pvp"))
+	local hide = C.general.hideAlways or (C.general.hideOOC and not InCombatLockdown()) or (C.general.hideSolo and CTM2.numGroupMembers == 0) or (C.general.hideInPVP and (instanceType == "arena" or instanceType == "pvp"))
 
 	if hide then
 		return CTM2.frame:Hide()
@@ -884,25 +884,35 @@ CTM2.configTable = {
 						CheckStatus()
 					end,
 				},
-				nameplates = {
+				hideAlways = {
 					order = 9,
+					name = L.visibility_hideAlways,
+					type = "toggle",
+					width = "full",
+					set = function(info, value)
+						C[info[1]][info[2]] = value
+						CheckStatus()
+					end,
+				},
+				nameplates = {
+					order = 10,
 					name = L.nameplates,
 					type = "header",
 				},
 				nameplateThreat = {
-					order = 10,
+					order = 11,
 					name = L.nameplates_enable,
 					type = "toggle",
 					width = "full",
 				},
 				invertColors = {
-					order = 11,
+					order = 12,
 					name = L.nameplates_invert,
 					type = "toggle",
 					width = "full",
 				},
 				threatColors = {
-					order = 12,
+					order = 13,
 					name = L.nameplates_colors,
 					type = "group",
 					inline = true,
@@ -1228,6 +1238,11 @@ CTM2.configTable = {
 SLASH_CTM2_SLASHCMD1 = "/ctm2"
 SLASH_CTM2_SLASHCMD2 = "/threat"
 SLASH_CTM2_SLASHCMD2 = "/classicthreatmeter2"
-SlashCmdList["CTM2_SLASHCMD"] = function()
-	LibStub("AceConfigDialog-3.0"):Open("ClassicThreatMeter2")
+SlashCmdList["CTM2_SLASHCMD"] = function(arg)
+	if arg == "toggle" then
+		C.general.hideAlways = not C.general.hideAlways
+		CheckStatus();
+	else
+		LibStub("AceConfigDialog-3.0"):Open("ClassicThreatMeter2")
+	end	
 end

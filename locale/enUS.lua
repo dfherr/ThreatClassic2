@@ -37,6 +37,7 @@ L.visibility			= "Visibility"
 L.visibility_hideOOC	= "Hide frame when out of combat."
 L.visibility_hideSolo	= "Hide frame when not in a group."
 L.visibility_hideInPvP	= "Hide frame when in battlegrounds."
+L.visibility_hideAlways	= "Hide frame always. /ctm2 toggle"
 
 L.nameplates			= "Nameplates"
 L.nameplates_enable		= "Enable threat coloring (only for Blizzard nameplates)."

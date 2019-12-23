@@ -4,9 +4,9 @@ Successor project for [https://github.com/EsreverWoW/LibThreatClassic](https://g
 
 ## How to use
 
-To provide Threat data to over players just include and load the lib as part of your addon.
+To provide Threat data to other players just include and load the lib as part of your addon.
 
-To start using the lib to display threat data get the latest revision from LibStub and get a units current threat:
+To start using the lib to display threat data get the latest revision from LibStub and get the UnitThreatSituation:
 
 ```
 local ThreatLib = LibStub:GetLibrary("LibThreatClassic2")
@@ -23,11 +23,10 @@ end
 
 ## Added fixes
 
-* Fixed LibStub versioning system (automatically use newest version if multiple LibThreatClassic2 minor versions are available) thanks [@DDCorkum](https://github.com/DDCorkum)
+* Fixed LibStub versioning system (automatically use newest version if multiple LibThreatClassic2 minor versions are available)
 * fix Execute threat multiplier for Warriors
 * fix Revenge rank 5 bonus threat
 * fix Maul threat multiplier for Druids
-* Druid catform threat reduction
 * Druid Feral instincts fixed
 * Warrior defiance 3% instead of 5% per talent point
 * SPELL_HEAL / overheal and absorb handling
