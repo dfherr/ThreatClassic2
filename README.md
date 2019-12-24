@@ -6,7 +6,7 @@ ClassicThreatMeter2 is the successor of [EsreverWow/ClassicThreatMeter](https://
  - Please check for bugs and feature requests in the [issue tracker](https://github.com/dfherr/ClassicThreatMeter2/issues) and report them, if you don't find them mentioned there already.
 
 ## Download
- - [CurseForge](https://www.curseforge.com/wow/addons/classicthreatmeter2)
+ - [CurseForge](https://www.curseforge.com/wow/addons/classicthreatmeter2) (approval pending) 
 
 ## FAQ
 **Q: Why am I not seeing other players in ClassicThreatMeter?**
