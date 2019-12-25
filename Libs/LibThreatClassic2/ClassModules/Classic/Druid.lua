@@ -119,7 +119,7 @@ function Druid:GetStanceThreatMod()
 		self.passiveThreatModifiers = 1.3 * self.feralinstinctMod
 		self.isTanking = true
 	elseif form == 2 then
-		self.passiveThreatModifiers = 0.8
+		self.passiveThreatModifiers = 0.71
 	else
 		self.passiveThreatModifiers = 1
 	end
