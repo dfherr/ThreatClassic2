@@ -1,5 +1,5 @@
 # ThreatClassic2 [!["Open Issues"](https://img.shields.io/github/issues-raw/dfherr/ThreatClassic2.svg)](https://github.com/dfherr/ThreatClassic2/issues)
-ThreatClassic2 is the successor of [EsreverWow/ClassicThreatMeter](https://github.com/EsreverWoW/ThreatClassic). It is a threat meter for WoW Classic that attempts to provide reasonably accurate estimates of your group's relative threat values against enemy NPCs by recording pertinent data from the combat log and making calculations from that data.
+ThreatClassic2 is a threat meter for WoW Classic that provides reasonably accurate estimates of a monster's threat table based on [LibThreatClassic2](https://github.com/dfherr/LibThreatClassic2/). It is compatible with all other AddOns providing threat data through LibThreatClassic2 and created as the successor of the abandoned [EsreverWow/ClassicThreatMeter](https://github.com/EsreverWoW/ClassicThreatMeter).
 
 ## Bugs and feature requests
 **Bugs:**
