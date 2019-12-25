@@ -1,5 +1,5 @@
-local CTM2, C, L, _ = unpack(select(2, ...))
-if CTM2.locale ~= "ruRU" then return end
+local TC2, C, L, _ = unpack(select(2, ...))
+if TC2.locale ~= "ruRU" then return end
 
 -----------------------------
 --	ruRU client (by Hubbotu)
@@ -12,10 +12,10 @@ L.gui_config			= "Открыть Настройки"
 L.reset					= "Сбросить до значений по умолчанию"
 
 -- messages
-L.message_welcome		= "Введите /ctm2 для настройки."
+L.message_welcome		= "Введите /tc2 для настройки."
 L.message_leader		= "Вы должны быть лидером группы или иметь статус помощника, чтобы сделать это."
-L.message_outdated		= "Доступна новая версия CTM2/LibThreatClassic2! Пожалуйста, загрузите последнюю версию."
-L.message_incompatible	= "CTM2/LibThreatClassic2 устарела и не будет совместима с этой группой. Пожалуйста, обновите немедленно."
+L.message_outdated		= "Доступна новая версия TC2/LibThreatClassic2! Пожалуйста, загрузите последнюю версию."
+L.message_incompatible	= "TC2/LibThreatClassic2 устарела и не будет совместима с этой группой. Пожалуйста, обновите немедленно."
 
 -- version check
 L.version				= "Проверка версии"

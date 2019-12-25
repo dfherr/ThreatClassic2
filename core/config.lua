@@ -1,15 +1,15 @@
-local CTM2, C, L, _ = unpack(select(2, ...))
+local TC2, C, L, _ = unpack(select(2, ...))
 
 -----------------------------
 -- Default Config
 -----------------------------
 local defaultTexture	= [[Interface\ChatFrame\ChatFrameBackground]]
-local defaultFont		= [[Interface\AddOns\ClassicThreatMeter2\media\NotoSans-SemiCondensedBold.ttf]] or _G.STANDARD_TEXT_FONT
+local defaultFont		= [[Interface\AddOns\ThreatClassic2\media\NotoSans-SemiCondensedBold.ttf]] or _G.STANDARD_TEXT_FONT
 
-CTM2.defaultConfig = {}
+TC2.defaultConfig = {}
 
 -- general
-CTM2.defaultConfig.general = {
+TC2.defaultConfig.general = {
 	welcome				= true,									-- display welcome message
 	update				= 0.1,									-- time (in seconds) between updates
 	minimap				= false,								-- toggle for minimap icon
@@ -28,7 +28,7 @@ CTM2.defaultConfig.general = {
 }
 
 -- frame settings
-CTM2.defaultConfig.frame = {
+TC2.defaultConfig.frame = {
 	test				= false,								-- toggle for test mode
 	scale				= 1,									-- global scale
 	width				= 217,									-- frame width
@@ -42,7 +42,7 @@ CTM2.defaultConfig.frame = {
 }
 
 -- backdrop settings
-CTM2.defaultConfig.backdrop = {
+TC2.defaultConfig.backdrop = {
 	bgFile				= defaultTexture,						-- backdrop file location
 	bgColor				= {1, 1, 1, 0.1},						-- backdrop color
 	edgeFile			= defaultTexture,						-- backdrop edge file location
@@ -54,7 +54,7 @@ CTM2.defaultConfig.backdrop = {
 }
 
 -- threat bar settings
-CTM2.defaultConfig.bar = {
+TC2.defaultConfig.bar = {
 	count				= 9,									-- maximum amount of bars to show
 	descend				= true,									-- sort bars descending / ascending
 	height				= 18,									-- bar height
@@ -68,7 +68,7 @@ CTM2.defaultConfig.bar = {
 }
 
 -- font settings
-CTM2.defaultConfig.font = {
+TC2.defaultConfig.font = {
 	family				= defaultFont,							-- font file location
 	size				= 12,									-- font size
 	style				= "OUTLINE",							-- font style
@@ -77,7 +77,7 @@ CTM2.defaultConfig.font = {
 }
 
 -- warning settings
-CTM2.defaultConfig.warnings = {
+TC2.defaultConfig.warnings = {
 	visual				= true,									-- enable screen flash
 	sounds				= true,									-- enable sounds
 	threshold			= 80,									-- alert threshold (of normalized percentage 0-100)

@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help ClassicThreatMeter2 improve
+about: Create a report to help ThreatClassic2 improve
 title: "[BUG]"
 labels: bug
 assignees: dfherr
@@ -12,7 +12,7 @@ assignees: dfherr
 2.  
 3.  
 
-### What version of ClassicThreatMeter2 are you using? (Stating 'latest' is not useful)
+### What version of ThreatClassic2 are you using? (Stating 'latest' is not useful)
 
 
 ### Do you have an error log of what happened?

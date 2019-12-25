@@ -1,29 +1,29 @@
-# ClassicThreatMeter [!["Open Issues"](https://img.shields.io/github/issues-raw/dfherr/ClassicThreatMeter2.svg)](https://github.com/dfherr/ClassicThreatMeter2/issues)
-ClassicThreatMeter2 is the successor of [EsreverWow/ClassicThreatMeter](https://github.com/EsreverWoW/ClassicThreatMeter). It is a threat meter for WoW Classic that attempts to provide reasonably accurate estimates of your group's relative threat values against enemy NPCs by recording pertinent data from the combat log and making calculations from that data.
+# ThreatClassic2 [!["Open Issues"](https://img.shields.io/github/issues-raw/dfherr/ThreatClassic2.svg)](https://github.com/dfherr/ThreatClassic2/issues)
+ThreatClassic2 is the successor of [EsreverWow/ClassicThreatMeter](https://github.com/EsreverWoW/ThreatClassic). It is a threat meter for WoW Classic that attempts to provide reasonably accurate estimates of your group's relative threat values against enemy NPCs by recording pertinent data from the combat log and making calculations from that data.
 
 ## Bugs and feature requests
 **Bugs:**
- - Please check for bugs and feature requests in the [issue tracker](https://github.com/dfherr/ClassicThreatMeter2/issues) and report them, if you don't find them mentioned there already.
+ - Please check for bugs and feature requests in the [issue tracker](https://github.com/dfherr/ThreatClassic2/issues) and report them, if you don't find them mentioned there already.
 
 ## Download
- - [CurseForge](https://www.curseforge.com/wow/addons/classicthreatmeter2) (approval pending) 
+ - [CurseForge](https://www.curseforge.com/wow/addons/ThreatClassic2) (approval pending) 
 
 ## FAQ
-**Q: Why am I not seeing other players in ClassicThreatMeter?**
+**Q: Why am I not seeing other players in ThreatClassic2?**
  
-A: Other players must have ClassicThreatMeter or a compatible AddOn enabled in order to track their threat similar to how KLH Threat Meter/Omen required compatible AddOns communicating threat to one another in Vanilla/TBC.
+A: Other players must have ThreatClassic2 or a compatible AddOn enabled in order to track their threat similar to how KLH Threat Meter/Omen required compatible AddOns communicating threat to one another in Vanilla/TBC.
 
-**Q: Why isn't ClassicThreatMeter using the built-in threat API?**
+**Q: Why isn't ThreatClassic2 using the built-in threat API?**
 
 A: To answer simply, it can't! Blizzard added in a threat API in patch 3.0.2 for WotLK and has been in the game since, but it has been purposely removed for WoW Classic, which means we must rely on combat log parsing.
 
-**Q: How does ClassicThreatMeter handle multiple targets?**
+**Q: How does ThreatClassic2 handle multiple targets?**
 
 A: The combat log in WoW Classic is fortunately much more detailed than that which was available in the game originally before patch 2.4. This allows us to track NPCs by GUID (global unique identifier), and there should be no issues with mobs having the same name and threat becoming muddled between them. It is also designed in such a way that effects that are meant to add divided threat between active targets, such as heals and buffs, are able to do so.
 
 **Q: Why aren't there more options to customize the threat window?**
 
-A: ClassicThreatMeter is still a very young AddOn. More features and customization options will come over time.
+A: ThreatClassic2 is still a very young AddOn. More features and customization options will come over time.
 
 ## Sreenshots
 <img src="https://i.imgur.com/7ipFacm.png">
@@ -55,6 +55,6 @@ A: ClassicThreatMeter is still a very young AddOn. More features and customizati
 
 ## License
 
-[MIT](license/ClassicThreatMeter2)
+[MIT](license/ThreatClassic2)
 
 Copyright (c) 2019 Dennis-Florian Herr

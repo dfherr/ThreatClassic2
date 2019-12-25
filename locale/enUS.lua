@@ -1,4 +1,4 @@
-local CTM2, C, L, _ = unpack(select(2, ...))
+local TC2, C, L, _ = unpack(select(2, ...))
 
 -----------------------------
 --	enUS and enGB clients
@@ -11,10 +11,10 @@ L.gui_config			= "Open Config"
 L.reset					= "Reset to Defaults"
 
 -- messages
-L.message_welcome		= "Type /ctm2 for options."
+L.message_welcome		= "Type /tc2 for options."
 L.message_leader		= "You must be the group leader or have assist to do this."
-L.message_outdated		= "New version of CTM2/LibThreatClassic2 available! Please download the latest version."
-L.message_incompatible	= "CTM2/LibThreatClassic2 is out of date and will not be compatible for this group. Please upgrade immediately."
+L.message_outdated		= "New version of TC2/LibThreatClassic2 available! Please download the latest version."
+L.message_incompatible	= "TC2/LibThreatClassic2 is out of date and will not be compatible for this group. Please upgrade immediately."
 
 -- version check
 L.version				= "Version Check"
@@ -37,7 +37,7 @@ L.visibility			= "Visibility"
 L.visibility_hideOOC	= "Hide frame when out of combat."
 L.visibility_hideSolo	= "Hide frame when not in a group."
 L.visibility_hideInPvP	= "Hide frame when in battlegrounds."
-L.visibility_hideAlways	= "Hide frame always. /ctm2 toggle"
+L.visibility_hideAlways	= "Hide frame always. /tc2 toggle"
 
 L.nameplates			= "Nameplates"
 L.nameplates_enable		= "Enable threat coloring (only for Blizzard nameplates)."
