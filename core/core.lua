@@ -54,6 +54,15 @@ TC2.playerTarget = ""
 -- TC2.classic = _G.WOW_PROJECT_ID ~= _G.WOW_PROJECT_CLASSIC -- for testing in retail
 TC2.classic = _G.WOW_PROJECT_ID == _G.WOW_PROJECT_CLASSIC
 
+-- depreciation warning for ClassicThreatMeter
+C_Timer.After(3, 
+  function() 
+    if IsAddOnLoaded("ClassicThreatMeter2") then
+      print("|cFFFBB709ClassicThreatMeter2|cFFFF6060 was renamed to |cFFFBB709ThreatClassic2|cFFFF6060. Please remove ClassicThreatMeter2 from your Interface\\AddOns folder.")
+    end
+  end
+)
+
 local ThreatLib = TC2.classic and LibStub:GetLibrary("LibThreatClassic2")
 assert(ThreatLib, "ThreatClassic2 requires LibThreatClassic2")
 
