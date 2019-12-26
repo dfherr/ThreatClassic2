@@ -118,7 +118,10 @@ function Druid:GetStanceThreatMod()
 	if form == 1 then
 		self.passiveThreatModifiers = 1.3 * self.feralinstinctMod
 		self.isTanking = true
-	elseif form == 2 then
+	elseif form == 2 or form == 3 then
+		-- if aquatic form is not learnt, druid cat form is 2 and travel form 3
+		-- else aquatic form is 2 and cat form 3.
+		-- should be fine, druids don't dps in travel or aquatic form xD
 		self.passiveThreatModifiers = 0.71
 	else
 		self.passiveThreatModifiers = 1

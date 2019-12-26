@@ -2,6 +2,8 @@
 
 Successor project for [https://github.com/EsreverWoW/LibThreatClassic](https://github.com/EsreverWoW/LibThreatClassic)
 
+The latest version of this library will always be available through the addon [ThreatClassic2](https://github.com/dfherr/ThreatClassic2)
+
 ## How to use
 
 To provide Threat data to other players just include and load the lib as part of your addon.
