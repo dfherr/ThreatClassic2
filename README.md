@@ -6,7 +6,8 @@ ThreatClassic2 is a threat meter for WoW Classic that provides reasonably accura
  - Please check for bugs and feature requests in the [issue tracker](https://github.com/dfherr/ThreatClassic2/issues) and report them, if you don't find them mentioned there already.
 
 ## Download
- - [CurseForge](https://www.curseforge.com/wow/addons/ThreatClassic2) (approval pending) 
+ - [CurseForge](https://www.curseforge.com/wow/addons/ThreatClassic2)
+ - Manual install from [releases](https://github.com/dfherr/ThreatClassic2/releases)
 
 ## FAQ
 **Q: Why use ThreatClassic2 instead of ClassicThreatMeter?**
