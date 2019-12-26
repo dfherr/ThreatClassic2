@@ -9,6 +9,10 @@ ThreatClassic2 is a threat meter for WoW Classic that provides reasonably accura
  - [CurseForge](https://www.curseforge.com/wow/addons/ThreatClassic2) (approval pending) 
 
 ## FAQ
+**Q: Why use ThreatClassic2 instead of ClassicThreatMeter?**
+
+The author of ClassicThreatMeter left the addon with a lot of bugs, like spamming "You are not in a raid" in Alterac Valley and 25% bonus aggro for Def tanks instead of 15%. ThreatClassic2 bundles LibThreatClassic2, which comes with a ton of bug fixes and provides new boss modules for handling Onyxia and Ragnaros threat mechanics.
+
 **Q: Why am I not seeing other players in ThreatClassic2?**
  
 A: Other players must have ThreatClassic2 or a compatible AddOn enabled in order to track their threat similar to how KLH Threat Meter/Omen required compatible AddOns communicating threat to one another in Vanilla/TBC.
