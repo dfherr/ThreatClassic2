@@ -14,7 +14,7 @@ ThreatLib:GetModule("NPCCore"):RegisterModule(NEFARIAN_ID, function(Nefarian)
 	} end)
 
 	Nefarian:RegisterTranslation("esES", function() return {
-		["BURN! You wretches! BURN!"] = nil, -- STRING NEEDED
+		["BURN! You wretches! BURN!"] = "¡ARDED! ¡Desdichados! ¡ARDED!",
 	} end)
 
 	Nefarian:RegisterTranslation("esMX", function() return {
