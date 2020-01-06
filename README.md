@@ -7,6 +7,8 @@ Please submit all feature requests and bugs in this projects [issue tracker](htt
 
 Please check for bugs and feature requests before submitting the same request and participate in the dicussion. Please **do not** email me, comment on commits or raise issues in any other channel, so there is a single place for discussions everyone can see and participate. Thank you for your consideration.
 
+Issues related to threat values are tracked in the threat libs project [LibThreatClassic2](https://github.com/dfherr/LibThreatClassic2/)
+
 ## Download
  - [CurseForge](https://www.curseforge.com/wow/addons/ThreatClassic2)
  - Manual install from [releases](https://github.com/dfherr/ThreatClassic2/releases)
