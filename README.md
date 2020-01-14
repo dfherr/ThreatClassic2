@@ -2,8 +2,12 @@
 ThreatClassic2 is a threat meter for WoW Classic that provides reasonably accurate estimates of a monster's threat table based on [LibThreatClassic2](https://github.com/dfherr/LibThreatClassic2/). It is compatible with all other AddOns providing threat data through LibThreatClassic2 and created as the successor of the abandoned [EsreverWow/ClassicThreatMeter](https://github.com/EsreverWoW/ClassicThreatMeter).
 
 ## Bugs and feature requests
-**Bugs:**
- - Please check for bugs and feature requests in the [issue tracker](https://github.com/dfherr/ThreatClassic2/issues) and report them, if you don't find them mentioned there already.
+
+Please submit all feature requests and bugs in this projects [issue tracker](https://github.com/dfherr/ThreatClassic2/issues)
+
+Please check for bugs and feature requests before submitting the same request and participate in the dicussion. Please **do not** email me, comment on commits or raise issues in any other channel, so there is a single place for discussions everyone can see and participate. Thank you for your consideration.
+
+Issues related to threat values are tracked in the threat libs project [LibThreatClassic2](https://github.com/dfherr/LibThreatClassic2/)
 
 ## Download
  - [CurseForge](https://www.curseforge.com/wow/addons/ThreatClassic2)
