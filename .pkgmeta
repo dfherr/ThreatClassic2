@@ -5,3 +5,7 @@ externals:
     Libs/LibThreatClassic2: 
         url: git://github.com/dfherr/LibThreatClassic2.git
         tag: latest
+
+manual-changelog:
+    filename: CHANGELOG.md
+    markup-type: markdown
