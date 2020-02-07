@@ -35,6 +35,7 @@ local UnitIsPlayer			= _G.UnitIsPlayer
 local UnitName				= _G.UnitName
 local UnitReaction			= _G.UnitReaction
 
+
 local FACTION_BAR_COLORS	= _G.FACTION_BAR_COLORS
 local RAID_CLASS_COLORS		= _G.RAID_CLASS_COLORS
 
@@ -203,7 +204,10 @@ end
 local function GetColor(unit)
 	if unit then
 		local colorUnit = {}
-		if C.bar.marker and unit == "player" then
+		
+		if C.selfBar.enableCustomColor and UnitName("player") == UnitName(unit) then
+			return C.selfBar.customColor
+		elseif C.bar.marker and unit == "player" then
 			return TC2.colorMarker
 		elseif UnitIsPlayer(unit) then
 			colorUnit = RAID_CLASS_COLORS[select(2, UnitClass(unit))]
@@ -1109,6 +1113,7 @@ TC2.configTable = {
 							max = 16,
 							step = 1,
 						},
+						
 						-- marker
 						-- texture
 						-- custom color / class color
@@ -1116,8 +1121,47 @@ TC2.configTable = {
 						-- color / colormod
 					},
 				},
-				font = {
+				selfBar = {
 					order = 3,
+					name = L.selfBar,
+					type = "group",
+					inline = true,
+					args = {
+						enableCustomColor = {
+							order = 1,
+							name = L.selfBar_enableCustomColor,
+							type = "toggle",
+						},
+						selfColor = {
+							order = 2,
+							name = L.color,
+							type = "group",
+							inline = false,
+							get = function(info)
+								return unpack(C[info[2]][info[4]])
+							end,
+							set = function(info, r, g, b, a)
+								local cfg = C[info[2]][info[4]]
+								cfg[1] = r
+								cfg[2] = g
+								cfg[3] = b
+								cfg[4] = a
+								TC2:UpdateFrame()
+							end,
+							
+							args = {
+								customColor = {
+									order = 1,
+									name = L.selfBar_customColor,
+									type = "color",
+									hasAlpha = true,
+								},
+							},
+						},
+					},
+				},
+				font = {
+					order = 4,
 					name = L.font,
 					type = "group",
 					inline = true,
@@ -1151,7 +1195,7 @@ TC2.configTable = {
 					},
 				},
 				reset = {
-					order = 4,
+					order = 5,
 					name = L.reset,
 					type = "execute",
 					func = function(info, value)

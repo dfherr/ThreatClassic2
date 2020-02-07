@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.08-alpha2
+
+Added possibility to change player color
+
 ## v2.08-alpha1
 
 Removed LibThreatClassic2 from files

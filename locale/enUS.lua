@@ -74,6 +74,10 @@ L.bar_defaultColor		= "Custom Color"
 L.bar_alpha				= "Bar Alpha"
 L.bar_colorMod			= "Color Modifier"
 
+L.selfBar                   = "Self Bar"
+L.selfBar_enableCustomColor = "Enable Custom Color"
+L.selfBar_customColor       = "Custom Color"
+
 L.font					= "Font"
 L.font_family			= "Name"
 L.font_size				= "Size"

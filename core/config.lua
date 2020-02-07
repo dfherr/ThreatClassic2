@@ -67,6 +67,12 @@ TC2.defaultConfig.bar = {
 	colorMod			= 0,									-- color modifier
 }
 
+-- self threat bar color settings
+TC2.defaultConfig.selfBar = {
+	enableCustomColor 		 = false,							-- enable custom color for player
+	customColor       		 = {0.58, 0, 0.827, 0.35},			-- custom color for player
+}
+
 -- font settings
 TC2.defaultConfig.font = {
 	family				= defaultFont,							-- font file location
