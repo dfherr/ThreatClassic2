@@ -74,9 +74,9 @@ L.bar_defaultColor		= "Custom Color"
 L.bar_alpha				= "Bar Alpha"
 L.bar_colorMod			= "Color Modifier"
 
-L.selfBar                   = "Self Bar"
-L.selfBar_enableCustomColor = "Enable Custom Color"
-L.selfBar_customColor       = "Custom Color"
+L.playerBarCustomColor 			= "Player Bar Color"
+L.playerBarCustomColor_enabled 	= "Enable Custom Color"
+L.playerBarCustomColor_color 	= "Custom Color"
 
 L.font					= "Font"
 L.font_family			= "Name"

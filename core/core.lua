@@ -34,6 +34,7 @@ local UnitIsFriend			= _G.UnitIsFriend
 local UnitIsPlayer			= _G.UnitIsPlayer
 local UnitName				= _G.UnitName
 local UnitReaction			= _G.UnitReaction
+local UnitIsUnit 			= _G.UnitIsUnit
 
 
 local FACTION_BAR_COLORS	= _G.FACTION_BAR_COLORS
@@ -43,7 +44,6 @@ local RAID_CLASS_COLORS		= _G.RAID_CLASS_COLORS
 TC2.bars = {}
 TC2.threatData = {}
 TC2.colorFallback = {}
-TC2.colorMarker = {}
 TC2.threatColors = {}
 TC2.numGroupMembers = 0
 TC2.playerName = ""
@@ -205,10 +205,8 @@ local function GetColor(unit)
 	if unit then
 		local colorUnit = {}
 		
-		if C.selfBar.enableCustomColor and UnitName("player") == UnitName(unit) then
-			return C.selfBar.customColor
-		elseif C.bar.marker and unit == "player" then
-			return TC2.colorMarker
+		if C.playerBarCustomColor.enabled and UnitIsUnit(unit, "player") then
+			return C.playerBarCustomColor.color
 		elseif UnitIsPlayer(unit) then
 			colorUnit = RAID_CLASS_COLORS[select(2, UnitClass(unit))]
 		else
@@ -690,7 +688,6 @@ function TC2:PLAYER_LOGIN()
 
 	-- Get Colors
 	TC2.colorFallback = {0.8, 0, 0.8, C.bar.alpha}
-	TC2.colorMarker = {0.8, 0, 0, C.bar.alpha}
 
 	TC2.threatColors = {
 		[0] = C.general.threatColors.good,
@@ -1121,18 +1118,18 @@ TC2.configTable = {
 						-- color / colormod
 					},
 				},
-				selfBar = {
+				playerBarCustomColor = {
 					order = 3,
-					name = L.selfBar,
+					name = L.playerBarCustomColor,
 					type = "group",
 					inline = true,
 					args = {
-						enableCustomColor = {
+						enabled = {
 							order = 1,
-							name = L.selfBar_enableCustomColor,
+							name = L.playerBarCustomColor_enabled,
 							type = "toggle",
 						},
-						selfColor = {
+						barColor = {
 							order = 2,
 							name = L.color,
 							type = "group",
@@ -1150,9 +1147,9 @@ TC2.configTable = {
 							end,
 							
 							args = {
-								customColor = {
+								color = {
 									order = 1,
-									name = L.selfBar_customColor,
+									name = L.playerBarCustomColor_color,
 									type = "color",
 									hasAlpha = true,
 								},
