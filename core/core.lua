@@ -34,6 +34,8 @@ local UnitIsFriend			= _G.UnitIsFriend
 local UnitIsPlayer			= _G.UnitIsPlayer
 local UnitName				= _G.UnitName
 local UnitReaction			= _G.UnitReaction
+local UnitIsUnit 			= _G.UnitIsUnit
+
 
 local FACTION_BAR_COLORS	= _G.FACTION_BAR_COLORS
 local RAID_CLASS_COLORS		= _G.RAID_CLASS_COLORS
@@ -42,7 +44,6 @@ local RAID_CLASS_COLORS		= _G.RAID_CLASS_COLORS
 TC2.bars = {}
 TC2.threatData = {}
 TC2.colorFallback = {}
-TC2.colorMarker = {}
 TC2.threatColors = {}
 TC2.numGroupMembers = 0
 TC2.playerName = ""
@@ -203,8 +204,9 @@ end
 local function GetColor(unit)
 	if unit then
 		local colorUnit = {}
-		if C.bar.marker and unit == "player" then
-			return TC2.colorMarker
+		
+		if C.playerBarCustomColor.enabled and UnitIsUnit(unit, "player") then
+			return C.playerBarCustomColor.color
 		elseif UnitIsPlayer(unit) then
 			colorUnit = RAID_CLASS_COLORS[select(2, UnitClass(unit))]
 		else
@@ -686,7 +688,6 @@ function TC2:PLAYER_LOGIN()
 
 	-- Get Colors
 	TC2.colorFallback = {0.8, 0, 0.8, C.bar.alpha}
-	TC2.colorMarker = {0.8, 0, 0, C.bar.alpha}
 
 	TC2.threatColors = {
 		[0] = C.general.threatColors.good,
@@ -1109,6 +1110,7 @@ TC2.configTable = {
 							max = 16,
 							step = 1,
 						},
+						
 						-- marker
 						-- texture
 						-- custom color / class color
@@ -1116,8 +1118,47 @@ TC2.configTable = {
 						-- color / colormod
 					},
 				},
-				font = {
+				playerBarCustomColor = {
 					order = 3,
+					name = L.playerBarCustomColor,
+					type = "group",
+					inline = true,
+					args = {
+						enabled = {
+							order = 1,
+							name = L.playerBarCustomColor_enabled,
+							type = "toggle",
+						},
+						barColor = {
+							order = 2,
+							name = L.color,
+							type = "group",
+							inline = false,
+							get = function(info)
+								return unpack(C[info[2]][info[4]])
+							end,
+							set = function(info, r, g, b, a)
+								local cfg = C[info[2]][info[4]]
+								cfg[1] = r
+								cfg[2] = g
+								cfg[3] = b
+								cfg[4] = a
+								TC2:UpdateFrame()
+							end,
+							
+							args = {
+								color = {
+									order = 1,
+									name = L.playerBarCustomColor_color,
+									type = "color",
+									hasAlpha = true,
+								},
+							},
+						},
+					},
+				},
+				font = {
+					order = 4,
 					name = L.font,
 					type = "group",
 					inline = true,
@@ -1151,7 +1192,7 @@ TC2.configTable = {
 					},
 				},
 				reset = {
-					order = 4,
+					order = 5,
 					name = L.reset,
 					type = "execute",
 					func = function(info, value)
