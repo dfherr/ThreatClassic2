@@ -38,7 +38,7 @@ local UnitIsUnit 			= _G.UnitIsUnit
 
 
 local FACTION_BAR_COLORS	= _G.FACTION_BAR_COLORS
-local RAID_CLASS_COLORS		= _G.RAID_CLASS_COLORS
+local RAID_CLASS_COLORS		= (_G.CUSTOM_CLASS_COLORS or _G.RAID_CLASS_COLORS)
 
 -- other
 TC2.bars = {}
