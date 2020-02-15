@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.09
+
+* Update LibThreatClassic2 to revision 7
+* Added option to change color of the player bar
+* enable support for custom class colors addon
+* save variables per character
+* fix friendly units turning hostile
+
 ## v2.08-alpha1
 
 Removed LibThreatClassic2 from files
