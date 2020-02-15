@@ -277,7 +277,7 @@ local function UpdatePlayerTarget()
 	elseif UnitExists("targettarget") and not UnitIsFriend("player", "targettarget") then
 		TC2.playerTarget = "targettarget"
 	else
-		TC2.playerTarget = ""
+		TC2.playerTarget = "target"
 	end
 end
 
