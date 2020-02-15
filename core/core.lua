@@ -271,6 +271,16 @@ local function UpdateThreatData(unit)
 	})
 end
 
+local function UpdatePlayerTarget()
+	if UnitExists("target") and not UnitIsFriend("player", "target") then
+		TC2.playerTarget = "target"
+	elseif UnitExists("targettarget") and not UnitIsFriend("player", "targettarget") then
+		TC2.playerTarget = "targettarget"
+	else
+		TC2.playerTarget = ""
+	end
+end
+
 local function CheckStatus()
 	if C.frame.test then return end
 
@@ -631,7 +641,7 @@ function TC2:PLAYER_ENTERING_WORLD(...)
 end
 
 function TC2:PLAYER_TARGET_CHANGED(...)
-	self.playerTarget = UnitExists("target") and (UnitIsFriend("player", "target") and "targettarget" or "target")
+	UpdatePlayerTarget()
 
 	C.frame.test = false
 	CheckStatus()
@@ -645,6 +655,7 @@ function TC2:GROUP_ROSTER_UPDATE(...)
 end
 
 function TC2:PLAYER_REGEN_DISABLED(...)
+	UpdatePlayerTarget() -- for friendly mobs that turn hostile like vaelastrasz
 	C.frame.test = false
 	ThreatLib.RegisterCallback(self, "ThreatUpdated", CheckStatus)
 	CheckStatus()
