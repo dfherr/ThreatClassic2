@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.10
+
+* Use "target" as a fallback for player target, if other options make no sense (e.g. at vael)
+
 ## v2.09
 
 * Update LibThreatClassic2 to revision 7
