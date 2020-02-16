@@ -285,6 +285,7 @@ local function CheckStatus()
 	if C.frame.test then return end
 
 	CheckVisibility()
+	UpdatePlayerTarget()
 
 	if UnitExists(TC2.playerTarget) then -- and UnitAffectingCombat(TC2.playerTarget) then
 		-- wipe
@@ -641,8 +642,6 @@ function TC2:PLAYER_ENTERING_WORLD(...)
 end
 
 function TC2:PLAYER_TARGET_CHANGED(...)
-	UpdatePlayerTarget()
-
 	C.frame.test = false
 	CheckStatus()
 end
@@ -655,7 +654,6 @@ function TC2:GROUP_ROSTER_UPDATE(...)
 end
 
 function TC2:PLAYER_REGEN_DISABLED(...)
-	UpdatePlayerTarget() -- for friendly mobs that turn hostile like vaelastrasz
 	C.frame.test = false
 	ThreatLib.RegisterCallback(self, "ThreatUpdated", CheckStatus)
 	CheckStatus()
