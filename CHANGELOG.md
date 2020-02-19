@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.11
+
+* Update LibThreatClassic to revision 8. Brings better threat sync interval and blacklist Lashlayer trash whelps.
+* Fix some lib loading issues.
+* added a /tc2 debug command to toggle LibThreatClassic2 debug output
+* added a /tc2 runSolo command to toggle LibThreatClassic2 runSolo option
+* added a /tc2 logThreat command to toggle LibThreatClassic2 logThreat option
+
 ## v2.10
 
 * Use "target" as a fallback for player target, if other options make no sense (e.g. at vael)

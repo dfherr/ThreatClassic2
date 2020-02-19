@@ -58,8 +58,8 @@ TC2.classic = _G.WOW_PROJECT_ID == _G.WOW_PROJECT_CLASSIC
 -- depreciation warning for ClassicThreatMeter
 C_Timer.After(3, 
   function() 
-    if IsAddOnLoaded("ClassicThreatMeter2") then
-      print("|cFFFBB709ClassicThreatMeter2|cFFFF6060 was renamed to |cFFFBB709ThreatClassic2|cFFFF6060. Please remove ClassicThreatMeter2 from your Interface\\AddOns folder.")
+    if IsAddOnLoaded("ClassicThreatMeter") then
+      print("Please disable |cFFFBB709ClassicThreatMeter|cFFFF6060 to avoid unnecessary syncing that can negatively impact |cFFFBB709ThreatClassic2|cFFFF6060 and other addons.")
     end
   end
 )
@@ -1303,6 +1303,32 @@ SlashCmdList["TC2_SLASHCMD"] = function(arg)
 	if arg == "toggle" then
 		C.general.hideAlways = not C.general.hideAlways
 		CheckStatus();
+	elseif arg == "debug" then
+		ThreatLib.DebugEnabled = not ThreatLib.DebugEnabled
+		
+		if ThreatLib.DebugEnabled then
+			print("Debug enabled. Output in Chatframe 4.")
+		else
+			print("Debug disabled.")
+		end
+	elseif arg == "runSolo" then
+		ThreatLib.alwaysRunOnSolo = not ThreatLib.alwaysRunOnSolo
+		if ThreatLib.alwaysRunOnSolo then
+			print("LibThreatClassic2 solo mode enabled.")
+		else
+			print("LibThreatClassic2 solo mode disabled.")
+		end
+	elseif arg == "logThreat" then
+		ThreatLib.LogThreat = not ThreatLib.LogThreat
+		if ThreatLib.LogThreat then
+			print("LibThreatClassic2 logThreat enabled.")
+			if not ThreatLib.DebugEnabled then
+				print("Debug is disabled. Also enabling debug mode.")
+				ThreatLib.DebugEnabled = true
+			end
+		else 
+			print("LibThreatClassic2 LogThreat disabled.")
+		end 
 	else
 		LibStub("AceConfigDialog-3.0"):Open("ThreatClassic2")
 	end	
