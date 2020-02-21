@@ -730,7 +730,9 @@ function TC2:PLAYER_LOGIN()
 	if self.classic then
 		ThreatLib.RegisterCallback(self, "Activate", CheckStatus)
 		ThreatLib.RegisterCallback(self, "Deactivate", CheckStatus)
+		ThreatLib.RegisterCallback(self, "PartyChanged", CheckStatus)
 		ThreatLib.RegisterCallback(self, "ThreatUpdated", ThreatUpdated)
+		ThreatLib.RegisterCallback(self, "ThreatCleared", CheckStatus)
 		ThreatLib:RequestActiveOnSolo(true)
 	else
 		self.frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
