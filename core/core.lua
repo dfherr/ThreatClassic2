@@ -323,6 +323,12 @@ local function CheckStatus()
 	end
 end
 
+local function ThreatUpdated(event, unitGUID, targetGUID, threat)
+	if UnitGUID(TC2.playerTarget) == targetGUID then
+		CheckStatus()	
+	end
+end
+
 -----------------------------
 -- UPDATE FRAME
 -----------------------------
@@ -657,14 +663,14 @@ end
 function TC2:PLAYER_REGEN_DISABLED(...)
 	UpdatePlayerTarget() -- for friendly mobs that turn hostile like vaelastrasz
 	C.frame.test = false
-	ThreatLib.RegisterCallback(self, "ThreatUpdated", CheckStatus)
+	ThreatLib.RegisterCallback(self, "ThreatUpdated", ThreatUpdated)
 	CheckStatus()
 end
 
 function TC2:PLAYER_REGEN_ENABLED(...)
 	-- collectgarbage()
 	C.frame.test = false
-	ThreatLib.UnregisterCallback(self, "ThreatUpdated", CheckStatus)
+	ThreatLib.UnregisterCallback(self, "ThreatUpdated", ThreatUpdated)
 	CheckStatus()
 end
 
@@ -724,7 +730,7 @@ function TC2:PLAYER_LOGIN()
 	if self.classic then
 		ThreatLib.RegisterCallback(self, "Activate", CheckStatus)
 		ThreatLib.RegisterCallback(self, "Deactivate", CheckStatus)
-		ThreatLib.RegisterCallback(self, "ThreatUpdated", CheckStatus)
+		ThreatLib.RegisterCallback(self, "ThreatUpdated", ThreatUpdated)
 		ThreatLib:RequestActiveOnSolo(true)
 	else
 		self.frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
