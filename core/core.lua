@@ -653,10 +653,10 @@ function TC2:PLAYER_TARGET_CHANGED(...)
 	CheckStatus()
 end
 
-function TC2:GROUP_ROSTER_UPDATE(...)
-	self.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
+local function PartyChanged()
+	TC2.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
 
-	-- CheckVersionOLD(self, ...)
+	-- CheckVersionOLD(TC2, ...)
 	CheckStatus()
 end
 
@@ -721,7 +721,6 @@ function TC2:PLAYER_LOGIN()
 	end
 
 	self.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-	self.frame:RegisterEvent("GROUP_ROSTER_UPDATE")
 	-- self.frame:RegisterEvent("CHAT_MSG_ADDON")
 	self.frame:RegisterEvent("PLAYER_TARGET_CHANGED")
 	self.frame:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -730,7 +729,7 @@ function TC2:PLAYER_LOGIN()
 	if self.classic then
 		ThreatLib.RegisterCallback(self, "Activate", CheckStatus)
 		ThreatLib.RegisterCallback(self, "Deactivate", CheckStatus)
-		ThreatLib.RegisterCallback(self, "PartyChanged", CheckStatus)
+		ThreatLib.RegisterCallback(self, "PartyChanged", PartyChanged)
 		ThreatLib.RegisterCallback(self, "ThreatUpdated", ThreatUpdated)
 		ThreatLib.RegisterCallback(self, "ThreatCleared", CheckStatus)
 		ThreatLib:RequestActiveOnSolo(true)
