@@ -1303,6 +1303,8 @@ SLASH_TC2_SLASHCMD1 = "/tc2"
 SLASH_TC2_SLASHCMD2 = "/threat2"
 SLASH_TC2_SLASHCMD2 = "/threatclassic2"
 SlashCmdList["TC2_SLASHCMD"] = function(arg)
+	arg = arg:lower()
+
 	if arg == "toggle" then
 		C.general.hideAlways = not C.general.hideAlways
 		CheckStatus();
@@ -1332,6 +1334,10 @@ SlashCmdList["TC2_SLASHCMD"] = function(arg)
 		else 
 			print("LibThreatClassic2 LogThreat disabled.")
 		end 
+	elseif arg == "ver" or arg == "version" then
+		CheckVersion()
+	elseif arg == "ver2" or arg == "version2" then
+		NotifyOldClients()
 	else
 		LibStub("AceConfigDialog-3.0"):Open("ThreatClassic2")
 	end	
