@@ -31,6 +31,7 @@ local UnitAffectingCombat	= _G.UnitAffectingCombat
 local UnitClass				= _G.UnitClass
 local UnitExists			= _G.UnitExists
 local UnitIsFriend			= _G.UnitIsFriend
+local UnitCanAssist			= _G.UnitCanAssist
 local UnitIsPlayer			= _G.UnitIsPlayer
 local UnitName				= _G.UnitName
 local UnitReaction			= _G.UnitReaction
@@ -272,9 +273,9 @@ local function UpdateThreatData(unit)
 end
 
 local function UpdatePlayerTarget()
-	if UnitExists("target") and not UnitIsFriend("player", "target") then
+	if UnitExists("target") and (not UnitIsFriend("player", "target") or ((UnitReaction("player", "target") or 0) <= 4 and not UnitCanAssist("player", "target"))) then
 		TC2.playerTarget = "target"
-	elseif UnitExists("targettarget") and not UnitIsFriend("player", "targettarget") then
+	elseif UnitExists("targettarget") and (not UnitIsFriend("player", "targettarget") or ((UnitReaction("player", "targettarget") or 0) <= 4 and not UnitCanAssist("player", "targettarget"))) then
 		TC2.playerTarget = "targettarget"
 	else
 		TC2.playerTarget = "target"
