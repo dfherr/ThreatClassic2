@@ -810,6 +810,9 @@ function TC2:SetupMenu()
 		{text = L.version_check, notCheckable = true, func = function()
 			CheckVersion(true)
 		end},
+		{text = L.version_notify, notCheckable = true, func = function()
+			NotifyOldClients()
+		end},
 		{text = L.gui_config, notCheckable = true, func = function()
 			LibStub("AceConfigDialog-3.0"):Open("ThreatClassic2")
 		end},
