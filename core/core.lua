@@ -566,10 +566,49 @@ local function CheckVersion(onlyOutdated)
 		end
 		table.sort(groupSort)
 		print(L.version_divider)
+		local incompatibleClients = {}
+		local missingClients = {}
+		local outdatedClients = {}
 		for _, v in ipairs(groupSort) do
-			if not onlyOutdated or (not revisions[v] or revisions[v] < (latestRevision or 0)) then
-				print(("%s: %s / %s %s"):format(v, agents[v] or ("|cff666666" .. UNKNOWN .. "|r"), revisions[v] or ("|cff666666" .. UNKNOWN .. "|r"), ThreatLib:IsCompatible(v) and "" or " - |cffff0000" .. L.version_incompatible))
+			local compatible = ThreatLib:IsCompatible(v)
+			local missing = not revisions[v]
+			local outdated = not missing and revisions[v] < (latestRevision or 0)
+			if not onlyOutdated or missing or outdated then
+				print(("%s: %s / %s %s"):format(v, agents[v] or ("|cff666666" .. UNKNOWN .. "|r"), revisions[v] or ("|cff666666" .. UNKNOWN .. "|r"), compatible and "" or " - |cffff0000" .. L.version_incompatible))
 			end
+			if missing then
+				tinsert(missingClients, v)
+			elseif outdated then
+				tinsert(outdatedClients, v)
+			elseif not compatible then
+				tinsert(incompatibleClients, v)
+			end
+		end
+		print("---")
+		if #missingClients > 0 or #outdatedClients > 0 or #incompatibleClients > 0 then
+			if #missingClients > 0 then
+				local s = format("Found %d player(s) without any version: ", #missingClients)
+				for i, v in ipairs(missingClients) do
+					s = s .. (i == 1 and v or format(", %s", v))
+				end
+				print(s)
+			end
+			if #outdatedClients > 0 then
+				local s = format("Found %d player(s) with outdated version: ", #outdatedClients)
+				for i, v in ipairs(outdatedClients) do
+					s = s .. (i == 1 and v or format(", %s", v))
+				end
+				print(s)
+			end
+			if #incompatibleClients > 0 then
+				local s = format("Found %d player(s) with incompatible version: ", #incompatibleClients)
+				for i, v in ipairs(incompatibleClients) do
+					s = s .. (i == 1 and v or format(", %s", v))
+				end
+				print(s)
+			end
+		else
+			print("Every player in your group has the lastest version installed!")
 		end
 	end
 end
