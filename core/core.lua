@@ -1272,7 +1272,7 @@ TC2.configTable = {
 					name = L.version_check,
 					type = "execute",
 					func = function(info, value)
-						CheckVersion()
+						CheckVersion(true)
 					end,
 				},
 				version_check_all = {
@@ -1280,7 +1280,7 @@ TC2.configTable = {
 					name = L.version_check_all,
 					type = "execute",
 					func = function(info, value)
-						CheckVersion(true)
+						CheckVersion()
 					end,
 				},
 				version_notify = {
