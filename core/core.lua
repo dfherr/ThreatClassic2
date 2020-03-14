@@ -351,14 +351,18 @@ local function SetPosition(f)
 end
 
 local function OnDragStart(f)
-	f = f:GetParent()
-	f:StartMoving()
+	if not C.frame.locked then
+		f = f:GetParent()
+		f:StartMoving()
+	end
 end
 
 local function OnDragStop(f)
-	f = f:GetParent()
-	f:StopMovingOrSizing()
-	SetPosition(f)
+	if not C.frame.locked then
+		f = f:GetParent()
+		f:StopMovingOrSizing()
+		SetPosition(f)
+	end
 end
 
 local function UpdateSize(f)
