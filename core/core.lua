@@ -566,10 +566,49 @@ local function CheckVersion(onlyOutdated)
 		end
 		table.sort(groupSort)
 		print(L.version_divider)
+		local incompatibleClients = {}
+		local missingClients = {}
+		local outdatedClients = {}
 		for _, v in ipairs(groupSort) do
-			if not onlyOutdated or (not revisions[v] or revisions[v] < (latestRevision or 0)) then
-				print(("%s: %s / %s %s"):format(v, agents[v] or ("|cff666666" .. UNKNOWN .. "|r"), revisions[v] or ("|cff666666" .. UNKNOWN .. "|r"), ThreatLib:IsCompatible(v) and "" or " - |cffff0000" .. L.version_incompatible))
+			local compatible = ThreatLib:IsCompatible(v)
+			local missing = not revisions[v]
+			local outdated = not missing and revisions[v] < (latestRevision or 0)
+			if not onlyOutdated or missing or outdated then
+				print(("%s: %s / %s %s"):format(v, agents[v] or ("|cff666666" .. UNKNOWN .. "|r"), revisions[v] or ("|cff666666" .. UNKNOWN .. "|r"), compatible and "" or " - |cffff0000" .. L.version_incompatible))
 			end
+			if missing then
+				tinsert(missingClients, v)
+			elseif outdated then
+				tinsert(outdatedClients, v)
+			elseif not compatible then
+				tinsert(incompatibleClients, v)
+			end
+		end
+		print("---")
+		if #missingClients > 0 or #outdatedClients > 0 or #incompatibleClients > 0 then
+			if #missingClients > 0 then
+				local s = format("Found %d player(s) without any version: ", #missingClients)
+				for i, v in ipairs(missingClients) do
+					s = s .. (i == 1 and v or format(", %s", v))
+				end
+				print(s)
+			end
+			if #outdatedClients > 0 then
+				local s = format("Found %d player(s) with outdated version: ", #outdatedClients)
+				for i, v in ipairs(outdatedClients) do
+					s = s .. (i == 1 and v or format(", %s", v))
+				end
+				print(s)
+			end
+			if #incompatibleClients > 0 then
+				local s = format("Found %d player(s) with incompatible version: ", #incompatibleClients)
+				for i, v in ipairs(incompatibleClients) do
+					s = s .. (i == 1 and v or format(", %s", v))
+				end
+				print(s)
+			end
+		else
+			print("Every player in your group has the lastest version installed!")
 		end
 	end
 end
@@ -809,6 +848,9 @@ function TC2:SetupMenu()
 		end},
 		{text = L.version_check, notCheckable = true, func = function()
 			CheckVersion(true)
+		end},
+		{text = L.version_notify, notCheckable = true, func = function()
+			NotifyOldClients()
 		end},
 		{text = L.gui_config, notCheckable = true, func = function()
 			LibStub("AceConfigDialog-3.0"):Open("ThreatClassic2")
@@ -1272,7 +1314,7 @@ TC2.configTable = {
 					name = L.version_check,
 					type = "execute",
 					func = function(info, value)
-						CheckVersion()
+						CheckVersion(true)
 					end,
 				},
 				version_check_all = {
@@ -1280,7 +1322,7 @@ TC2.configTable = {
 					name = L.version_check_all,
 					type = "execute",
 					func = function(info, value)
-						CheckVersion(true)
+						CheckVersion()
 					end,
 				},
 				version_notify = {
@@ -1300,6 +1342,8 @@ SLASH_TC2_SLASHCMD1 = "/tc2"
 SLASH_TC2_SLASHCMD2 = "/threat2"
 SLASH_TC2_SLASHCMD2 = "/threatclassic2"
 SlashCmdList["TC2_SLASHCMD"] = function(arg)
+	arg = arg:lower()
+
 	if arg == "toggle" then
 		C.general.hideAlways = not C.general.hideAlways
 		CheckStatus();
@@ -1329,6 +1373,10 @@ SlashCmdList["TC2_SLASHCMD"] = function(arg)
 		else 
 			print("LibThreatClassic2 LogThreat disabled.")
 		end 
+	elseif arg == "ver" or arg == "version" then
+		CheckVersion()
+	elseif arg == "ver2" or arg == "version2" then
+		NotifyOldClients()
 	else
 		LibStub("AceConfigDialog-3.0"):Open("ThreatClassic2")
 	end	
