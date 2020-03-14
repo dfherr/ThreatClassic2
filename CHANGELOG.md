@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.12
+
+* Delay updates up to 0.2 seconds to address performance issues
+* Only update frame on changes for current target
+* Bump LibThreatClassic2 to revision 9
+    - Add cleave threat modifier
+    - Fix Paladin Greater Blessing bug on pets
+    - Blacklist various enemies in BWL
+* Update player target, if target target changes
+* Added option to hide when not in an instance (also hides world bosses!)
+* Improved Version checks
+* Added zhTW translations
+
 ## v2.11
 
 * Update LibThreatClassic to revision 8. Brings better threat sync interval and blacklist Lashlayer trash whelps.
