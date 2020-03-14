@@ -22,6 +22,7 @@ local tremove	= _G.table.remove
 local sort		= _G.table.sort
 local wipe		= _G.table.wipe
 
+local GetTime			= _G.GetTime
 local GetNumGroupMembers	= _G.GetNumGroupMembers
 local GetNumSubgroupMembers	= _G.GetNumSubgroupMembers
 local GetInstanceInfo		= _G.GetInstanceInfo
@@ -320,6 +321,17 @@ local function CheckStatus()
 		for i = 1, 40 do
 			TC2.bars[i]:Hide()
 		end
+	end
+end
+
+local lastTime = GetTime()
+local checkStatus
+
+local function CheckStatusDeferred()
+	if GetTime() > lastTime then
+		checkStatus = true
+	else
+		CheckStatus()
 	end
 end
 
@@ -669,6 +681,14 @@ TC2.frame:RegisterEvent("PLAYER_LOGIN")
 TC2.frame:SetScript("OnEvent", function(self, event, ...)
 	return TC2[event] and TC2[event](TC2, event, ...)
 end)
+TC2.frame:SetScript("OnUpdate", function(self, elapsed)
+	if checkStatus then
+		CheckStatus()
+	end
+
+	checkStatus = nil
+	lastTime = GetTime()
+end)
 
 function TC2:PLAYER_ENTERING_WORLD(...)
 	self.playerName = UnitName("player")
@@ -676,14 +696,14 @@ function TC2:PLAYER_ENTERING_WORLD(...)
 	self.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
 
 	-- CheckVersionOLD(self, ...)
-	CheckStatus()
+	CheckStatusDeferred()
 end
 
 function TC2:PLAYER_TARGET_CHANGED(...)
 	UpdatePlayerTarget()
 
 	C.frame.test = false
-	CheckStatus()
+	CheckStatusDeferred()
 end
 
 TC2.UNIT_TARGET = TC2.PLAYER_TARGET_CHANGED
@@ -692,26 +712,26 @@ function TC2:GROUP_ROSTER_UPDATE(...)
 	self.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
 
 	-- CheckVersionOLD(self, ...)
-	CheckStatus()
+	CheckStatusDeferred()
 end
 
 function TC2:PLAYER_REGEN_DISABLED(...)
 	UpdatePlayerTarget() -- for friendly mobs that turn hostile like vaelastrasz
 	C.frame.test = false
-	ThreatLib.RegisterCallback(self, "ThreatUpdated", CheckStatus)
-	CheckStatus()
+	ThreatLib.RegisterCallback(self, "ThreatUpdated", CheckStatusDeferred)
+	CheckStatusDeferred()
 end
 
 function TC2:PLAYER_REGEN_ENABLED(...)
 	-- collectgarbage()
 	C.frame.test = false
-	ThreatLib.UnregisterCallback(self, "ThreatUpdated", CheckStatus)
-	CheckStatus()
+	ThreatLib.UnregisterCallback(self, "ThreatUpdated", CheckStatusDeferred)
+	CheckStatusDeferred()
 end
 
 function TC2:UNIT_THREAT_LIST_UPDATE(...)
 	C.frame.test = false
-	CheckStatus()
+	CheckStatusDeferred()
 end
 
 function TC2:PLAYER_LOGIN()
@@ -764,9 +784,9 @@ function TC2:PLAYER_LOGIN()
 	self.frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
 	if self.classic then
-		ThreatLib.RegisterCallback(self, "Activate", CheckStatus)
-		ThreatLib.RegisterCallback(self, "Deactivate", CheckStatus)
-		ThreatLib.RegisterCallback(self, "ThreatUpdated", CheckStatus)
+		ThreatLib.RegisterCallback(self, "Activate", CheckStatusDeferred)
+		ThreatLib.RegisterCallback(self, "Deactivate", CheckStatusDeferred)
+		ThreatLib.RegisterCallback(self, "ThreatUpdated", CheckStatusDeferred)
 		ThreatLib:RequestActiveOnSolo(true)
 	else
 		self.frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
@@ -843,7 +863,7 @@ function TC2:SetupMenu()
 			if C.frame.test then
 				TC2:TestMode()
 			else
-				CheckStatus()
+				CheckStatusDeferred()
 			end
 		end},
 		{text = L.version_check_all, notCheckable = true, func = function()
@@ -927,7 +947,7 @@ TC2.configTable = {
 					width = "full",
 					set = function(info, value)
 						C[info[1]][info[2]] = value
-						CheckStatus()
+						CheckStatusDeferred()
 					end,
 				},
 				hideSolo = {
@@ -937,7 +957,7 @@ TC2.configTable = {
 					width = "full",
 					set = function(info, value)
 						C[info[1]][info[2]] = value
-						CheckStatus()
+						CheckStatusDeferred()
 					end,
 				},
 				hideInPVP = {
@@ -947,7 +967,7 @@ TC2.configTable = {
 					width = "full",
 					set = function(info, value)
 						C[info[1]][info[2]] = value
-						CheckStatus()
+						CheckStatusDeferred()
 					end,
 				},
 				hideAlways = {
@@ -957,7 +977,7 @@ TC2.configTable = {
 					width = "full",
 					set = function(info, value)
 						C[info[1]][info[2]] = value
-						CheckStatus()
+						CheckStatusDeferred()
 					end,
 				},
 				nameplates = {
@@ -1043,7 +1063,7 @@ TC2.configTable = {
 								if C.frame.test then
 									TC2:TestMode()
 								else
-									CheckStatus()
+									CheckStatusDeferred()
 								end
 							end,
 						},
@@ -1349,7 +1369,7 @@ SlashCmdList["TC2_SLASHCMD"] = function(arg)
 
 	if arg == "toggle" then
 		C.general.hideAlways = not C.general.hideAlways
-		CheckStatus();
+		CheckStatusDeferred();
 	elseif arg == "debug" then
 		ThreatLib.DebugEnabled = not ThreatLib.DebugEnabled
 		
