@@ -252,7 +252,11 @@ end
 
 local function CheckVisibility()
 	local instanceType = select(2, GetInstanceInfo())
-	local hide = C.general.hideAlways or (C.general.hideOOC and not InCombatLockdown()) or (C.general.hideSolo and TC2.numGroupMembers == 0) or (C.general.hideInPVP and (instanceType == "arena" or instanceType == "pvp"))
+	local hide = C.general.hideAlways or
+		(C.general.hideOOC and not InCombatLockdown()) or 
+		(C.general.hideSolo and TC2.numGroupMembers == 0) or 
+		(C.general.hideInPVP and (instanceType == "arena" or instanceType == "pvp")) or
+		(C.general.hideOpenWorld and instanceType == "none")
 
 	if hide then
 		return TC2.frame:Hide()
@@ -709,6 +713,10 @@ function TC2:GROUP_ROSTER_UPDATE(...)
 	CheckStatusDeferred()
 end
 
+function TC2:ZONE_CHANGED_NEW_AREA(...)
+	CheckStatus()
+end
+
 function TC2:PLAYER_REGEN_DISABLED(...)
 	UpdatePlayerTarget() -- for friendly mobs that turn hostile like vaelastrasz
 	C.frame.test = false
@@ -771,6 +779,7 @@ function TC2:PLAYER_LOGIN()
 
 	self.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	self.frame:RegisterEvent("GROUP_ROSTER_UPDATE")
+	self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	-- self.frame:RegisterEvent("CHAT_MSG_ADDON")
 	self.frame:RegisterEvent("PLAYER_TARGET_CHANGED")
 	self.frame:RegisterUnitEvent("UNIT_TARGET", "target")
@@ -964,8 +973,18 @@ TC2.configTable = {
 						CheckStatus()
 					end,
 				},
-				hideAlways = {
+				hideOpenWorld = {
 					order = 9,
+					name = L.visibility_hideOpenWorld,
+					type = "toggle",
+					width = "full",
+					set = function(info, value)
+						C[info[1]][info[2]] = value
+						CheckStatus()
+					end,
+				},
+				hideAlways = {
+					order = 10,
 					name = L.visibility_hideAlways,
 					type = "toggle",
 					width = "full",
@@ -975,24 +994,24 @@ TC2.configTable = {
 					end,
 				},
 				nameplates = {
-					order = 10,
+					order = 11,
 					name = L.nameplates,
 					type = "header",
 				},
 				nameplateThreat = {
-					order = 11,
+					order = 12,
 					name = L.nameplates_enable,
 					type = "toggle",
 					width = "full",
 				},
 				invertColors = {
-					order = 12,
+					order = 13,
 					name = L.nameplates_invert,
 					type = "toggle",
 					width = "full",
 				},
 				threatColors = {
-					order = 13,
+					order = 14,
 					name = L.nameplates_colors,
 					type = "group",
 					inline = true,
