@@ -686,6 +686,8 @@ function TC2:PLAYER_TARGET_CHANGED(...)
 	CheckStatus()
 end
 
+TC2.UNIT_TARGET = TC2.PLAYER_TARGET_CHANGED
+
 function TC2:GROUP_ROSTER_UPDATE(...)
 	self.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
 
@@ -757,6 +759,7 @@ function TC2:PLAYER_LOGIN()
 	self.frame:RegisterEvent("GROUP_ROSTER_UPDATE")
 	-- self.frame:RegisterEvent("CHAT_MSG_ADDON")
 	self.frame:RegisterEvent("PLAYER_TARGET_CHANGED")
+	self.frame:RegisterUnitEvent("UNIT_TARGET", "target")
 	self.frame:RegisterEvent("PLAYER_REGEN_DISABLED")
 	self.frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
