@@ -13,7 +13,7 @@ L.reset					= "Reset to Defaults"
 -- messages
 L.message_welcome		= "Type /tc2 for options."
 L.message_leader		= "You must be the group leader or have assist to do this."
-L.message_outdated		= "New version of TC2/LibThreatClassic2 available! Please download the latest version."
+L.message_outdated		= "New version of LibThreatClassic2 available! Please download the latest version. Latest version is always available in ThreatClassic2 and shortly after in DBM, Details and some other addons."
 L.message_incompatible	= "TC2/LibThreatClassic2 is out of date and will not be compatible for this group. Please upgrade immediately."
 
 -- version check
