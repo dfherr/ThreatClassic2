@@ -730,14 +730,12 @@ end
 function TC2:PLAYER_REGEN_DISABLED(...)
 	UpdatePlayerTarget() -- for friendly mobs that turn hostile like vaelastrasz
 	C.frame.test = false
-	ThreatLib.RegisterCallback(self, "ThreatUpdated", ThreatUpdated)
 	CheckStatus()
 end
 
 function TC2:PLAYER_REGEN_ENABLED(...)
 	-- collectgarbage()
 	C.frame.test = false
-	ThreatLib.UnregisterCallback(self, "ThreatUpdated", ThreatUpdated)
 	CheckStatus()
 end
 
