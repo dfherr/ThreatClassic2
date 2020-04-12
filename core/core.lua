@@ -254,7 +254,7 @@ end
 local function CheckVisibility()
 	local instanceType = select(2, GetInstanceInfo())
 	local hide = C.general.hideAlways or
-		(C.general.hideOOC and not InCombatLockdown()) or 
+		(C.general.hideOOC and not UnitAffectingCombat("player")) or
 		(C.general.hideSolo and TC2.numGroupMembers == 0) or 
 		(C.general.hideInPVP and (instanceType == "arena" or instanceType == "pvp")) or
 		(C.general.hideOpenWorld and instanceType == "none")
@@ -296,7 +296,7 @@ local function CheckStatus()
 
 	CheckVisibility()
 
-	if UnitExists(TC2.playerTarget) then -- and UnitAffectingCombat(TC2.playerTarget) then
+	if UnitExists(TC2.playerTarget) then
 		-- wipe
 		wipe(TC2.threatData)
 
@@ -508,7 +508,7 @@ end
 -- TEST MODE
 -----------------------------
 function TC2:TestMode()
-	if InCombatLockdown() then return end
+	if UnitAffectingCombat("player") then return end
 
 	C.frame.test = true
 	wipe(TC2.threatData)
