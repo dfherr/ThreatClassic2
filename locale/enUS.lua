@@ -87,8 +87,14 @@ L.font_shadow			= "Dropshadow"
 
 L.warnings				= "Warnings"
 L.warnings_visual		= "Enable visual screen alerts."
-L.warnings_sounds		= "Enable sounds."
+L.warnings_soundHeader	= "Sound warning settings."
+L.warnings_sound		= "Enable sounds."
 L.warnings_threshold	= "Warning threshold (0-100%)."
 
-L.sound_warningFile		= "Warning sound file."
-L.sound_pulledFile		= "Pulled aggro sound file."
+L.warnings_soundFile	= "Sound file"
+L.warnings_soundChannel	= "Sound channel"
+
+L.soundChannel_master = "Master"
+L.soundChannel_sfx = "SFX"
+L.soundChannel_ambience = "Ambience"
+L.soundChannel_music = "Music"

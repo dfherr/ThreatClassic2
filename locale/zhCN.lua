@@ -82,8 +82,8 @@ L.font_shadow			= "字体阴影"
 
 L.warnings				= "警报"
 L.warnings_visual		= "启用全可视屏幕警报."
-L.warnings_sounds		= "启用声音."
+L.warnings_sound		= "启用声音."
 L.warnings_threshold	= "警报仇恨阈值 (0-100%)."
 
-L.sound_warningFile		= "警报声音文件."
+L.warnings_soundFile		= "警报声音文件."
 L.sound_pulledFile		= "获得仇恨警报的声音文件."

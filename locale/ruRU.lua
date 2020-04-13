@@ -82,8 +82,8 @@ L.font_shadow			= "Тень"
 
 L.warnings				= "Предупреждения"
 L.warnings_visual		= "Включить визуальные оповещения на экране."
-L.warnings_sounds		= "Включить звуки."
+L.warnings_sound		= "Включить звуки."
 L.warnings_threshold	= "Порог предупреждения (0-100%)."
 
-L.sound_warningFile		= "Звук предупреждения."
+L.warnings_soundFile		= "Звук предупреждения."
 L.sound_pulledFile		= "Звук при Агро."

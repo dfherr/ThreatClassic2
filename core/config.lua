@@ -1,5 +1,6 @@
 local TC2, C, L, _ = unpack(select(2, ...))
 
+
 -----------------------------
 -- Default Config
 -----------------------------
@@ -82,9 +83,9 @@ TC2.defaultConfig.font = {
 
 -- warning settings
 TC2.defaultConfig.warnings = {
-	visual				= true,									-- enable screen flash
-	sounds				= true,									-- enable sounds
+	visual				= false,								-- enable screen flash
+	sound				= false,								-- enable sound
 	threshold			= 80,									-- alert threshold (of normalized percentage 0-100)
-	warningFile			= [[Sound\Interface\Aggro_Enter_Warning_State.ogg]],
-	pulledFile			= [[Sound\Interface\Aggro_Pulled_Aggro.ogg]],
+	soundFile			= "You Will Die!",
+	soundChannel		= "SFX",
 }

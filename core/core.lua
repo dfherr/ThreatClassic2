@@ -41,6 +41,8 @@ local UnitIsUnit 			= _G.UnitIsUnit
 local lastCheckStatusTime 	= 0
 local callCheckStatus		= false
 
+local lastWarnPercent		=  0
+
 local FACTION_BAR_COLORS	= _G.FACTION_BAR_COLORS
 local RAID_CLASS_COLORS		= (_G.CUSTOM_CLASS_COLORS or _G.RAID_CLASS_COLORS)
 
@@ -67,6 +69,17 @@ C_Timer.After(3,
     end
   end
 )
+
+local LSM = LibStub("LibSharedMedia-3.0")
+-- Register some media
+LSM:Register("sound", "You Will Die!", [[Sound\Creature\CThun\CThunYouWillDie.ogg]])
+
+local SoundChannels = {
+	["Master"] = L.soundChannel_master,
+	["SFX"] =  L.soundChannel_sfx,
+	["Ambience"] =  L.soundChannel_ambience,
+	["Music"] = L.soundChannel_music
+}
 
 local ThreatLib = TC2.classic and LibStub:GetLibrary("LibThreatClassic2")
 assert(ThreatLib, "ThreatClassic2 requires LibThreatClassic2")
@@ -268,9 +281,13 @@ end
 
 local function UpdateThreatData(unit)
 	if not UnitExists(unit) then return end
-	local _, _, scaledPercent, _, threatValue = UnitDetailedThreatSituation(unit, TC2.playerTarget)
+	local isTanking, _, scaledPercent, _, threatValue = UnitDetailedThreatSituation(unit, TC2.playerTarget)
 	if threatValue and threatValue < 0 then
 		threatValue = threatValue + 410065408
+	end
+	-- check for warnings
+	if unit == "player" and scaledPercent then
+		TC2:CheckWarning(isTanking, scaledPercent)
 	end
 	tinsert(TC2.threatData, {
 		unit			= unit,
@@ -341,6 +358,59 @@ local function ThreatUpdated(event, unitGUID, targetGUID, threat)
 	if UnitGUID(TC2.playerTarget) == targetGUID then
 		CheckStatusDeferred()
 	end
+end
+
+function TC2:CheckWarning(isTanking, threatPercent)
+	if isTanking then return end
+	-- percentage is now above threshold and was below threshold before
+	local threshold = C.warnings.threshold
+	if threatPercent >= threshold and lastWarnPercent < threshold then
+		lastWarnPercent = threatPercent
+		if C.warnings.sound then PlaySoundFile(LSM:Fetch("sound", C.warnings.soundFile), C.warnings.soundChannel) end
+		self:FlashScreen()
+	-- percentage is below threshold -> reset lastWarnPercent
+	elseif threatPercent < threshold and lastWarnPercent > threshold then
+		lastWarnPercent = threatPercent
+	end
+end
+
+
+function TC2:FlashScreen()
+	if not self.FlashFrame then
+		local flasher = CreateFrame("Frame", "Tc2FlashFrame")
+		flasher:SetToplevel(true)
+		flasher:SetFrameStrata("FULLSCREEN_DIALOG")
+		flasher:SetAllPoints(UIParent)
+		flasher:EnableMouse(false)
+		flasher:Hide()
+		flasher.texture = flasher:CreateTexture(nil, "BACKGROUND")
+		flasher.texture:SetTexture("Interface\\FullScreenTextures\\LowHealth")
+		flasher.texture:SetAllPoints(UIParent)
+		flasher.texture:SetBlendMode("ADD")
+		flasher:SetScript("OnShow", function(self)
+			self.elapsed = 0
+			self:SetAlpha(0)
+		end)
+		flasher:SetScript("OnUpdate", function(self, elapsed)
+			elapsed = self.elapsed + elapsed
+			if elapsed < 2.6 then
+				local alpha = elapsed % 1.3
+				if alpha < 0.15 then
+					self:SetAlpha(alpha / 0.15)
+				elseif alpha < 0.9 then
+					self:SetAlpha(1 - (alpha - 0.15) / 0.6)
+				else
+					self:SetAlpha(0)
+				end
+			else
+				self:Hide()
+			end
+			self.elapsed = elapsed
+		end)
+		self.FlashFrame = flasher
+	end
+
+	self.FlashFrame:Show()
 end
 
 -----------------------------
@@ -710,6 +780,8 @@ end
 
 function TC2:PLAYER_TARGET_CHANGED(...)
 	UpdatePlayerTarget()
+	-- reset last warning on target change
+	lastWarnPercent = 0
 
 	C.frame.test = false
 	CheckStatus()
@@ -730,6 +802,7 @@ end
 
 function TC2:PLAYER_REGEN_DISABLED(...)
 	UpdatePlayerTarget() -- for friendly mobs that turn hostile like vaelastrasz
+	lastWarnPercent = 0
 	C.frame.test = false
 	CheckStatus()
 end
@@ -903,7 +976,7 @@ function TC2:SetupConfig()
 	self.config = {}
 	self.config.general = ACD:AddToBlizOptions(TC2.addonName, TC2.addonName, nil, "general")
 	self.config.appearance = ACD:AddToBlizOptions(TC2.addonName, L.appearance, TC2.addonName, "appearance")
-	-- self.config.warnings = ACD:AddToBlizOptions(TC2.addonName, L.warnings, TC2.addonName, "warnings")
+	self.config.warnings = ACD:AddToBlizOptions(TC2.addonName, L.warnings, TC2.addonName, "warnings")
 	self.config.version = ACD:AddToBlizOptions(TC2.addonName, L.version, TC2.addonName, "version")
 end
 
@@ -1301,49 +1374,49 @@ TC2.configTable = {
 				},
 			},
 		},
-		--[[
 		warnings = {
 			order = 3,
 			type = "group",
 			name = L.warnings,
 			args = {
 				visual = {
-					order = 1,
+					order = 2,
 					name = L.warnings_visual,
 					type = "toggle",
 					width = "full",
 				},
-				sounds = {
-					order = 2,
-					name = L.warnings_sounds,
-					type = "toggle",
-					width = "full",
-				},
 				threshold = {
-					order = 3,
+					order = 1,
 					name = L.warnings_threshold,
 					type = "range",
 					min = 50,
 					max = 100,
 					step = 1,
-					bigStep = 10,
+					bigStep = 5,
 					-- get / set
 				},
-				warningFile = {
+				sound = {
 					order = 4,
-					name = L.sound_warningFile,
+					name = L.warnings_sound,
 					type = "toggle",
 					width = "full",
 				},
-				pulledFile = {
+				soundFile = {
+					type = "select", dialogControl = 'LSM30_Sound',
 					order = 5,
-					name = L.sound_pulledFile,
-					type = "toggle",
-					width = "full",
+					name = L.warnings_soundFile,
+					values = AceGUIWidgetLSMlists.sound,
+					disabled = function() return not C.warnings.sound end,
+				},
+				soundChannel = {
+					type = "select",
+					order = 6,
+					name = L.warnings_soundChannel,
+					values = SoundChannels,
+					disabled = function() return not C.warnings.sound end,
 				},
 			},
 		},
-		--]]
 		version = {
 			order = 4,
 			type = "group",
