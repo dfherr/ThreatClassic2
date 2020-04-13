@@ -75,7 +75,7 @@ L.bar_alpha				= "Прозрачность Панели"
 L.bar_colorMod			= "Модификатор цвета"
 
 L.font					= "Шрифт"
-L.font_family			= "Имя"
+L.font_name			= "Имя"
 L.font_size				= "Размер"
 L.font_style			= "Стиль"
 L.font_shadow			= "Тень"

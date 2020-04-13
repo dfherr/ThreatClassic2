@@ -73,6 +73,7 @@ C_Timer.After(3,
 local LSM = LibStub("LibSharedMedia-3.0")
 -- Register some media
 LSM:Register("sound", "You Will Die!", [[Sound\Creature\CThun\CThunYouWillDie.ogg]])
+LSM:Register("font", "NotoSans SemiCondensedBold", [[Interface\AddOns\ThreatClassic2\media\NotoSans-SemiCondensedBold.ttf]])
 
 local SoundChannels = {
 	["Master"] = L.soundChannel_master,
@@ -137,7 +138,7 @@ end
 
 local function CreateFS(parent)
 	local fs = parent:CreateFontString(nil, "ARTWORK")
-	fs:SetFont(C.font.family, C.font.size, C.font.style)
+	fs:SetFont(LSM:Fetch("font", C.font.name), C.font.size, C.font.style)
 	return fs
 end
 
@@ -472,7 +473,7 @@ local function OnMouseUp(f)
 end
 
 local function UpdateFont(fs)
-	fs:SetFont(C.font.family, C.font.size, C.font.style)
+	fs:SetFont(LSM:Fetch("font", C.font.name), C.font.size, C.font.style)
 	fs:SetVertexColor(unpack(C.font.color))
 	fs:SetShadowOffset(C.font.shadow and 1 or 0, C.font.shadow and -1 or 0)
 end
@@ -832,11 +833,6 @@ function TC2:PLAYER_LOGIN()
 	-- Adjust C.bar.count if it exceed the frame height
 	local maxBarCount = floor(C.frame.height / (C.bar.height + C.bar.padding - 1))
 	if C.bar.count > maxBarCount then C.bar.count = maxBarCount end
-
-	-- Adjust fonts for CJK
-	if self.locale == "koKR" or self.locale == "zhCN" or self.locale == "zhTW" then
-		C.font.family = _G.STANDARD_TEXT_FONT
-	end
 
 	self:SetupUnits()
 	self:SetupFrame()
@@ -1334,7 +1330,6 @@ TC2.configTable = {
 					type = "group",
 					inline = true,
 					args = {
-						-- name
 						size = {
 							order = 2,
 							name = L.font_size,
@@ -1354,8 +1349,15 @@ TC2.configTable = {
 							},
 							style = "dropdown",
 						},
-						shadow = {
+						name = {
 							order = 4,
+							name = L.font_name,
+							type = "select",
+							dialogControl = 'LSM30_Font',
+							values = AceGUIWidgetLSMlists.font,
+						},
+						shadow = {
+							order = 5,
 							name = L.font_shadow,
 							type = "toggle",
 							width = "full",

@@ -75,7 +75,7 @@ L.bar_alpha				= "条透明度"
 L.bar_colorMod			= "颜色调节"
 
 L.font					= "字体"
-L.font_family			= "名字"
+L.font_name			= "名字"
 L.font_size				= "大小"
 L.font_style			= "风格"
 L.font_shadow			= "字体阴影"
