@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.16
+
+*  Bump LibThreatClassic2 to revision 11
+    - improved thunderfury handling
+
 ## v2.15
 
 * rename screen flashing parameter so it's correctly disabled by default
