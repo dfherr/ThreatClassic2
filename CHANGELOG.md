@@ -1,4 +1,10 @@
 # Changelog
+
+## v2.15
+
+* rename screen flashing parameter so it's correctly disabled by default
+* correctly consider flash setting
+
 ## v2.14
 
 * remove percentage overwrite for max threat target and rely on LTC2 output
