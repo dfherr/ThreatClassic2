@@ -368,7 +368,7 @@ function TC2:CheckWarning(isTanking, threatPercent)
 	if threatPercent >= threshold and lastWarnPercent < threshold then
 		lastWarnPercent = threatPercent
 		if C.warnings.sound then PlaySoundFile(LSM:Fetch("sound", C.warnings.soundFile), C.warnings.soundChannel) end
-		self:FlashScreen()
+		if C.warnings.flash then self:FlashScreen() end
 	-- percentage is below threshold -> reset lastWarnPercent
 	elseif threatPercent < threshold and lastWarnPercent > threshold then
 		lastWarnPercent = threatPercent
