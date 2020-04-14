@@ -74,6 +74,7 @@ local LSM = LibStub("LibSharedMedia-3.0")
 -- Register some media
 LSM:Register("sound", "You Will Die!", [[Sound\Creature\CThun\CThunYouWillDie.ogg]])
 LSM:Register("font", "NotoSans SemiCondensedBold", [[Interface\AddOns\ThreatClassic2\media\NotoSans-SemiCondensedBold.ttf]])
+LSM:Register("font", "Standard Text Font", _G.STANDARD_TEXT_FONT) -- register so it's usable as a default in config
 
 local SoundChannels = {
 	["Master"] = L.soundChannel_master,

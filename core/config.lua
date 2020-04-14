@@ -9,7 +9,7 @@ local defaultFont = "NotoSans SemiCondensedBold"
 -- Adjust fonts for CJK
 local locale = GetLocale()
 if locale == "koKR" or locale == "zhCN" or locale == "zhTW" then
-	defaultFont = "Friz Quadrata TT"
+	defaultFont = "Standard Text Font"
 end
 
 
