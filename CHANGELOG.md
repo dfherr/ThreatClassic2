@@ -1,4 +1,8 @@
 # Changelog
+## v2.14
+
+* remove percentage overwrite for max threat target and rely on LTC2 output
+* use Blizzard default font for china/korea/taiwan
 
 ## v2.13
 
