@@ -1381,9 +1381,9 @@ TC2.configTable = {
 			type = "group",
 			name = L.warnings,
 			args = {
-				visual = {
+				flash = {
 					order = 2,
-					name = L.warnings_visual,
+					name = L.warnings_flash,
 					type = "toggle",
 					width = "full",
 				},

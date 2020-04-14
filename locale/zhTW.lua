@@ -81,7 +81,6 @@ L.font_style			= "風格"
 L.font_shadow			= "字體陰影"
 
 L.warnings				= "警報"
-L.warnings_visual		= "啟用全可視螢幕警報."
 L.warnings_sound		= "啟用聲音."
 L.warnings_threshold	= "警報仇恨閾值 (0-100%)."
 

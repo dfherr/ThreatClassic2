@@ -86,7 +86,7 @@ L.font_style			= "Style"
 L.font_shadow			= "Dropshadow"
 
 L.warnings				= "Warnings"
-L.warnings_visual		= "Enable visual screen alerts."
+L.warnings_flash		= "Enable screen flashing."
 L.warnings_soundHeader	= "Sound warning settings."
 L.warnings_sound		= "Enable sounds."
 L.warnings_threshold	= "Warning threshold (0-100%)."

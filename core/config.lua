@@ -89,7 +89,7 @@ TC2.defaultConfig.font = {
 
 -- warning settings
 TC2.defaultConfig.warnings = {
-	visual				= false,								-- enable screen flash
+	flash				= false,								-- enable screen flash
 	sound				= false,								-- enable sound
 	threshold			= 80,									-- alert threshold (of normalized percentage 0-100)
 	soundFile			= "You Will Die!",

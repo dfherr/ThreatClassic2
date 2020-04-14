@@ -81,7 +81,6 @@ L.font_style			= "Стиль"
 L.font_shadow			= "Тень"
 
 L.warnings				= "Предупреждения"
-L.warnings_visual		= "Включить визуальные оповещения на экране."
 L.warnings_sound		= "Включить звуки."
 L.warnings_threshold	= "Порог предупреждения (0-100%)."
 
