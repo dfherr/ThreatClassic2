@@ -1475,14 +1475,14 @@ SlashCmdList["TC2_SLASHCMD"] = function(arg)
 		else
 			print("Debug disabled.")
 		end
-	elseif arg == "runSolo" then
+	elseif arg == "runsolo" then
 		ThreatLib.alwaysRunOnSolo = not ThreatLib.alwaysRunOnSolo
 		if ThreatLib.alwaysRunOnSolo then
 			print("LibThreatClassic2 solo mode enabled.")
 		else
 			print("LibThreatClassic2 solo mode disabled.")
 		end
-	elseif arg == "logThreat" then
+	elseif arg == "logthreat" then
 		ThreatLib.LogThreat = not ThreatLib.LogThreat
 		if ThreatLib.LogThreat then
 			print("LibThreatClassic2 logThreat enabled.")
