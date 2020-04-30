@@ -816,7 +816,7 @@ TC2.frame:SetScript("OnEvent", function(self, event, ...)
 	return TC2[event] and TC2[event](TC2, event, ...)
 end)
 TC2.frame:SetScript("OnUpdate", function(self, elapsed)
-	if callCheckStatus and GetTime() > lastCheckStatusTime + 0.2 then
+	if callCheckStatus and GetTime() > lastCheckStatusTime + C.general.updateFreq then
 		CheckStatus()
 	end
 end)
@@ -1072,6 +1072,15 @@ TC2.configTable = {
 					name = L.general_welcome,
 					type = "toggle",
 					width = "full",
+				},
+				updateFreq = {
+					order = 3,
+					name = L.general_updateFreq,
+					type = "range",
+					width = "double",
+					min = 0.05,
+					max = 1,
+					step = 0.05,
 				},
 				--[[
 				minimap = {

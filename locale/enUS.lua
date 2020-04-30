@@ -28,7 +28,7 @@ L.version_incompatible	= "Not compatible!"
 
 L.general				= "General"
 L.general_welcome		= "Display welcome message when logging in."
-L.general_update		= "Time (in seconds) between updates."
+L.general_updateFreq    = "Time (in seconds) between updates."
 L.general_test			= "Enable test mode."
 L.general_minimap		= "Toggle minimap icon."
 L.general_ignorePets	= "Ignore threat from player pets."

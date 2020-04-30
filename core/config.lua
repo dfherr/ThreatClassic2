@@ -16,7 +16,7 @@ local defaultConfig = {}
 -- general
 defaultConfig.general = {
 	welcome				= true,									-- display welcome message
-	update				= 0.1,									-- time (in seconds) between updates
+	updateFreq			= 0.2,									-- how often the threat bars update
 	minimap				= false,								-- toggle for minimap icon
 	ignorePets			= false,								-- toggle for ignoring pets
 	hideOOC				= false,								-- hide frame when out of combat
