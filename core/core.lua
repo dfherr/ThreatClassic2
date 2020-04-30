@@ -314,7 +314,7 @@ local function UpdateThreatData(unit)
 		unit			= unit,
 		scaledPercent	= scaledPercent or 0,
 		threatValue		= threatValue or 0,
-		isTanking		= isTanking or 0,
+		isTanking		= isTanking or false,
 	})
 end
 
