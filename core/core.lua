@@ -261,13 +261,16 @@ end
 function TC2:UpdateThreatBars()
 	-- sort the threat table
 	sort(self.threatData, Compare)
-
+	local playerIncluded = false
 	-- update view
 	for i = 1, C.bar.count do
 		-- get values out of table
 		local data = self.threatData[i]
 		local bar = self.bars[i]
 		if data and data.threatValue > 0 then
+			if UnitIsUnit(data.unit, "player") then
+				playerIncluded = true
+			end
 			bar.name:SetText(UnitName(data.unit) or UNKNOWN)
 			bar.val:SetText(NumFormat(data.threatValue))
 			bar.perc:SetText(floor(data.scaledPercent).."%")
@@ -281,6 +284,28 @@ function TC2:UpdateThreatBars()
 			bar:Show()
 		else
 			bar:Hide()
+		end
+	end
+	-- overwrite last bar if player wasn't included above
+	if not playerIncluded then
+		for _, data in pairs(self.threatData) do
+			if data and UnitIsUnit(data.unit, "player") then
+				if data.threatValue > 0 then
+					local bar = self.bars[C.bar.count]
+					bar.name:SetText(UnitName(data.unit) or UNKNOWN)
+					bar.val:SetText(NumFormat(data.threatValue))
+					bar.perc:SetText(floor(data.scaledPercent).."%")
+					bar:SetValue(data.scaledPercent)
+					local color = GetColor(data.unit, data.isTanking)
+					bar:SetStatusBarColor(unpack(color))
+					bar.bg:SetVertexColor(color[1] * C.bar.colorMod, color[2] * C.bar.colorMod, color[3] * C.bar.colorMod, C.bar.alpha)
+					bar.backdrop:SetBackdropColor(unpack(C.backdrop.bgColor))
+					bar.backdrop:SetBackdropBorderColor(unpack(C.backdrop.edgeColor))
+
+					bar:Show()
+					break
+				end
+			end
 		end
 	end
 end
@@ -479,7 +504,7 @@ end
 
 local function OnMouseDown(f)
 	f = f:GetParent()
-	f:SetMinResize(64, 64)
+	f:SetMinResize(64, C.bar.height*2)
 	f:SetMaxResize(512, 1024)
 	TC2.sizing = true
 	f:SetScript("OnSizeChanged", UpdateSize)
