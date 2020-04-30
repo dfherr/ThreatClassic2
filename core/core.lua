@@ -99,19 +99,22 @@ end or _G.UnitDetailedThreatSituation
 -----------------------------
 -- FUNCTIONS
 -----------------------------
-local function CopyDefaults(t1, t2)
-	if type(t1) ~= "table" then return {} end
-	if type(t2) ~= "table" then t2 = {} end
+-- migrate from character specific settings to new profile database
+local function CopyLegacySettings(oldSettings, newSettings)
+	if type(oldSettings) ~= "table" then return newSettings end
 
-	for k, v in pairs(t1) do
-		if type(v) == "table" then
-			t2[k] = CopyDefaults(v, t2[k])
-		elseif type(v) ~= type(t2[k]) then
-			t2[k] = v
+	for k, v in pairs(oldSettings) do
+		-- only keep settings that exist in new db
+		if newSettings[k] then
+			if type(v) == "table" then
+				newSettings[k] = CopyLegacySettings(v, newSettings[k])
+			else
+				newSettings[k] = v
+			end
 		end
 	end
 
-	return t2
+	return newSettings
 end
 
 local function CreateBackdrop(parent, cfg)
@@ -868,10 +871,21 @@ function TC2:UNIT_THREAT_LIST_UPDATE(...)
 end
 
 function TC2:PLAYER_LOGIN()
-	-- C_ChatInfo.RegisterAddonMessagePrefix("TC2Ver")
 
-	TC2_Options = TC2_Options or {}
-	C = CopyDefaults(self.defaultConfig, TC2_Options)
+	-- creates by default character specific profile, when 3rd argument is obmitted
+	self.db = LibStub("AceDB-3.0"):New("ThreatClassic2DB", self.defaultConfig)
+	-- check if per character settings still exist. If yes copy over to db
+	if TC2_Options then
+		print("ThreatClassic2 copying old config to new character profile.")
+		self.db.profile = CopyLegacySettings(TC2_Options, self.db.profile)
+		TC2_Options = nil
+	end
+	C = self.db.profile
+
+	self.db.RegisterCallback(self, "OnProfileChanged", "RefreshProfile")
+	self.db.RegisterCallback(self, "OnProfileCopied", "RefreshProfile")
+	self.db.RegisterCallback(self, "OnProfileReset", "RefreshProfile")
+
 
 	-- Minimum of 1 Row
 	if not C.bar.count or C.bar.count < 1 then
@@ -1014,6 +1028,7 @@ end
 -- CONFIG
 -----------------------------
 function TC2:SetupConfig()
+	self.configTable.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(TC2.addonName, self.configTable)
 
 	local ACD = LibStub("AceConfigDialog-3.0")
@@ -1022,6 +1037,12 @@ function TC2:SetupConfig()
 	self.config.appearance = ACD:AddToBlizOptions(TC2.addonName, L.appearance, TC2.addonName, "appearance")
 	self.config.warnings = ACD:AddToBlizOptions(TC2.addonName, L.warnings, TC2.addonName, "warnings")
 	self.config.version = ACD:AddToBlizOptions(TC2.addonName, L.version, TC2.addonName, "version")
+	self.config.profiles = ACD:AddToBlizOptions(TC2.addonName, L.profiles, TC2.addonName, "profiles")
+end
+
+function TC2:RefreshProfile()
+	C = self.db.profile
+	TC2:UpdateFrame()
 end
 
 TC2.configTable = {
@@ -1447,8 +1468,7 @@ TC2.configTable = {
 					name = L.reset,
 					type = "execute",
 					func = function(info, value)
-						TC2_Options = {}
-						C = CopyDefaults(TC2.defaultConfig, TC2_Options)
+						self.db.profile = TC2.defaultConfig
 						TC2:UpdateFrame()
 					end,
 				},

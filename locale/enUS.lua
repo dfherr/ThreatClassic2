@@ -45,6 +45,8 @@ L.nameplates_enable		= "Enable threat coloring (only for Blizzard nameplates)."
 L.nameplates_invert		= "Invert threat coloring (intended for tanks)."
 L.nameplates_colors		= "Threat Colors"
 
+L.profiles              = "Profiles"
+
 L.color					= "Colors"
 L.color_good			= "Good"
 L.color_neutral			= "Neutral"

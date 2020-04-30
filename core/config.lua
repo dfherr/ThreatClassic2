@@ -12,11 +12,9 @@ if locale == "koKR" or locale == "zhCN" or locale == "zhTW" then
 	defaultFont = "Standard Text Font"
 end
 
-
-TC2.defaultConfig = {}
-
+local defaultConfig = {}
 -- general
-TC2.defaultConfig.general = {
+defaultConfig.general = {
 	welcome				= true,									-- display welcome message
 	update				= 0.1,									-- time (in seconds) between updates
 	minimap				= false,								-- toggle for minimap icon
@@ -36,7 +34,7 @@ TC2.defaultConfig.general = {
 }
 
 -- frame settings
-TC2.defaultConfig.frame = {
+defaultConfig.frame = {
 	test				= false,								-- toggle for test mode
 	scale				= 1,									-- global scale
 	width				= 217,									-- frame width
@@ -50,7 +48,7 @@ TC2.defaultConfig.frame = {
 }
 
 -- backdrop settings
-TC2.defaultConfig.backdrop = {
+defaultConfig.backdrop = {
 	bgFile				= defaultTexture,						-- backdrop file location
 	bgColor				= {1, 1, 1, 0.1},						-- backdrop color
 	edgeFile			= defaultTexture,						-- backdrop edge file location
@@ -62,7 +60,7 @@ TC2.defaultConfig.backdrop = {
 }
 
 -- threat bar settings
-TC2.defaultConfig.bar = {
+defaultConfig.bar = {
 	count				= 9,									-- maximum amount of bars to show
 	descend				= true,									-- sort bars descending / ascending
 	height				= 18,									-- bar height
@@ -73,7 +71,7 @@ TC2.defaultConfig.bar = {
 }
 
 --bar custom color settings
-TC2.defaultConfig.customBarColors  = {
+defaultConfig.customBarColors  = {
 	playerEnabled		= false,								-- enable custom color for player
 	activeTankEnabled	= false,								-- enable custom color for active tank
 	otherUnitEnabled	= false,								-- enable custom color for other units
@@ -83,7 +81,7 @@ TC2.defaultConfig.customBarColors  = {
 }
 
 -- font settings
-TC2.defaultConfig.font = {
+defaultConfig.font = {
 	name 				= defaultFont,							-- font name
 	size				= 12,									-- font size
 	style				= "OUTLINE",							-- font style
@@ -92,10 +90,12 @@ TC2.defaultConfig.font = {
 }
 
 -- warning settings
-TC2.defaultConfig.warnings = {
+defaultConfig.warnings = {
 	flash				= false,								-- enable screen flash
 	sound				= false,								-- enable sound
 	threshold			= 80,									-- alert threshold (of normalized percentage 0-100)
 	soundFile			= "You Will Die!",
 	soundChannel		= "SFX",
 }
+
+TC2.defaultConfig = { profile = defaultConfig }
