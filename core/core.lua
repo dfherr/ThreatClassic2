@@ -877,6 +877,10 @@ function TC2:PLAYER_LOGIN()
 	-- check if per character settings still exist. If yes copy over to db
 	if TC2_Options then
 		print("ThreatClassic2 copying old config to new character profile.")
+		if TC2_Options.bar and TC2_Options.bar.texture then
+			-- remove old non LSM texture
+			TC2_Options.bar.texture = nil
+		end
 		self.db.profile = CopyLegacySettings(TC2_Options, self.db.profile)
 		TC2_Options = nil
 	end
