@@ -4,7 +4,7 @@ local TC2, C, L, _ = unpack(select(2, ...))
 -----------------------------
 -- Default Config
 -----------------------------
-local defaultTexture	= [[Interface\ChatFrame\ChatFrameBackground]]
+local defaultTexture	= "TC2 Default"
 local defaultFont = "NotoSans SemiCondensedBold"
 -- Adjust fonts for CJK
 local locale = GetLocale()
@@ -72,10 +72,14 @@ TC2.defaultConfig.bar = {
 	colorMod			= 0,									-- color modifier
 }
 
--- player bar custom color settings
-TC2.defaultConfig.playerBarCustomColor  = {
-	enabled 			= false,								-- enable custom color for player
-	color 				= {0.8, 0, 0, 1},						-- custom color for player
+--bar custom color settings
+TC2.defaultConfig.customBarColors  = {
+	playerEnabled		= false,								-- enable custom color for player
+	activeTankEnabled	= false,								-- enable custom color for active tank
+	otherUnitEnabled	= false,								-- enable custom color for other units
+	playerColor			= {0.8, 0, 0, 1},						-- custom color for player
+	activeTankColor		= {0, 0.8, 0, 1},						-- custom color for active tank
+	otherUnitColor		= {0.3, 0.3, 0.3, 1},					-- custom color for other units
 }
 
 -- font settings

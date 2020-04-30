@@ -71,7 +71,7 @@ L.bar_marker			= "Угроза игрока красным"
 L.bar_texture			= "Текстура"
 L.bar_classColor		= "Использовать цвет класса"
 L.bar_defaultColor		= "Пользовательский цвет"
-L.bar_alpha				= "Прозрачность Панели"
+L.bar_alpha				= "Прозрачность Панели (default colors)"
 L.bar_colorMod			= "Модификатор цвета"
 
 L.font					= "Шрифт"

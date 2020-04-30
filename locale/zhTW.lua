@@ -71,7 +71,7 @@ L.bar_marker			= "你在條中為紅色"
 L.bar_texture			= "紋理"
 L.bar_classColor		= "使用職業顏色"
 L.bar_defaultColor		= "自訂顏色"
-L.bar_alpha				= "條透明度"
+L.bar_alpha				= "條透明度 (default colors)"
 L.bar_colorMod			= "顏色調節"
 
 L.font					= "字體"

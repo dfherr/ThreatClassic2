@@ -75,6 +75,8 @@ local LSM = LibStub("LibSharedMedia-3.0")
 LSM:Register("sound", "You Will Die!", [[Sound\Creature\CThun\CThunYouWillDie.ogg]])
 LSM:Register("font", "NotoSans SemiCondensedBold", [[Interface\AddOns\ThreatClassic2\media\NotoSans-SemiCondensedBold.ttf]])
 LSM:Register("font", "Standard Text Font", _G.STANDARD_TEXT_FONT) -- register so it's usable as a default in config
+LSM:Register("statusbar", "TC2 Default", [[Interface\ChatFrame\ChatFrameBackground]]) -- register so it's usable as a default in config
+
 
 local SoundChannels = {
 	["Master"] = L.soundChannel_master,
@@ -220,19 +222,37 @@ local function TruncateString(str, i, ellipsis)
 	end
 end
 
-local function GetColor(unit)
+local function DefaultUnitColor(unit)
+	if UnitIsPlayer(unit) then
+		colorUnit = RAID_CLASS_COLORS[select(2, UnitClass(unit))]
+	else
+		colorUnit = FACTION_BAR_COLORS[UnitReaction(unit, "player")]
+	end
+	colorUnit = {colorUnit.r, colorUnit.g, colorUnit.b, C.bar.alpha}
+	return colorUnit
+end
+
+local function GetColor(unit, isTanking)
 	if unit then
 		local colorUnit = {}
 		
-		if C.playerBarCustomColor.enabled and UnitIsUnit(unit, "player") then
-			return C.playerBarCustomColor.color
-		elseif UnitIsPlayer(unit) then
-			colorUnit = RAID_CLASS_COLORS[select(2, UnitClass(unit))]
+		if UnitIsUnit(unit, "player") then
+			if C.customBarColors.playerEnabled then
+				return C.customBarColors.playerColor
+			elseif isTanking and C.customBarColors.activeTankEnabled then
+				return C.customBarColors.activeTankColor
+			else
+				return DefaultUnitColor(unit)
+			end
 		else
-			colorUnit = FACTION_BAR_COLORS[UnitReaction(unit, "player")]
+			if isTanking and C.customBarColors.activeTankEnabled then
+				return C.customBarColors.activeTankColor
+			elseif C.customBarColors.otherUnitEnabled then
+				return C.customBarColors.otherUnitColor
+			else
+				return DefaultUnitColor(unit)
+			end
 		end
-		colorUnit = {colorUnit.r, colorUnit.g, colorUnit.b, C.bar.alpha}
-		return colorUnit
 	else
 		return TC2.colorFallback
 	end
@@ -252,7 +272,7 @@ function TC2:UpdateThreatBars()
 			bar.val:SetText(NumFormat(data.threatValue))
 			bar.perc:SetText(floor(data.scaledPercent).."%")
 			bar:SetValue(data.scaledPercent)
-			local color = GetColor(data.unit)
+			local color = GetColor(data.unit, data.isTanking)
 			bar:SetStatusBarColor(unpack(color))
 			bar.bg:SetVertexColor(color[1] * C.bar.colorMod, color[2] * C.bar.colorMod, color[3] * C.bar.colorMod, C.bar.alpha)
 			bar.backdrop:SetBackdropColor(unpack(C.backdrop.bgColor))
@@ -294,6 +314,7 @@ local function UpdateThreatData(unit)
 		unit			= unit,
 		scaledPercent	= scaledPercent or 0,
 		threatValue		= threatValue or 0,
+		isTanking		= isTanking or 0,
 	})
 end
 
@@ -521,7 +542,7 @@ function TC2:UpdateFrame()
 	-- Header
 	if C.frame.headerShow then
 		frame.header:SetSize(C.frame.width + 2, C.bar.height)
-		frame.header:SetStatusBarTexture(C.bar.texture)
+		frame.header:SetStatusBarTexture(LSM:Fetch("statusbar", C.bar.texture))
 
 		frame.header:SetPoint("TOPLEFT", frame, 0, C.bar.height - 1)
 		frame.header:SetStatusBarColor(unpack(C.frame.headerColor))
@@ -555,10 +576,11 @@ function TC2:UpdateBars()
 			bar:SetPoint("TOP", self.bars[i - 1], "BOTTOM", 0, -C.bar.padding + 1)
 		end
 		bar:SetSize(C.frame.width + 2, C.bar.height)
-		bar:SetStatusBarTexture(C.bar.texture)
+
+		bar:SetStatusBarTexture(LSM:Fetch("statusbar", C.bar.texture))
 
 		-- BG
-		bar.bg:SetTexture(C.bar.texture)
+		bar.bg:SetTexture(LSM:Fetch("statusbar", C.bar.texture))
 		-- Name
 		bar.name:SetPoint("LEFT", bar, 4, 0)
 		UpdateFont(bar.name)
@@ -573,6 +595,7 @@ function TC2:UpdateBars()
 		-- Adjust Name
 		bar.name:SetPoint("RIGHT", bar.val, "LEFT", -10, 0) -- right point of name is left point of value
 	end
+	TC2:UpdateThreatBars()
 end
 
 -----------------------------
@@ -1277,27 +1300,46 @@ TC2.configTable = {
 							max = 16,
 							step = 1,
 						},
-						
-						-- marker
-						-- texture
-						-- custom color / class color
-						-- alpha (for when using class colors)
-						-- color / colormod
+						alpha = {
+							order = 5,
+							name = L.bar_alpha,
+							type = "range",
+							min = 0,
+							max = 1,
+							step = 0.01,
+						},
+						texture = {
+							order = 6,
+							name = L.bar_texture,
+							type = "select",
+							dialogControl = 'LSM30_Statusbar',
+							values = AceGUIWidgetLSMlists.statusbar,
+						}
 					},
 				},
-				playerBarCustomColor = {
+				customBarColors = {
 					order = 3,
-					name = L.playerBarCustomColor,
+					name = L.customBarColors,
 					type = "group",
 					inline = true,
 					args = {
-						enabled = {
+						playerEnabled = {
 							order = 1,
-							name = L.playerBarCustomColor_enabled,
+							name = L.customBarColorsPlayer_enabled,
 							type = "toggle",
 						},
-						barColor = {
+						activeTankEnabled = {
 							order = 2,
+							name = L.customBarColorsActiveTank_enabled,
+							type = "toggle",
+						},
+						otherUnitEnabled = {
+							order = 3,
+							name = L.customBarColorsOtherUnit_enabled,
+							type = "toggle",
+						},
+						colors = {
+							order = 4,
 							name = L.color,
 							type = "group",
 							inline = false,
@@ -1312,11 +1354,22 @@ TC2.configTable = {
 								cfg[4] = a
 								TC2:UpdateFrame()
 							end,
-							
 							args = {
-								color = {
+								playerColor = {
 									order = 1,
-									name = L.playerBarCustomColor_color,
+									name = L.customBarColorsPlayer_color,
+									type = "color",
+									hasAlpha = true,
+								},
+								activeTankColor = {
+									order = 2,
+									name = L.customBarColorsActiveTank_color,
+									type = "color",
+									hasAlpha = true,
+								},
+								otherUnitColor = {
+									order = 3,
+									name = L.customBarColorsOtherUnit_color,
 									type = "color",
 									hasAlpha = true,
 								},
