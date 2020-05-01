@@ -82,7 +82,7 @@ L.font_shadow			= "Тень"
 
 L.warnings				= "Предупреждения"
 L.warnings_sound		= "Включить звуки."
-L.warnings_threshold	= "Порог предупреждения (0-100%)."
+L.warnings_threshold	= "Порог предупреждения (100% = aggro)."
 
 L.warnings_soundFile		= "Звук предупреждения."
 L.sound_pulledFile		= "Звук при Агро."

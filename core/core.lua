@@ -178,7 +178,7 @@ local function CreateStatusBar(parent, header)
 end
 
 local function Compare(a, b)
-	return a.scaledPercent > b.scaledPercent
+	return a.threatPercent > b.threatPercent
 end
 
 local function NumFormat(v)
@@ -279,8 +279,8 @@ function TC2:UpdateThreatBars()
 			end
 			bar.name:SetText(UnitName(data.unit) or UNKNOWN)
 			bar.val:SetText(NumFormat(data.threatValue))
-			bar.perc:SetText(floor(data.scaledPercent).."%")
-			bar:SetValue(data.scaledPercent)
+			bar.perc:SetText(floor(data.threatPercent).."%")
+			bar:SetValue(data.threatPercent)
 			local color = GetColor(data.unit, data.isTanking)
 			bar:SetStatusBarColor(unpack(color))
 			bar.bg:SetVertexColor(color[1] * C.bar.colorMod, color[2] * C.bar.colorMod, color[3] * C.bar.colorMod, C.bar.alpha)
@@ -300,8 +300,8 @@ function TC2:UpdateThreatBars()
 					local bar = self.bars[C.bar.count]
 					bar.name:SetText(UnitName(data.unit) or UNKNOWN)
 					bar.val:SetText(NumFormat(data.threatValue))
-					bar.perc:SetText(floor(data.scaledPercent).."%")
-					bar:SetValue(data.scaledPercent)
+					bar.perc:SetText(floor(data.threatPercent).."%")
+					bar:SetValue(data.threatPercent)
 					local color = GetColor(data.unit, data.isTanking)
 					bar:SetStatusBarColor(unpack(color))
 					bar.bg:SetVertexColor(color[1] * C.bar.colorMod, color[2] * C.bar.colorMod, color[3] * C.bar.colorMod, C.bar.alpha)
@@ -333,17 +333,20 @@ end
 
 local function UpdateThreatData(unit)
 	if not UnitExists(unit) then return end
-	local isTanking, _, scaledPercent, _, threatValue = UnitDetailedThreatSituation(unit, TC2.playerTarget)
+	local isTanking, _, threatPercent, rawThreatPercent, threatValue = UnitDetailedThreatSituation(unit, TC2.playerTarget)
 	if threatValue and threatValue < 0 then
 		threatValue = threatValue + 410065408
 	end
 	-- check for warnings
-	if unit == "player" and scaledPercent then
-		TC2:CheckWarning(isTanking, scaledPercent)
+	if unit == "player" and threatPercent then
+		TC2:CheckWarning(isTanking, threatPercent)
+	end
+	if C.general.rawPercent then
+		threatPercent = rawThreatPercent
 	end
 	tinsert(TC2.threatData, {
 		unit			= unit,
-		scaledPercent	= scaledPercent or 0,
+		threatPercent	= threatPercent or 0,
 		threatValue		= threatValue or 0,
 		isTanking		= isTanking or false,
 	})
@@ -647,7 +650,7 @@ function TC2:TestMode()
 	for i = 1, C.bar.count do
 		self.threatData[i] = {
 			unit = self.playerName,
-			scaledPercent = i / C.bar.count * 100,
+			threatPercent = i / C.bar.count * 100,
 			threatValue = i * 1e4,
 		}
 		tinsert(self.bars, i)
@@ -1075,8 +1078,14 @@ TC2.configTable = {
 					type = "toggle",
 					width = "full",
 				},
-				updateFreq = {
+				rawPercent = {
 					order = 3,
+					name = L.general_rawPercent,
+					type = "toggle",
+					width = "full",
+				},
+				updateFreq = {
+					order = 4,
 					name = L.general_updateFreq,
 					type = "range",
 					width = "double",
@@ -1553,6 +1562,7 @@ TC2.configTable = {
 					order = 1,
 					name = L.warnings_threshold,
 					type = "range",
+					width = "double",
 					min = 50,
 					max = 100,
 					step = 1,
