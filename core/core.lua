@@ -414,7 +414,11 @@ local function ThreatUpdated(event, unitGUID, targetGUID, threat)
 end
 
 function TC2:CheckWarning(isTanking, threatPercent)
-	if isTanking then return end
+	if isTanking then
+		-- so we don't warn when losing aggro.
+		lastWarnPercent = threatPercent
+		return
+	end
 	-- percentage is now above threshold and was below threshold before
 	local threshold = C.warnings.threshold
 	if threatPercent >= threshold and lastWarnPercent < threshold then
