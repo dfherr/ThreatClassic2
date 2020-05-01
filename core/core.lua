@@ -38,6 +38,9 @@ local UnitName				= _G.UnitName
 local UnitReaction			= _G.UnitReaction
 local UnitIsUnit 			= _G.UnitIsUnit
 
+local screenWidth			= floor(GetScreenWidth())
+local screenHeight			= floor(GetScreenHeight())
+
 local lastCheckStatusTime 	= 0
 local callCheckStatus		= false
 
@@ -468,7 +471,7 @@ end
 -----------------------------
 local function SetPosition(f)
 	local a1, _, a2, x, y = f:GetPoint()
-	C.frame.position = {a1, "UIParent", a2, x, y}
+	C.frame.position = {"TOPLEFT", "UIParent", "TOPLEFT", x, y}
 end
 
 local function OnDragStart(f)
@@ -481,8 +484,11 @@ end
 local function OnDragStop(f)
 	if not C.frame.locked then
 		f = f:GetParent()
-		f:StopMovingOrSizing()
+		-- make sure to call before StopMovingOrSizing, or frame anchors will be broken
+		-- see https://wowwiki.fandom.com/wiki/API_Frame_StartMoving
 		SetPosition(f)
+		f:StopMovingOrSizing()
+		
 	end
 end
 
@@ -490,9 +496,7 @@ local function UpdateSize(f)
 	C.frame.width = f:GetWidth() - 2
 	C.frame.height = f:GetHeight()
 
-	local maxBarCount = floor(C.frame.height / (C.bar.height + C.bar.padding)) + 1
-	-- if C.bar.count > maxBarCount then C.bar.count = maxBarCount end
-	C.bar.count = maxBarCount
+	C.bar.count = floor(C.frame.height / (C.bar.height + C.bar.padding - 1))
 
 	for i = 1, 40 do
 		if i <= C.bar.count and TC2.threatData[i] then
@@ -505,16 +509,18 @@ local function UpdateSize(f)
 	TC2:UpdateFrame()
 end
 
-local function OnMouseDown(f)
+local function OnResizeStart(f)
+	TC2.frame.header:SetMovable(false)
 	f = f:GetParent()
-	f:SetMinResize(64, C.bar.height*2)
+	f:SetMinResize(64, C.bar.height)
 	f:SetMaxResize(512, 1024)
 	TC2.sizing = true
 	f:SetScript("OnSizeChanged", UpdateSize)
 	f:StartSizing()
 end
 
-local function OnMouseUp(f)
+local function OnResizeStop(f)
+	TC2.frame.header:SetMovable(true)
 	f = f:GetParent()
 	TC2.sizing = false
 	f:SetScript("OnSizeChanged", nil)
@@ -547,8 +553,8 @@ function TC2:UpdateFrame()
 		frame.resize:EnableMouse(true)
 		frame.resize:SetMovable(true)
 		frame.resize:RegisterForDrag("LeftButton")
-		frame.resize:SetScript("OnDragStart", OnMouseDown)
-		frame.resize:SetScript("OnDragStop", OnMouseUp)
+		frame.resize:SetScript("OnDragStart", OnResizeStart)
+		frame.resize:SetScript("OnDragStop", OnResizeStop)
 
 		frame.header:SetMovable(true)
 		frame.header:SetClampedToScreen(true)
@@ -890,15 +896,7 @@ function TC2:PLAYER_LOGIN()
 	self.db.RegisterCallback(self, "OnProfileCopied", "RefreshProfile")
 	self.db.RegisterCallback(self, "OnProfileReset", "RefreshProfile")
 
-
-	-- Minimum of 1 Row
-	if not C.bar.count or C.bar.count < 1 then
-		C.bar.count = 1
-	end
-
-	-- Adjust C.bar.count if it exceed the frame height
-	local maxBarCount = floor(C.frame.height / (C.bar.height + C.bar.padding - 1))
-	if C.bar.count > maxBarCount then C.bar.count = maxBarCount end
+	C.bar.count = floor(C.frame.height / (C.bar.height + C.bar.padding - 1))
 
 	self:SetupUnits()
 	self:SetupFrame()
@@ -1217,7 +1215,6 @@ TC2.configTable = {
 			end,
 			set = function(info, value)
 				C[info[2]][info[3]] = value
-				C.frame.height = ((C.bar.height + C.bar.padding - 1) * C.bar.count) - C.bar.padding
 				TC2:UpdateFrame()
 			end,
 			args = {
@@ -1266,6 +1263,76 @@ TC2.configTable = {
 							order = 4,
 							name = L.frame_headerShow,
 							type = "toggle",
+						},
+						framePosition = {
+							order = 5,
+							name = L.frame_position,
+							type = "group",
+							inline = true,
+							args = {
+								width = {
+									order = 3,
+									name = L.frame_width,
+									type = "range",
+									min = 64,
+									max = 1024,
+									step = 1,
+									get = function(info)
+										return C[info[2]][info[4]]
+									end,
+									set = function(info, value)
+										C[info[2]][info[4]] = value
+										C.bar.count = floor(C.frame.height / (C.bar.height + C.bar.padding - 1))
+										TC2:UpdateFrame()
+									end,
+								},
+								height = {
+									order = 4,
+									name = L.frame_height,
+									type = "range",
+									min = 10,
+									max = 1024,
+									step = 1,
+									get = function(info)
+										return C[info[2]][info[4]]
+									end,
+									set = function(info, value)
+										C[info[2]][info[4]] = value
+										C.bar.count = floor(C.frame.height / (C.bar.height + C.bar.padding - 1))
+										TC2:UpdateFrame()
+									end,
+								},
+								xOffset = {
+									order = 5,
+									name = L.frame_xOffset,
+									type = "range",
+									min = 0,
+									max = screenWidth,
+									step = 1,
+									get = function(info)
+										return C[info[2]].position[4]
+									end,
+									set = function(info, value)
+										C[info[2]].position[4] = value
+										TC2:UpdateFrame()
+									end,
+								},
+								yOffset = {
+									order = 5,
+									name = L.frame_yOffset,
+									type = "range",
+									min = -screenHeight,
+									max = 0,
+									step = 1,
+									get = function(info)
+										return C[info[2]].position[5]
+									end,
+									set = function(info, value)
+										C[info[2]].position[5] = value
+										TC2:UpdateFrame()
+									end,
+								},
+							},
 						},
 						scale = {
 							order = 5,
@@ -1323,26 +1390,6 @@ TC2.configTable = {
 					type = "group",
 					inline = true,
 					args = {
-						count = {
-							order = 1,
-							name = L.bar_count,
-							type = "range",
-							min = 1,
-							max = 40,
-							step = 1,
-							set = function(info, value)
-								local prev = C[info[2]][info[3]]
-								C[info[2]][info[3]] = value
-								if prev > value then
-									for i = value + 1, prev do
-										TC2.bars[i]:Hide()
-									end
-								end
-								C.frame.height = ((C.bar.height + C.bar.padding - 1) * C.bar.count) - C.bar.padding
-								TC2:UpdateFrame()
-							end,
-						},
-						-- growth direction
 						height = {
 							order = 3,
 							name = L.bar_height,
