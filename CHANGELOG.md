@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.18
+
+* fixed a small bug that caused toggled settings not to be copied to the new profiles
+
 ## v2.17
 
 * Bump LibThreatClassic2 to revision 12

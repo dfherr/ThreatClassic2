@@ -108,7 +108,7 @@ local function CopyLegacySettings(oldSettings, newSettings)
 
 	for k, v in pairs(oldSettings) do
 		-- only keep settings that exist in new db
-		if newSettings[k] then
+		if newSettings[k] ~= nil then
 			if type(v) == "table" then
 				newSettings[k] = CopyLegacySettings(v, newSettings[k])
 			else
