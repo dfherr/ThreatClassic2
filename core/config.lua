@@ -94,6 +94,7 @@ defaultConfig.warnings = {
 	flash				= false,								-- enable screen flash
 	sound				= false,								-- enable sound
 	threshold			= 80,									-- alert threshold (of normalized percentage 0-100)
+	minThreatAmount		= 2000,
 	soundFile			= "You Will Die!",
 	soundChannel		= "SFX",
 }
