@@ -126,8 +126,8 @@ local function CreateBackdrop(parent, cfg)
 	f:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", cfg.inset, -cfg.inset)
 	-- Backdrop Settings
 	local backdrop = {
-		bgFile = cfg.bgFile,
-		edgeFile = cfg.edgeFile,
+		bgFile = LSM:Fetch("statusbar", cfg.bgTexture),
+		edgeFile = LSM:Fetch("statusbar", cfg.edgeTexture),
 		tile = cfg.tile,
 		tileSize = cfg.tileSize,
 		edgeSize = cfg.edgeSize,
@@ -897,6 +897,10 @@ function TC2:PLAYER_LOGIN()
 		self.db.profile = CopyLegacySettings(TC2_Options, self.db.profile)
 		TC2_Options = nil
 	end
+	-- remove old config options
+	self.db.profile.backdrop.bgFile = nil
+	self.db.profile.backdrop.edgeFile = nil
+
 	C = self.db.profile
 
 	self.db.RegisterCallback(self, "OnProfileChanged", "RefreshProfile")
@@ -1051,6 +1055,7 @@ end
 
 function TC2:RefreshProfile()
 	C = self.db.profile
+	CheckVisibility()
 	TC2:UpdateFrame()
 end
 
@@ -1091,7 +1096,8 @@ TC2.configTable = {
 					width = "double",
 					min = 0.05,
 					max = 1,
-					step = 0.05,
+					step = 0.01,
+					bigStep = 0.05,
 				},
 				--[[
 				minimap = {
@@ -1289,7 +1295,8 @@ TC2.configTable = {
 									type = "range",
 									min = 64,
 									max = 1024,
-									step = 1,
+									step = 0.01,
+									bigStep = 1,
 									get = function(info)
 										return C[info[2]][info[4]]
 									end,
@@ -1305,7 +1312,8 @@ TC2.configTable = {
 									type = "range",
 									min = 10,
 									max = 1024,
-									step = 1,
+									step = 0.01,
+									bigStep = 1,
 									get = function(info)
 										return C[info[2]][info[4]]
 									end,
@@ -1321,7 +1329,8 @@ TC2.configTable = {
 									type = "range",
 									min = 0,
 									max = screenWidth,
-									step = 1,
+									step = 0.01,
+									bigStep = 1,
 									get = function(info)
 										return C[info[2]].position[4]
 									end,
@@ -1336,7 +1345,8 @@ TC2.configTable = {
 									type = "range",
 									min = -screenHeight,
 									max = 0,
-									step = 1,
+									step = 0.01,
+									bigStep = 1,
 									get = function(info)
 										return C[info[2]].position[5]
 									end,
@@ -1553,7 +1563,7 @@ TC2.configTable = {
 			name = L.warnings,
 			args = {
 				flash = {
-					order = 2,
+					order = 3,
 					name = L.warnings_flash,
 					type = "toggle",
 					width = "full",
