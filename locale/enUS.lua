@@ -98,7 +98,6 @@ L.font_shadow			= "Dropshadow"
 
 L.warnings				= "Warnings"
 L.warnings_flash		= "Enable screen flashing."
-L.warnings_soundHeader	= "Sound warning settings."
 L.warnings_sound		= "Enable sounds."
 L.warnings_threshold	= "Warning threshold (100% = aggro)."
 L.warnings_minThreatAmount = "Minimum threat to trigger warnings."
