@@ -96,12 +96,12 @@ L.font_style			= "样式"
 L.font_shadow			= "字体阴影"
 
 L.warnings				= "警报"
-L.warnings_flash		= "启用屏幕闪烁。"
-L.warnings_sound		= "启用声音。"
-L.warnings_threshold	= "警报仇恨阈值 (100% = 仇恨)。"
-L.warnings_minThreatAmount = "触发警告的最小威胁。"
+L.warnings_flash		= "启用屏幕闪烁"
+L.warnings_sound		= "启用声音"
+L.warnings_threshold	= "警报仇恨阈值 (100% = 仇恨)"
+L.warnings_minThreatAmount = "触发警告的最小威胁"
 
-L.warnings_soundFile		= "设置警报声音。"
+L.warnings_soundFile		= "设置警报声音"
 L.warnings_soundChannel	= "声音通道"
 
 L.soundChannel_master = "主"
