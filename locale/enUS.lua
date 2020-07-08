@@ -13,18 +13,8 @@ L.reset					= "Reset to Defaults"
 -- messages
 L.message_welcome		= "Type /tc2 for options."
 L.message_leader		= "You must be the group leader or have assist to do this."
-L.message_outdated		= "New version of LibThreatClassic2 available! Please download the latest version. Latest version is always available in ThreatClassic2 and shortly after in DBM, Details and some other addons."
-L.message_incompatible	= "TC2/LibThreatClassic2 is out of date and will not be compatible for this group. Please upgrade immediately."
-
--- version check
-L.version				= "Version Check"
-L.version_check			= "Check Outdated"
-L.version_check_all		= "Check All"
-L.version_notify		= "Notify Outdated"
-L.version_list			= "Version Check: All Clients"
-L.version_list_outdated	= "Version Check: Outdated Clients"
-L.version_divider		= "--------------------------------"
-L.version_incompatible	= "Not compatible!"
+L.message_outdated		= "A new version of ThreatClassic2 is available! Please update to the latest version."
+L.message_incompatible	= "ThreatClassic2 is out of date and incompatible with older versions. Please update immediately!"
 
 L.general				= "General"
 L.general_welcome		= "Display welcome message when logging in."
@@ -46,9 +36,6 @@ L.visibility_hideAlways	= "Hide frame always. /tc2 toggle"
 L.profiles              = "Profiles"
 
 L.color					= "Colors"
-L.color_good			= "Good"
-L.color_neutral			= "Neutral"
-L.color_bad				= "Bad"
 
 L.appearance			= "Appearance"
 
@@ -68,16 +55,11 @@ L.frame_xOffset         = "X Offset"
 L.frame_yOffset         = "Y Offset"
 
 L.bar					= "Bars"
-L.bar_count				= "Maximum Count"
 L.bar_descend			= "Reverse Growth"
 L.bar_height			= "Height"
 L.bar_padding			= "Padding"
-L.bar_marker			= "Player Threat in Red"
 L.bar_texture			= "Texture"
-L.bar_classColor		= "Use Class Color"
-L.bar_defaultColor		= "Custom Color"
 L.bar_alpha				= "Bar Alpha (default colors)"
-L.bar_colorMod			= "Color Modifier"
 
 L.customBarColors 			        = "Custom Bar Colors"
 L.customBarColorsPlayer_enabled	    = "Enable Custom Player Color"

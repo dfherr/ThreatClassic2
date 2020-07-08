@@ -48,9 +48,6 @@ L.visibility_hideAlways	= "始终隐藏框架。输入 /tc2  进入设置界面"
 L.profiles              = "配置"
 
 L.color					= "颜色设置"
---L.color_good			= "低仇恨"  --You can't find this option, you can delete it.
---L.color_neutral			= "平均仇恨"  --You can't find this option, you can delete it.
---L.color_bad				= "高仇恨"  --You can't find this option, you can delete it.
 
 L.appearance			= "外观"
 
@@ -70,16 +67,11 @@ L.frame_xOffset         = "X 偏移"
 L.frame_yOffset         = "Y 偏移"---
 
 L.bar					= "仇恨条"
---L.bar_count				= "最大数量"  --You can't find this option, you can delete it.
 --L.bar_descend			= "反向增长"  --You can't find this option, you can delete it.
 L.bar_height			= "高度"
 L.bar_padding			= "间隔"
---L.bar_marker			= "你在条中为红色"  --You can't find this option, you can delete it.
 L.bar_texture			= "纹理"
---L.bar_classColor		= "使用职业颜色"  --You can't find this option, you can delete it.
---L.bar_defaultColor		= "自定义颜色"  --You can't find this option, you can delete it.
 L.bar_alpha				= "透明度 (默认颜色)"
---L.bar_colorMod			= "颜色调节"  --You can't find this option, you can delete it.
 
 L.customBarColors 			        = "自定义颜色"
 L.customBarColorsPlayer_enabled	    = "启用自定义玩家颜色"
