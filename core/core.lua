@@ -77,6 +77,8 @@ C_Timer.After(3,
 local LSM = LibStub("LibSharedMedia-3.0")
 -- Register some media
 LSM:Register("sound", "You Will Die!", [[Sound\Creature\CThun\CThunYouWillDie.ogg]])
+LSM:Register("sound", "Omen: Aoogah!", [[Interface\AddOns\ThreatClassic2\aoogah.ogg]])
+LSM:Register("sound", "TC2: Bell", [[Sound/Doodad/BellTollAlliance.ogg]])
 LSM:Register("font", "NotoSans SemiCondensedBold", [[Interface\AddOns\ThreatClassic2\media\NotoSans-SemiCondensedBold.ttf]])
 LSM:Register("font", "Standard Text Font", _G.STANDARD_TEXT_FONT) -- register so it's usable as a default in config
 LSM:Register("statusbar", "TC2 Default", [[Interface\ChatFrame\ChatFrameBackground]]) -- register so it's usable as a default in config
@@ -654,13 +656,12 @@ function TC2:OnCommReceived(prefix, message, distribution, sender)
 		if cmd == "VERSION" then
 			if self.version < value and not announcedOutdated then
 				announcedOutdated = true
-				C_Timer.After(2, function() print("|cFFFBB709"..L.message_outdated.."|r") end)
+				C_Timer.After(2, function() print(L.message_outdated) end)
 			end
-
 		elseif cmd == "INCOMPATIBLE" then
 			if self.version < value and not announcedIncompatible then
 				announcedIncompatible = true
-				C_Timer.After(3, function() print("|cFFFBB709"..L.message_incompatible.."|r") end)
+				C_Timer.After(3, function() print(L.message_incompatible) end)
 			end
 		end
 	end

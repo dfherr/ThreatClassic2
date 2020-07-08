@@ -13,8 +13,8 @@ L.reset					= "Reset to Defaults"
 -- messages
 L.message_welcome		= "Type /tc2 for options."
 L.message_leader		= "You must be the group leader or have assist to do this."
-L.message_outdated		= "A new version of ThreatClassic2 is available! Please update to the latest version."
-L.message_incompatible	= "ThreatClassic2 is out of date and incompatible with older versions. Please update immediately!"
+L.message_outdated		= "|cFFFBB709ThreatClassic2:|r A new version is available! Please update."
+L.message_incompatible	= "|cFFFBB709ThreatClassic2|r is out of date and incompatible with older versions. Please update immediately!"
 
 L.general				= "General"
 L.general_welcome		= "Display welcome message when logging in."
