@@ -44,7 +44,7 @@ local screenHeight			= floor(GetScreenHeight())
 local lastCheckStatusTime 	= 0
 local callCheckStatus		= false
 
-local announcedOutdated		= false
+local announcedOutdated	    = false
 local announcedIncompatible = false
 
 local lastWarnPercent		=  100
@@ -329,6 +329,7 @@ end
 local function UpdateThreatData(unit)
 	if not UnitExists(unit) then return end
 	local isTanking, _, threatPercent, rawThreatPercent, threatValue = UnitDetailedThreatSituation(unit, TC2.playerTarget)
+
 	if threatValue and threatValue < 0 then
 		threatValue = threatValue + 410065408
 	end
