@@ -331,24 +331,24 @@ local function UpdateThreatData(unit)
 	local isTanking, _, threatPercent, rawThreatPercent, threatValue = UnitDetailedThreatSituation(unit, TC2.playerTarget)
 
 	if isTanking then
-		-- this fixes wonky returns from the API. threatPercent should be working correctly, but just in case...
+		-- this fixes wonky returns from the API. regular threatPercent should be working correctly, but just in case...
 		rawThreatPercent = 100
 		threatPercent = 100
-	end
-	if threatValue and threatValue < 0 then
-		threatValue = threatValue + 410065408
 	end
 
 	if threatValue and C.general.downscaleThreat then
 		threatValue = math.floor(threatValue / 100)
 	end
+
 	-- check for warnings
 	if UnitIsUnit(unit, "player") and threatPercent then
 		TC2:CheckWarning(threatPercent, threatValue)
 	end
+
 	if C.general.rawPercent then
 		threatPercent = rawThreatPercent
 	end
+
 	tinsert(TC2.threatData, {
 		unit			= unit,
 		threatPercent	= threatPercent or 0,
@@ -1375,6 +1375,7 @@ TC2.configTable = {
 				minThreatAmount = {
 					order = 2,
 					name = L.warnings_minThreatAmount,
+					desc = L.warnings_minThreatAmount_desc,
 					type = "range",
 					width = "double",
 					min = 1,
