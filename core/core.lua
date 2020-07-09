@@ -1413,7 +1413,7 @@ SlashCmdList["TC2_SLASHCMD"] = function(arg)
 		C.general.hideAlways = not C.general.hideAlways
 		CheckStatus();
 	elseif arg == "ver" or arg == "version" then
-		print("|c00FFAA00"..self.addonName.." v"..self.version.."|r")
+		print("|c00FFAA00"..TC2.addonName.." v"..TC2.version.."|r")
 	else
 		LibStub("AceConfigDialog-3.0"):Open("ThreatClassic2")
 	end	
