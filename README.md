@@ -18,7 +18,7 @@ ClassicThreatMeter is outdated and should no longer be used.
 
 **Q: Why am I not seeing other players in the beginning of combat?**
  
-A: You can not see a monsters threat data before you are on the monsters threat table (i.e. did damage or healed someone). This is a restriction of the Blizzard API and can not be changed.
+A: You can not see a monsters threat data before you are on the monsters threat table (i.e. did damage to it or caused any kind of aoe threat like healing or buffing). This is a restriction of the Blizzard API and cannot be changed.
 
 **Q: Is this addon under active development and will get more features?**
 
