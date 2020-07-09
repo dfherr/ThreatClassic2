@@ -330,6 +330,11 @@ local function UpdateThreatData(unit)
 	if not UnitExists(unit) then return end
 	local isTanking, _, threatPercent, rawThreatPercent, threatValue = UnitDetailedThreatSituation(unit, TC2.playerTarget)
 
+	if isTanking then
+		-- this fixes wonky returns from the API. threatPercent should be working correctly, but just in case...
+		rawThreatPercent = 100
+		threatPercent = 100
+	end
 	if threatValue and threatValue < 0 then
 		threatValue = threatValue + 410065408
 	end
