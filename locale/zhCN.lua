@@ -3,7 +3,7 @@ if TC2.locale ~= "zhCN" then return end
 
 -----------------------------
 --	zhCN client (by Qcat of 60Addons & 阿什坎迪-枫聖)
---  Last update: 2020/06/15
+--  Last update: 2020/07/09
 -----------------------------
 -- main frame
 L.gui_threat			= "仇恨"
@@ -15,8 +15,8 @@ L.reset					= "重置为默认"
 -- messages
 L.message_welcome		= "输入 /tc2 进入设置"
 L.message_leader		= "你必须是队长或者有权限"
-L.message_outdated		= "发现新的可用 LibThreatClassic2 版本！ 请下载最新版本。 ThreatClassic2中始终提供最新版本，而DBM，Details和其他一些附加组件中始终提供最新版本。"
-L.message_incompatible	= "TC2/LibThreatClassic2 已过期，因此不兼容，请立即升级。"
+L.message_outdated		= "|cFFFBB709ThreatClassic2:|r 新版本已发布，请去 https://www.curseforge.com/wow/addons/threatclassic2 下载最新版本。"
+L.message_incompatible	= "你的 |cFFFBB709ThreatClassic2|r 已过期，因此不兼容，请立即升级。"
 
 -- version check
 L.version				= "版本检查"
