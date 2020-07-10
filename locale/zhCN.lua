@@ -19,14 +19,14 @@ L.message_outdated		= "|cFFFBB709ThreatClassic2:|r 新版本已发布，请去 h
 L.message_incompatible	= "你的 |cFFFBB709ThreatClassic2|r 已过期，因此不兼容，请立即升级。"
 
 -- version check
-L.version				= "版本检查"
-L.version_check			= "检查过期"
-L.version_check_all		= "检查所有"
-L.version_notify		= "通知过期的"
-L.version_list			= "版本检查: 所有客户端"
-L.version_list_outdated	= "版本检查: 过期的客户端"
-L.version_divider		= "--------------------------------"
-L.version_incompatible	= "不兼容！"
+--L.version				= "版本检查"
+--L.version_check			= "检查过期"
+--L.version_check_all		= "检查所有"
+--L.version_notify		= "通知过期的"
+--L.version_list			= "版本检查: 所有客户端"
+--L.version_list_outdated	= "版本检查: 过期的客户端"
+--L.version_divider		= "--------------------------------"
+--L.version_incompatible	= "不兼容！"
 
 L.general				= "一般"
 L.general_welcome		= "登录时显示信息。"
