@@ -3,7 +3,7 @@ if TC2.locale ~= "zhCN" then return end
 
 -----------------------------
 --	zhCN client (by Qcat of 60Addons & 阿什坎迪-枫聖)
---  Last update: 2020/07/09
+--  Last update: 2020/07/10
 -----------------------------
 -- main frame
 L.gui_threat			= "仇恨"
@@ -30,7 +30,7 @@ L.version_incompatible	= "不兼容！"
 
 L.general				= "一般"
 L.general_welcome		= "登录时显示信息。"
-L.general_rawPercent    = "显示原始威胁百分比 (近战 110% / 远程 130% 的仇恨)"   ---
+L.general_rawPercent    = "启用原始威胁百分比 (近战 110% / 远程 130% 的仇恨)"   ---
 L.general_downscaleThreat = "调整威胁值 (因此1伤害等于修正前1威胁值)"
 L.general_downscaleThreatDesc = "暴雪威胁API是每造成1点伤害算100点威胁值。 此设置将威胁API的数字缩减为我们在补丁1.13.5之前使用的数字。"
 L.general_updateFreq    = "更新间隔的最短时间（以秒为单位）。"   --
@@ -90,8 +90,9 @@ L.font_shadow			= "字体阴影"
 L.warnings				= "警报"
 L.warnings_flash		= "启用屏幕闪烁"
 L.warnings_sound		= "启用声音"
-L.warnings_threshold	= "警报仇恨阈值 (100% = 仇恨)"
+L.warnings_threshold	= "警报仇恨阈值 (仇恨 = 100% )"
 L.warnings_minThreatAmount = "触发警告的最小威胁"
+L.warnings_minThreatAmount_desc = "该值取决于"常规->标定威胁值"设置，并与显示的威胁相匹配。 可以在输入框中设置更大的数字。"
 
 L.warnings_soundFile		= "设置警报声音"
 L.warnings_soundChannel	= "声音通道"
