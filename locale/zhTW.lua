@@ -28,11 +28,14 @@ L.version_divider		= "--------------------------------"
 L.version_incompatible	= "不相容！"
 
 L.general				= "一般"
-L.general_welcome		= "顯示歡迎資訊當你登陸時."
+L.general_welcome		= "顯示資訊當你登陸時."
+L.general_rawPercent    = "顯示原始威脅百分比 (近戰 110% / 遠程 130% 的仇恨)"   ---
+L.general_downscaleThreat = "調整威脅值 (因此1傷害等於修正前1威脅值)"
+L.general_downscaleThreatDesc = "暴雪威脅API是每造成1點傷害算100點威脅值。此設置將威脅API的數字縮減為我們在補丁1.13.5之前使用的數字。"
 L.general_updateFreq    = "更新間隔最短時間 (秒)。"   --
 L.general_test			= "測試模式."
-L.general_minimap		= "小地圖按鈕."
-L.general_ignorePets	= "忽略玩家寵物的仇恨."
+--L.general_minimap		= "小地圖按鈕."
+--L.general_ignorePets	= "忽略玩家寵物的仇恨."
 
 L.visibility			= "可見性"
 L.visibility_hideOOC	= "當脫戰時隱藏框架"
@@ -81,8 +84,10 @@ L.font_style			= "風格"
 L.font_shadow			= "字體陰影"
 
 L.warnings				= "警報"
-L.warnings_sound		= "啟用聲音."
-L.warnings_threshold	= "警報仇恨閾值 (100% = aggro)."
+L.warnings_sound		= "啟用聲音"
+L.warnings_threshold	= "警報仇恨閾值 (aggro = 100%)"
+L.warnings_minThreatAmount = "觸發警告的最小威脅"
+L.warnings_minThreatAmount_desc = "該值取決於'常規->標定威脅值'設置，並與顯示的威脅相匹配。可以在輸入框中設置更大的數字。"
 
-L.warnings_soundFile		= "警報音效檔."
-L.sound_pulledFile		= "獲得仇恨警報的音效檔."
+L.warnings_soundFile		= "警報音效檔"
+L.sound_pulledFile		= "獲得仇恨警報的音效檔"
