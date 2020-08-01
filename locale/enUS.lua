@@ -70,9 +70,12 @@ L.customBarColorsActiveTank_color 	= "Active Tank Color"
 L.customBarColorsOtherUnit_color 	= "Other Unit Color"
 
 L.font					= "Font"
-L.font_name			    = "Name"
+L.font_name			  = "Name"
 L.font_size				= "Size"
 L.font_style			= "Style"
+L.NONE            = "NONE"
+L.OUTLINE         = "OUTLINE"
+L.THICKOUTLINE    = "THICKOUTLINE"
 L.font_shadow			= "Dropshadow"
 
 L.warnings				= "Warnings"
