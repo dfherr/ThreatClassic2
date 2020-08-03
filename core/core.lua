@@ -1318,9 +1318,9 @@ TC2.configTable = {
 							name = L.font_style,
 							type = "select",
 							values = {
-								[""] = "NONE",
-								["OUTLINE"] = "OUTLINE",
-								["THICKOUTLINE"] = "THICKOUTLINE",
+								[""] = L.NONE,
+								["OUTLINE"] = L.OUTLINE,
+								["THICKOUTLINE"] = L.THICKOUTLINE,
 							},
 							style = "dropdown",
 						},
