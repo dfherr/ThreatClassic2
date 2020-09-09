@@ -7,7 +7,6 @@ local TC2, C, L, _ = unpack(select(2, ...))
 local _G		= _G
 local select	= _G.select
 local unpack	= _G.unpack
---local tonumber= _G.tonumber
 local type		= _G.type
 local floor		= _G.math.floor
 local strbyte	= _G.string.byte
@@ -16,10 +15,8 @@ local strlen	= _G.string.len
 local strsub	= _G.string.sub
 local strmatch	= _G.string.match
 
---local ipairs	= _G.ipairs
 local pairs		= _G.pairs
 local tinsert	= _G.table.insert
---local tremove	= _G.table.remove
 local sort		= _G.table.sort
 local wipe		= _G.table.wipe
 
@@ -27,7 +24,6 @@ local GetTime				= _G.GetTime
 local GetNumGroupMembers	= _G.GetNumGroupMembers
 local GetNumSubgroupMembers	= _G.GetNumSubgroupMembers
 local GetInstanceInfo		= _G.GetInstanceInfo
---local InCombatLockdown	= _G.InCombatLockdown
 local IsInRaid				= _G.IsInRaid
 local UnitAffectingCombat	= _G.UnitAffectingCombat
 local UnitClass				= _G.UnitClass
@@ -674,7 +670,9 @@ function TC2:OnCommReceived(prefix, message, distribution, sender)
 end
 
 function TC2:PublishVersion()
-	self:SendCommMessage(self.commPrefix, "VERSION::"..self.version, "GUILD")
+	if IsInGuild() then
+		self:SendCommMessage(self.commPrefix, "VERSION::"..self.version, "GUILD")
+	end
 end
 
 -----------------------------
