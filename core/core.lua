@@ -228,6 +228,10 @@ local function DefaultUnitColor(unit)
 	else
 		colorUnit = FACTION_BAR_COLORS[UnitReaction(unit, "player")]
 	end
+	-- safeguard, i.e. if requested unit is out of draw distance
+	if colorUnit == nil then
+		colorUnit = FACTION_BAR_COLORS[5]
+	end
 	colorUnit = {colorUnit.r, colorUnit.g, colorUnit.b, C.bar.alpha}
 	return colorUnit
 end
