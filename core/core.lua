@@ -9,6 +9,7 @@ local select	= _G.select
 local unpack	= _G.unpack
 local type		= _G.type
 local floor		= _G.math.floor
+local min		= _G.math.min
 local strbyte	= _G.string.byte
 local format	= _G.string.format
 local strlen	= _G.string.len
@@ -493,7 +494,7 @@ local function UpdateSize(f)
 	C.frame.width = f:GetWidth() - 2
 	C.frame.height = f:GetHeight()
 
-	C.bar.count = floor(C.frame.height / (C.bar.height + C.bar.padding - 1))
+	TC2:SetBarCount()
 
 	for i = 1, 40 do
 		if i <= C.bar.count and TC2.threatData[i] then
@@ -528,6 +529,10 @@ local function UpdateFont(fs)
 	fs:SetFont(LSM:Fetch("font", C.font.name), C.font.size, C.font.style)
 	fs:SetVertexColor(unpack(C.font.color))
 	fs:SetShadowOffset(C.font.shadow and 1 or 0, C.font.shadow and -1 or 0)
+end
+
+function TC2:SetBarCount()
+	C.bar.count = min(floor(C.frame.height / (C.bar.height + C.bar.padding - 1)), 40)
 end
 
 function TC2:UpdateFrame()
@@ -767,8 +772,7 @@ function TC2:PLAYER_LOGIN()
 	self.db.RegisterCallback(self, "OnProfileCopied", "RefreshProfile")
 	self.db.RegisterCallback(self, "OnProfileReset", "RefreshProfile")
 
-	C.bar.count = floor(C.frame.height / (C.bar.height + C.bar.padding - 1))
-
+	self:SetBarCount()
 	self:SetupUnits()
 	self:SetupFrame()
 	self:SetupMenu()
@@ -1093,7 +1097,7 @@ TC2.configTable = {
 									end,
 									set = function(info, value)
 										C[info[2]][info[4]] = value
-										C.bar.count = floor(C.frame.height / (C.bar.height + C.bar.padding - 1))
+										TC2:SetBarCount()
 										TC2:UpdateFrame()
 									end,
 								},
@@ -1110,7 +1114,7 @@ TC2.configTable = {
 									end,
 									set = function(info, value)
 										C[info[2]][info[4]] = value
-										C.bar.count = floor(C.frame.height / (C.bar.height + C.bar.padding - 1))
+										TC2:SetBarCount()
 										TC2:UpdateFrame()
 									end,
 								},
