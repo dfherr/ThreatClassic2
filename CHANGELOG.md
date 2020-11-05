@@ -1,19 +1,7 @@
 # Changelog
 
-## v2.24
-* Fixed Not in guild error upon login
-* update CN translation
-* update RU translation
-* some code cleanup
-
-## v2.23
-* Added a fix for wrong raw threat percentages returned by Blizzard API.
-
-## v2.22
-* Small bug fix for the /tc2 version command
-* Update Chinese translations
-
-## v2.21
-* LibThreatClassic2 was completely removed from the addon.
-* Added two new warning sounds
-* Added an outdated version announcement for TC2.
+## v2.25
+* Added two ignite tracking options (bar color and icon)
+* Threat value and percentage can no be toggled on and off
+* fixed a lua error when the window height was set too high
+* fixed a rare lua error when the player ran out of draw distance
