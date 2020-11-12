@@ -41,7 +41,7 @@ L.color					= "Colores"
 
 L.appearance			= "Apariencia"
 
-L.frame					= "Marcho"
+L.frame					= "Marco"
 L.frame_header			= "Encabezado"
 L.frame_bg				= "Fondo"
 L.frame_test			= "Modo de prueba"
