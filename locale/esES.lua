@@ -54,7 +54,7 @@ L.frame_position		= "Posición"
 L.frame_width			= "Anchura"
 L.frame_height			= "Altura"
 L.frame_xOffset         = "Compensación X"
-L.frame_yOffset         = "Compensación Offset"
+L.frame_yOffset         = "Compensación Y"
 
 L.bar					= "Barras"
 L.bar_descend			= "Crecimiento inverso"
