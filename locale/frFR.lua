@@ -25,7 +25,7 @@ L.general_downscaleThreatDesc = "L'API des menaces de Blizzard utilise 100 menac
 L.general_updateFreq = "Temps minimum (en secondes) entre les mises à jour."
 L.general_updateFreq_desc = "Ce paramètre est destiné à limiter la consommation du processeur, lorsque tc2 est mis à jour à intervalles réguliers (par exemple, en mode cible cible). En général, les valeurs de menace ne peuvent pas être mises à jour plus rapidement que l'API de Blizzard les fournit. "
 L.general_test = "Activer le mode test."
-L.general_minimap = "Activer /désactiver l'icône de la mini-carte."
+L.general_minimap = "Activer/désactiver l'icône de la mini-carte."
 L.general_ignorePets = "Ignorez la menace des animaux de compagnie des joueurs."
 
 
@@ -70,7 +70,7 @@ L.bar_showIgniteIndicator_desc = "Afficher une petite icône d'enflammé à côt
 
 L.igniteIndicator = "Indicateur d'enflammé"
 L.igniteIndicator_makeRound = "Faites tourner l'icône"
-L.igniteIndicator_makeRound_desc = "Nécessite /recharge pour recréer la texture."
+L.igniteIndicator_makeRound_desc = "Nécessite /recharger pour recréer la texture."
 L.igniteIndicator_size = "Taille"
 
 L.customBarColors = "Couleurs de barre personnalisées"
