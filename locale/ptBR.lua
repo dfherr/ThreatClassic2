@@ -13,8 +13,8 @@ L.reset = "Redefinir para os valores padrão"
 -- mensagens
 L.message_welcome = "Digite /tc2 para opções."
 L.message_leader = "Você deve ser o líder do grupo ou ter um assistente para fazer isso."
-L.message_outdated = "|cFFFBB709ThreatClassic2:| r Uma nova versão está disponível! Por favor, atualize."
-L.message_incompatible = "|cFFFBB709ThreatClassic2| r está desatualizado e é incompatível com as versões anteriores. Atualize imediatamente!"
+L.message_outdated = "|cFFFBB709ThreatClassic2:|r Uma nova versão está disponível! Por favor, atualize."
+L.message_incompatible = "|cFFFBB709ThreatClassic2|r está desatualizado e incompatível com as versões anteriores. Atualize imediatamente!"
 
 L.general = "Geral"
 L.general_welcome = "Mostrar uma mensagem de boas-vindas ao fazer conecte-se."
@@ -68,7 +68,7 @@ L.bar_showIgniteIndicator_desc = "Mostrar um pequeno ícone de incendiar ao lado
 
 L.igniteIndicator = "Indicador de incendiar"
 L.igniteIndicator_makeRound = "Faça o ícone circular"
-L.igniteIndicator_makeRound_desc = "Requer /recarrega para recriar a textura."
+L.igniteIndicator_makeRound_desc = "Requer /recarregar para recriar a textura."
 L.igniteIndicator_size = "Tamanho"
 
 L.customBarColors = "Cores de barra personalizadas"
@@ -87,7 +87,7 @@ L.font = "Fonte"
 L.font_name = "Nome"
 L.font_size = "Tamanho"
 L.font_style = "Estilo"
-L.NONE = "NONE"
+L.NONE = "NENHUM"
 L.OUTLINE = "CONTORNO"
 L.THICKOUTLINE = "CONTORNOGROSSO"
 L.font_shadow = "Dropshadow"
