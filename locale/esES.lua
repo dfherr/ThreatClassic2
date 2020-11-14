@@ -14,11 +14,11 @@ L.reset					= "Restablecer los valores predeterminados"
 -- messages
 L.message_welcome		= "Escribe /tc2 para opciones."
 L.message_leader		= "Debe ser el líder del grupo o tener asistente para hacer esto."
-L.message_outdated		= "|cFFFBB709ThreatClassic2:|r ¡Una nueva version esta disponible! Por favor actualice."
+L.message_outdated		= "|cFFFBB709ThreatClassic2:|r ¡Una nueva versión está disponible! Por favor actualice."
 L.message_incompatible	= "|cFFFBB709ThreatClassic2|r está desactualizado e incompatible con versiones anteriores. ¡Actualiza inmediatamente!"
 
 L.general				= "General"
-L.general_welcome		= "Muestra un mensaje de bienvenida al iniciar sesión."
+L.general_welcome		= "Muestra un mensaje de bienvenida al conectarse."
 L.general_rawPercent    = "Usa el porcentaje de amenaza bruta (agro al 110% cuerpo a cuerpo / 130% de alcance)"
 L.general_downscaleThreat = "Escala los valores de amenaza (por lo que 1 daño equivale a 1 amenaza antes de los modificadores)"
 L.general_downscaleThreatDesc = "La API de amenazas de Blizzard usa 100 amenazas por 1 daño. Esta configuración reduce los números de API de amenazas a los que usamos antes del parche 1.13.5"
