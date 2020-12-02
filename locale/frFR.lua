@@ -11,7 +11,7 @@ L.gui_config = "Ouvrir la configuration"
 -- cadre de configuration
 L.reset = "Rétablir les valeurs par défaut"
 
-- messages
+-- messages
 L.message_welcome = "Tapez /tc2 pour les options."
 L.message_leader = "Vous devez être le chef du groupe ou avoir un assistant pour le faire."
 L.message_outdated = "|cFFFBB709ThreatClassic2:|r Une nouvelle version est disponible! Veuillez mettre à jour."
