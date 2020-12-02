@@ -1,9 +1,9 @@
-## Interface: 11305
+## Interface: 11306
 ## Title: ThreatClassic2
 ## Notes: Simple threat meter for WoW Classic.
 ## Author: Dennis-Florian Herr (dfherr)
 ## X-Curse-Project-ID: 355497
-## Version: 2.25
+## Version: 2.26
 ## SavedVariables: ThreatClassic2DB
 ## SavedVariablesPerCharacter: TC2_Options
 

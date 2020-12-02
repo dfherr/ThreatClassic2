@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.26
+* Update various translations
+* Update WoW Interface Version to 1.13.6
+
 ## v2.25
 * Added two ignite tracking options (bar color and icon)
 * Threat value and percentage can no be toggled on and off
