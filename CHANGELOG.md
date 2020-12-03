@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.27
+* Fix a small mistake in fr translation that caused lua errors
+
 ## v2.26
 * Update various translations
 * Update WoW Interface Version to 1.13.6
