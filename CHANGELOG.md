@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.28
+* Switch to GitHub actions packager workflow
+
 ## v2.27
 * Fix a small mistake in fr translation that caused lua errors
 
