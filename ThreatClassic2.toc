@@ -3,7 +3,7 @@
 ## Notes: Simple threat meter for WoW Classic.
 ## Author: Dennis-Florian Herr (dfherr)
 ## X-Curse-Project-ID: 355497
-## Version: 2.28
+## Version: 2.29
 ## SavedVariables: ThreatClassic2DB
 ## SavedVariablesPerCharacter: TC2_Options
 
