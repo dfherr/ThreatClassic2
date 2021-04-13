@@ -1,5 +1,5 @@
 # ThreatClassic2 [!["Open Issues"](https://img.shields.io/github/issues-raw/dfherr/ThreatClassic2.svg)](https://github.com/dfherr/ThreatClassic2/issues)
-ThreatClassic2 is a threat meter for WoW Classic using the built in Blizzard API.
+ThreatClassic2 is a threat meter for WoW Classic and TBC Classic using the built in Blizzard API.
 
 ## Bugs and feature requests
 
