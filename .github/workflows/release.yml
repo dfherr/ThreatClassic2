@@ -23,4 +23,4 @@ jobs:
       - name: Package and release
         uses: BigWigsMods/packager@master
         with:
-          args: -g 1.13.6
+          args: -g 1.13.6 -n "{package-name}-{project-version}"
