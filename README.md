@@ -7,8 +7,12 @@ Please submit all feature requests and bugs in this projects [issue tracker](htt
 
 Please check for bugs and feature requests before submitting the same request and participate in the dicussion. Please **do not** email me, comment on commits or raise issues in any other channel, so there is a single place for discussions everyone can see and participate. Thank you for your consideration.
 
+Like the project? Leave a star :)
+
 ## Download
  - [CurseForge](https://www.curseforge.com/wow/addons/ThreatClassic2)
+ - [wago.io](https://addons.wago.io/addons/threatclassic2)
+ - [wowinterface](https://www.wowinterface.com/downloads/info25966-ThreatClassic2.html)
  - Manual install from [releases](https://github.com/dfherr/ThreatClassic2/releases)
 
 ## FAQ

@@ -1,7 +1,7 @@
 # Changelog
 
 ## v2.31
-* bump interface version ti 11307
+* bump interface version to 11307
 
 ## v2.30
 * add backdrop mixin for TBC client
