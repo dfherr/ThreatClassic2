@@ -26,6 +26,9 @@
 	<Script file="locale\zhCN.lua"/>
 	<Script file="locale\zhTW.lua"/>
 
+	<!-- Media -->
+	<Script file="media\NotoSans-SemiCondensedBold.ttf"/>
+
 	<!-- Core -->
 	<Script file="core\config.lua"/>
 	<Script file="core\core.lua"/>
