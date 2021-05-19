@@ -21,7 +21,12 @@ jobs:
           actions/checkout@v2
         with:
           fetch-depth: 20
+      - name: Package and release classic
+        uses: BigWigsMods/packager@master
+        with:
+          args: -g classic
       - name: Package and release
         uses: BigWigsMods/packager@master
         with:
-          args: -g classic -n "{package-name}-{project-version}"
+          args: -g bcc
+ 

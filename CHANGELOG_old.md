@@ -1,5 +1,14 @@
 # Changelog old versions
 
+## v2.31
+* bump interface version to 11307
+
+## v2.30
+* add backdrop mixin for TBC client
+
+## v2.29
+* Fixed unnecessary threat warnings when the Blizzard API  incorrectly returns 250% threat percentage (e.g. on threat wipe abilities)
+
 ## v2.28
 * Switch to GitHub actions packager workflow
 
