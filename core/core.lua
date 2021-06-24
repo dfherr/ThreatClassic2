@@ -81,6 +81,7 @@ LSM:Register("sound", "TC2: Bell", [[Sound/Doodad/BellTollAlliance.ogg]])
 LSM:Register("font", "NotoSans SemiCondensedBold", [[Interface\AddOns\ThreatClassic2\media\NotoSans-SemiCondensedBold.ttf]])
 LSM:Register("font", "Standard Text Font", _G.STANDARD_TEXT_FONT) -- register so it's usable as a default in config
 LSM:Register("statusbar", "TC2 Default", [[Interface\ChatFrame\ChatFrameBackground]]) -- register so it's usable as a default in config
+LSM:Register("border", "TC2 Default", [[Interface\ChatFrame\ChatFrameBackground]]) -- register so it's usable as a default in config
 
 
 local SoundChannels = {
@@ -104,7 +105,7 @@ local function CreateBackdrop(parent, cfg)
 	-- Backdrop Settings
 	local backdrop = {
 		bgFile = LSM:Fetch("statusbar", cfg.bgTexture),
-		edgeFile = LSM:Fetch("statusbar", cfg.edgeTexture),
+		edgeFile = LSM:Fetch("border", cfg.edgeTexture),
 		tile = cfg.tile,
 		tileSize = cfg.tileSize,
 		edgeSize = cfg.edgeSize,
@@ -627,6 +628,20 @@ function TC2:UpdateFrame()
 end
 
 function TC2:UpdateBars()
+	-- get up-to-date backdrop settings
+	local backdrop = {
+		bgFile = LSM:Fetch("statusbar", C.backdrop.bgTexture),
+		edgeFile = LSM:Fetch("border", C.backdrop.edgeTexture),
+		tile = C.backdrop.tile,
+		tileSize = C.backdrop.tileSize,
+		edgeSize = C.backdrop.edgeSize,
+		insets = {
+			left = C.backdrop.inset,
+			right = C.backdrop.inset,
+			top = C.backdrop.inset,
+			bottom = C.backdrop.inset,
+		},
+	}
 	for i = 1, 40 do
 		if not self.bars[i] then
 			self.bars[i] = CreateStatusBar(self.frame)
@@ -634,6 +649,8 @@ function TC2:UpdateBars()
 
 		local bar = self.bars[i]
 
+		bar.backdrop:SetBackdrop(backdrop)
+		
 		if i == 1 then
 			bar:SetPoint("TOP", 0, 0)
 		else
@@ -687,7 +704,7 @@ function TC2:UpdateBars()
 			end
 		end
 	end
-	TC2:UpdateThreatBars()
+	self:UpdateThreatBars()
 end
 
 -----------------------------
@@ -808,10 +825,6 @@ function TC2:PLAYER_LOGIN()
 
 	-- creates by default character specific profile, when 3rd argument is obmitted
 	self.db = LibStub("AceDB-3.0"):New("ThreatClassic2DB", self.defaultConfig, true)
-
-	-- remove old config options
-	self.db.profile.backdrop.bgFile = nil
-	self.db.profile.backdrop.edgeFile = nil
 
 	C = self.db.profile
 
@@ -1287,18 +1300,110 @@ TC2.configTable = {
 							dialogControl = 'LSM30_Statusbar',
 							values = AceGUIWidgetLSMlists.statusbar,
 						},
-						showThreatValue = {
+						border = {
 							order = 7,
+							name = L.backdrop_edge,
+							type = "header",
+						},
+						edgeColor = {
+							order = 8,
+							name = L.backdrop_edgeColor,
+							type = "color",
+							hasAlpha = true,
+							get = function(info)
+								return unpack(C.backdrop.edgeColor)
+							end,
+							set = function(info, r, g, b, a)
+								local cfg = C.backdrop.edgeColor
+								cfg[1] = r
+								cfg[2] = g
+								cfg[3] = b
+								cfg[4] = a
+								TC2:UpdateFrame()
+							end,
+						},
+						edgeTexture = {
+							order = 9,
+							name = L.backdrop_edgeTexture,
+							type = "select",
+							dialogControl = 'LSM30_Border',
+							values = AceGUIWidgetLSMlists.border,
+							get = function(info)
+								return C.backdrop.edgeTexture
+							end,
+							set = function(info, value)
+								C.backdrop.edgeTexture = value
+								TC2:UpdateFrame()
+							end,
+						},
+						edgeSize = {
+							order = 10,
+							name = L.backdrop_edgeSize,
+							type = "range",
+							min = 1,
+							max = 16,
+							step = 1,
+							get = function(info)
+								return C.backdrop.edgeSize
+							end,
+							set = function(info, value)
+								C.backdrop.edgeSize = value
+								TC2:UpdateFrame()
+							end,
+						},
+						backdrop = {
+							order = 11,
+							name = L.backdrop,
+							type = "header",
+						},
+						backdropBgColor = {
+							order = 12,
+							name = L.backdrop_bgColor,
+							type = "color",
+							hasAlpha = true,
+							get = function(info)
+								return unpack(C.backdrop.bgColor)
+							end,
+							set = function(info, r, g, b, a)
+								local cfg = C.backdrop.bgColor
+								cfg[1] = r
+								cfg[2] = g
+								cfg[3] = b
+								cfg[4] = a
+								TC2:UpdateFrame()
+							end,
+						},
+						backdropBgTexture = {
+							order = 13,
+							name = L.backdrop_bgTexture,
+							type = "select",
+							dialogControl = 'LSM30_Statusbar',
+							values = AceGUIWidgetLSMlists.statusbar,
+							get = function(info)
+								return C.backdrop.edgeTexture
+							end,
+							set = function(info, value)
+								C.backdrop.bgTexture = value
+								TC2:UpdateFrame()
+							end,
+						},
+						textOptions = {
+							order = 14,
+							name = L.bar_textOptions,
+							type = "header",
+						},
+						showThreatValue = {
+							order = 15,
 							name = L.bar_showThreatValue,
 							type = "toggle",
 						},
 						showThreatPercentage = {
-							order = 8,
+							order = 16,
 							name = L.bar_showThreatPercentage,
 							type = "toggle",
 						},
 						showIgniteIndicator = {
-							order = 9,
+							order = 17,
 							name = L.bar_showIgniteIndicator,
 							desc = L.bar_showIgniteIndicator_desc,
 							type = "toggle",
@@ -1306,7 +1411,7 @@ TC2.configTable = {
 					},
 				},
 				igniteIndicator = {
-					order = 3,
+					order = 4,
 					name = L.igniteIndicator,
 					type = "group",
 					inline = true,
@@ -1329,7 +1434,7 @@ TC2.configTable = {
 					}
 				},
 				customBarColors = {
-					order = 4,
+					order = 5,
 					name = L.customBarColors,
 					type = "group",
 					inline = true,
