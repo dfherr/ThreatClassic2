@@ -96,23 +96,6 @@ local UnitDetailedThreatSituation = _G.UnitDetailedThreatSituation
 -----------------------------
 -- FUNCTIONS
 -----------------------------
--- migrate from character specific settings to new profile database
-local function CopyLegacySettings(oldSettings, newSettings)
-	if type(oldSettings) ~= "table" then return newSettings end
-
-	for k, v in pairs(oldSettings) do
-		-- only keep settings that exist in new db
-		if newSettings[k] ~= nil then
-			if type(v) == "table" then
-				newSettings[k] = CopyLegacySettings(v, newSettings[k])
-			else
-				newSettings[k] = v
-			end
-		end
-	end
-
-	return newSettings
-end
 
 local function CreateBackdrop(parent, cfg)
 	local f = CreateFrame("Frame", nil, parent, BackdropTemplateMixin and "BackdropTemplate")
@@ -824,17 +807,8 @@ end
 function TC2:PLAYER_LOGIN()
 
 	-- creates by default character specific profile, when 3rd argument is obmitted
-	self.db = LibStub("AceDB-3.0"):New("ThreatClassic2DB", self.defaultConfig)
-	-- check if per character settings still exist. If yes copy over to db
-	if TC2_Options then
-		print("ThreatClassic2 copying old config to new character profile.")
-		if TC2_Options.bar and TC2_Options.bar.texture then
-			-- remove old non LSM texture
-			TC2_Options.bar.texture = nil
-		end
-		self.db.profile = CopyLegacySettings(TC2_Options, self.db.profile)
-		TC2_Options = nil
-	end
+	self.db = LibStub("AceDB-3.0"):New("ThreatClassic2DB", self.defaultConfig, true)
+
 	-- remove old config options
 	self.db.profile.backdrop.bgFile = nil
 	self.db.profile.backdrop.edgeFile = nil
