@@ -362,6 +362,17 @@ local function UpdateThreatData(unit)
 		threatPercent = 100
 	end
 
+	-- never filter player
+	if not UnitIsUnit(unit, "player") then
+		-- target list disabled or target in filter targetlist
+		if not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)] then
+			-- melee range filter
+			if C.filter.outOfMelee and rawThreatPercent and rawThreatPercent / threatPercent > 1.2 then
+				return
+			end
+		end
+	end
+
 	if threatValue and C.general.downscaleThreat then
 		threatValue = math.floor(threatValue / 100)
 	end
@@ -950,6 +961,7 @@ function TC2:SetupConfig()
 	self.config = {}
 	self.config.general = ACD:AddToBlizOptions(TC2.addonName, TC2.addonName, nil, "general")
 	self.config.appearance = ACD:AddToBlizOptions(TC2.addonName, L.appearance, TC2.addonName, "appearance")
+	self.config.appearance = ACD:AddToBlizOptions(TC2.addonName, L.filter, TC2.addonName, "filter")
 	self.config.warnings = ACD:AddToBlizOptions(TC2.addonName, L.warnings, TC2.addonName, "warnings")
 	self.config.profiles = ACD:AddToBlizOptions(TC2.addonName, L.profiles, TC2.addonName, "profiles")
 end
@@ -1557,8 +1569,58 @@ TC2.configTable = {
 				},
 			},
 		},
-		warnings = {
+		filter = {
 			order = 3,
+			type = "group",
+			name = L.filter,
+			args = {
+				outOfMelee = {
+					order = 1,
+					name = L.filter_outOfMelee,
+					type = "toggle",
+					width = "full",
+				},
+				useTargetList = {
+					order = 2,
+					name = L.filter_useTargetList,
+					type = "toggle",
+					width = "full",
+				},
+				targetList = {
+					order = 3,
+					name = L.filter_targetList,
+					type = "input",
+					width = "full",
+					multiline = 8,
+					get = function(info)
+						-- restore insertion order by adding to an array using integer keys
+						sortedTargets = {}
+						for target, index in pairs(C[info[1]][info[2]]) do
+							sortedTargets[index] = target
+						end
+						-- rebuild string
+						targetString = ""
+						for _ , target in pairs(sortedTargets) do
+							targetString = targetString .. target .. "\n"
+						end
+						return targetString
+					end,
+					set = function(info, value)
+						targets = {}
+						num = 1
+						-- built a target set but preserve insertion order information
+						for target in value:gmatch("[^\n]+") do
+							targets[target] = num
+							num = num + 1
+						end
+						C[info[1]][info[2]] = targets
+					end,
+					disabled = function() return not C.filter.useTargetList end,
+				},
+			},
+		},
+		warnings = {
+			order = 4,
 			type = "group",
 			name = L.warnings,
 			args = {
