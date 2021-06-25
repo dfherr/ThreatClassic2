@@ -35,6 +35,8 @@ local UnitIsPlayer			= _G.UnitIsPlayer
 local UnitName				= _G.UnitName
 local UnitReaction			= _G.UnitReaction
 local UnitIsUnit 			= _G.UnitIsUnit
+local GetSpellInfo			= _G.GetSpellInfo
+local GetShapeshiftForm		= _G.GetShapeshiftForm
 local FindAuraByName		= AuraUtil.FindAuraByName
 
 local screenWidth			= floor(GetScreenWidth())
@@ -59,6 +61,7 @@ TC2.threatData = {}
 TC2.colorFallback = {}
 TC2.numGroupMembers = 0
 TC2.playerName = ""
+TC2.playerClass = ""
 TC2.playerTarget = ""
 
 local AceComm = LibStub("AceComm-3.0")
@@ -377,7 +380,7 @@ local function UpdateThreatData(unit)
 		threatValue = math.floor(threatValue / 100)
 	end
 
-	-- check for warnings
+	-- check for warnings. this always uses the scaled percentage to avoid conercases of over 100% raw threat and then aggro
 	if UnitIsUnit(unit, "player") and threatPercent then
 		TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
 	end
@@ -453,6 +456,29 @@ local function CheckStatusDeferred()
 end
 
 function TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
+
+	if C.warnings.disableWhileTanking then
+		if self.playerClass == "WARRIOR" then
+			-- def stance
+			if GetShapeshiftForm() == 2 then
+				lastWarnPercent = 100
+				return
+			end
+		elseif self.playerClass == "DRUID" then
+			-- bear form
+			if GetShapeshiftForm() == 1 then
+				lastWarnPercent = 100
+				return
+			end
+		elseif self.playerClass == "PALADIN" then
+			-- righteous fury active
+			if FindAuraByName(GetSpellInfo(25780), "player", "HELPFUL") then
+				lastWarnPercent = 100
+				return
+			end
+		end
+	end
+
 	-- percentage is now above threshold and was below threshold before
 	if threatPercent >= C.warnings.threshold and lastWarnPercent < C.warnings.threshold and rawThreatPercent < 250 then
 		lastWarnPercent = threatPercent
@@ -785,7 +811,7 @@ end)
 
 function TC2:PLAYER_ENTERING_WORLD(...)
 	self.playerName = UnitName("player")
-
+	self.playerClass = select(2, _G.UnitClass("player"))
 	self.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
 
 	CheckStatus()
@@ -1624,25 +1650,27 @@ TC2.configTable = {
 			type = "group",
 			name = L.warnings,
 			args = {
-				flash = {
-					order = 3,
-					name = L.warnings_flash,
+				disableWhileTanking = {
+					order = 1,
+					name = L.warnings_disableWhileTanking,
+					desc = L.warnings_disableWhileTanking_desc,
 					type = "toggle",
 					width = "full",
 				},
 				threshold = {
-					order = 1,
+					order = 2,
 					name = L.warnings_threshold,
+					desc = L.warnings_threshold_desc,
 					type = "range",
 					width = "double",
-					min = 50,
+					min = 5,
+					softMin = 50,
 					max = 100,
 					step = 1,
 					bigStep = 5,
-					-- get / set
 				},
 				minThreatAmount = {
-					order = 2,
+					order = 3,
 					name = L.warnings_minThreatAmount,
 					desc = L.warnings_minThreatAmount_desc,
 					type = "range",
@@ -1653,22 +1681,28 @@ TC2.configTable = {
 					step = 1,
 					bigStep = 100,
 				},
-				sound = {
+				flash = {
 					order = 4,
+					name = L.warnings_flash,
+					type = "toggle",
+					width = "full",
+				},
+				sound = {
+					order = 5,
 					name = L.warnings_sound,
 					type = "toggle",
 					width = "full",
 				},
 				soundFile = {
 					type = "select", dialogControl = 'LSM30_Sound',
-					order = 5,
+					order = 6,
 					name = L.warnings_soundFile,
 					values = AceGUIWidgetLSMlists.sound,
 					disabled = function() return not C.warnings.sound end,
 				},
 				soundChannel = {
 					type = "select",
-					order = 6,
+					order = 7,
 					name = L.warnings_soundChannel,
 					values = SoundChannels,
 					disabled = function() return not C.warnings.sound end,

@@ -107,9 +107,11 @@ L.filter_useTargetList  = "Filter players only for listed targets"
 L.filter_targetList     = "Filter players for these targets (newline separated)"
 
 L.warnings				= "Warnings"
+L.warnings_disableWhileTanking	= "Disable while tanking"
+L.warnings_disableWhileTanking_desc = "You are considered tanking when in Defensive Stance or Bear Form or when Righteous Fury is active"
 L.warnings_flash		= "Enable screen flashing."
 L.warnings_sound		= "Enable sounds."
-L.warnings_threshold	= "Warning threshold (aggro = 100%)"
+L.warnings_threshold	= "Warning threshold (100% = aggro)."
 L.warnings_minThreatAmount = "Minimum threat to trigger warnings"
 L.warnings_minThreatAmount_desc = "The value depends on 'General -> Scale threat values' setting and matches the displayed threat. Larger numbers can be set with the input box."
 

@@ -103,6 +103,7 @@ defaultConfig.filter  = {
 
 -- warning settings
 defaultConfig.warnings = {
+	disableWhileTanking = true,									-- disable warnings if considered tanking
 	flash				= false,								-- enable screen flash
 	sound				= false,								-- enable sound
 	threshold			= 80,									-- alert threshold (of normalized percentage 0-100)
