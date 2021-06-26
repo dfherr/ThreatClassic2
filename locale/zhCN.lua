@@ -109,6 +109,8 @@ L.filter_useTargetList  = "仅针对列出的目标过滤玩家"
 L.filter_targetList     = "过滤这些目标的玩家（换行符分隔）"
 
 L.warnings				= "警报"
+L.warnings_disableWhileTanking  = "坦克时禁用"
+L.warnings_disableWhileTanking_desc = "当你启用防御姿态或熊形态或启用了正义之怒时，你被认定为坦克。"
 L.warnings_flash		= "启用屏幕闪烁"
 L.warnings_sound		= "启用声音"
 L.warnings_threshold	= "警报仇恨阈值 (100% = 仇恨)"
