@@ -1418,7 +1418,7 @@ TC2.configTable = {
                             dialogControl = 'LSM30_Statusbar',
                             values = AceGUIWidgetLSMlists.statusbar,
                             get = function(info)
-                                return C.backdrop.edgeTexture
+                                return C.backdrop.bgTexture
                             end,
                             set = function(info, value)
                                 C.backdrop.bgTexture = value
