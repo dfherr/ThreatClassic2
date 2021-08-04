@@ -3,7 +3,7 @@ if TC2.locale ~= "zhCN" then return end
 
 -----------------------------
 --	zhCN client (by Qcat of 60Addons & 阿什坎迪-枫聖)
---  Last update: 2020/11/06
+--  Last update: 2021/08/05
 -----------------------------
 -- main frame
 L.gui_threat			= "仇恨"
@@ -104,9 +104,10 @@ L.THICKOUTLINE          = "粗轮廓"
 L.font_shadow			= "字体阴影"
 
 L.filter                = "过滤器"
-L.filter_outOfMelee     = "隐藏不在近战范围内的玩家"
-L.filter_useTargetList  = "仅针对列出的目标过滤玩家"
-L.filter_targetList     = "过滤这些目标的玩家（换行符分隔）"
+L.filter_outOfMelee     = "过滤不在近战范围"
+L.filter_useTargetList  = "仅针对列出的目标过滤"
+L.filter_targetList     = "过滤目标列表（换行符分隔Shift+Enter键）"
+L.filter_targetList_desc  = "输入要应用过滤的首领或其他的单位。每行一个。使用准确的拼写和全名，例如：屠龙者格鲁尔"
 
 L.warnings				= "警报"
 L.warnings_disableWhileTanking  = "坦克时禁用"
