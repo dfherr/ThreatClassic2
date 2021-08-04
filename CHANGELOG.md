@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.38
+
+* Fixed a bug that made it impossible to change the backdrop texture
+* Fixed a lua error that could occur when filtering range players
+
 ## v2.37
 
 * Release chinese localization

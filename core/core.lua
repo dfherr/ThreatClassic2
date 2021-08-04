@@ -369,8 +369,8 @@ local function UpdateThreatData(unit)
     if not UnitIsUnit(unit, "player") then
         -- target list disabled or target in filter targetlist
         if not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)] then
-            -- melee range filter
-            if C.filter.outOfMelee and rawThreatPercent and rawThreatPercent / threatPercent > 1.2 then
+            -- melee range filter; threatPercent > 0 to avoid divison by zero on fucked up api response
+            if C.filter.outOfMelee and rawThreatPercent and threatPercent > 0 and rawThreatPercent / threatPercent > 1.2 then
                 return
             end
         end
@@ -1615,6 +1615,7 @@ TC2.configTable = {
                 targetList = {
                     order = 3,
                     name = L.filter_targetList,
+                    desc = L.filter_targetList_desc,
                     type = "input",
                     width = "full",
                     multiline = 8,
