@@ -1,4 +1,7 @@
 # Changelog
+## v2.40
+* Added new option to grow bars bottom up
+
 ## v2.39
 * Updated translations and bump interface version
 
