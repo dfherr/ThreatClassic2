@@ -1,4 +1,7 @@
 # Changelog
+## v2.41
+* adjust toc for Season of Mastery
+
 ## v2.40
 * Added new option to grow bars bottom up
 
