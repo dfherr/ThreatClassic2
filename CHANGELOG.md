@@ -1,4 +1,7 @@
 # Changelog
+## v2.42
+* adjust toc for Hyjal/BT BCC
+
 ## v2.41
 * adjust toc for Season of Mastery
 
