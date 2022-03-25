@@ -1,4 +1,7 @@
 # Changelog
+## v2.43
+* adjust toc for Zul'Aman BCC
+
 ## v2.42
 * adjust toc for Hyjal/BT BCC
 
