@@ -45,8 +45,8 @@ defaultConfig.frame = {
 
 -- backdrop settings
 defaultConfig.backdrop = {
-    bgTexture           = defaultTexture,                       -- backdrop texture
-    bgColor             = {1, 1, 1, 0.1},                       -- backdrop color
+    texture             = defaultTexture,                       -- backdrop texture
+    color               = {0, 0, 0, 1},                         -- backdrop color
     edgeTexture         = defaultTexture,                       -- backdrop edge texture
     edgeColor           = {0, 0, 0, 1},                         -- backdrop edge color
     tile                = false,                                -- backdrop texture tiling
@@ -63,7 +63,6 @@ defaultConfig.bar = {
     padding             = 1,                                    -- padding between bars
     texture             = defaultTexture,                       -- texture file location
     alpha               = 1,                                    -- statusbar alpha
-    colorMod            = 0,                                    -- color modifier
     showThreatValue     = true,                                 -- show threat value in bar
     showThreatPercentage = true,                                -- show threat percentage in bar
     showIgniteIndicator = true,                                 -- show ignite icon when target has ignite

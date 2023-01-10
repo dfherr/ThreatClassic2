@@ -81,7 +81,6 @@ L.bar_texture           = "질감"
 L.bar_classColor        = "직업색상 사용"
 L.bar_defaultColor      = "사용자정의 색상"
 L.bar_alpha             = "바 투명도 (기본 색상)"
-L.bar_colorMod          = "색상 조정"
 
 L.customBarColors       = "사용자정의 바 색상"
 L.customBarColorsPlayer_enabled = "사용자정의 플레이어 색상 사용"

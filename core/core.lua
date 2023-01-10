@@ -136,7 +136,7 @@ local function CreateStatusBar(parent, header)
     bar:SetMinMaxValues(0, 100)
     -- Backdrop
     local backdrop = {
-        bgFile = LSM:Fetch("statusbar", C.backdrop.bgTexture),
+        bgFile = LSM:Fetch("statusbar", C.backdrop.texture),
         tile = C.backdrop.tile,
         tileSize = C.backdrop.tileSize,
         insets = {
@@ -147,15 +147,12 @@ local function CreateStatusBar(parent, header)
         },
     }
     bar:SetBackdrop(backdrop)
-    bar:SetBackdropColor(unpack(C.backdrop.bgColor)) -- hide backdrop area. this backdrop is just for the edge
+    bar:SetBackdropColor(unpack(C.backdrop.color))
     bar:SetBackdropBorderColor(0, 0, 0, 0) -- no edge on regular backdrop
     -- Edge
     CreateEdgeBackdrop(bar, C.backdrop)
 
     if not header then
-        -- BG
-        bar.bg = bar:CreateTexture(nil, "BACKGROUND", nil, -6)
-        bar.bg:SetAllPoints(bar)
         -- ignite indicator
         bar.ignite = bar:CreateTexture(nil, "OVERLAY")
         bar.ignite:SetPoint("LEFT", bar, 4, 0)
@@ -311,7 +308,6 @@ function TC2:UpdateThreatBars()
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             bar:SetStatusBarColor(unpack(color))
-            bar.bg:SetVertexColor(color[1] * C.bar.colorMod, color[2] * C.bar.colorMod, color[3] * C.bar.colorMod, C.bar.alpha)
 
             bar:Show()
         else
@@ -339,8 +335,6 @@ function TC2:UpdateThreatBars()
                     bar:SetValue(data.threatPercent)
                     local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
                     bar:SetStatusBarColor(unpack(color))
-                    bar.bg:SetVertexColor(color[1] * C.bar.colorMod, color[2] * C.bar.colorMod, color[3] * C.bar.colorMod, C.bar.alpha)
-
                     bar:Show()
                     break
                 end
@@ -681,7 +675,7 @@ end
 function TC2:UpdateBars()
     -- get up-to-date backdrop and edgeBackdrop settings
     local backdrop = {
-        bgFile = LSM:Fetch("statusbar", C.backdrop.bgTexture),
+        bgFile = LSM:Fetch("statusbar", C.backdrop.texture),
         tile = C.backdrop.tile,
         tileSize = C.backdrop.tileSize,
         insets = {
@@ -709,7 +703,7 @@ function TC2:UpdateBars()
         local bar = self.bars[i]
 
         bar:SetBackdrop(backdrop)
-        bar:SetBackdropColor(unpack(C.backdrop.bgColor))
+        bar:SetBackdropColor(unpack(C.backdrop.color))
         bar:SetBackdropBorderColor(0,0,0,0)
         bar.edgeBackdrop:SetBackdrop(edgeBackdrop)
         bar.edgeBackdrop:SetBackdropColor(0,0,0,0)
@@ -733,8 +727,6 @@ function TC2:UpdateBars()
 
         bar:SetStatusBarTexture(LSM:Fetch("statusbar", C.bar.texture))
 
-        -- BG
-        bar.bg:SetTexture(LSM:Fetch("statusbar", C.bar.texture))
         -- ignite
         bar.ignite:SetSize(C.igniteIndicator.size, C.igniteIndicator.size)
         bar.ignite:Hide()
@@ -1436,16 +1428,16 @@ TC2.configTable = {
                             name = L.backdrop,
                             type = "header",
                         },
-                        backdropBgColor = {
+                        backdropColor = {
                             order = 12,
-                            name = L.backdrop_bgColor,
+                            name = L.backdrop_color,
                             type = "color",
                             hasAlpha = true,
                             get = function(info)
-                                return unpack(C.backdrop.bgColor)
+                                return unpack(C.backdrop.color)
                             end,
                             set = function(info, r, g, b, a)
-                                local cfg = C.backdrop.bgColor
+                                local cfg = C.backdrop.color
                                 cfg[1] = r
                                 cfg[2] = g
                                 cfg[3] = b
@@ -1453,17 +1445,17 @@ TC2.configTable = {
                                 TC2:UpdateFrame()
                             end,
                         },
-                        backdropBgTexture = {
+                        backdropTexture = {
                             order = 13,
-                            name = L.backdrop_bgTexture,
+                            name = L.backdrop_texture,
                             type = "select",
                             dialogControl = 'LSM30_Statusbar',
                             values = AceGUIWidgetLSMlists.statusbar,
                             get = function(info)
-                                return C.backdrop.bgTexture
+                                return C.backdrop.texture
                             end,
                             set = function(info, value)
-                                C.backdrop.bgTexture = value
+                                C.backdrop.texture = value
                                 TC2:UpdateFrame()
                             end,
                         },
