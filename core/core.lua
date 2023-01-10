@@ -81,6 +81,7 @@ local LSM = LibStub("LibSharedMedia-3.0")
 LSM:Register("sound", "You Will Die!", [[Sound\Creature\CThun\CThunYouWillDie.ogg]])
 LSM:Register("sound", "Omen: Aoogah!", [[Interface\AddOns\ThreatClassic2\aoogah.ogg]])
 LSM:Register("sound", "TC2: Bell", [[Sound/Doodad/BellTollAlliance.ogg]])
+LSM:Register("sound", "Yogg Laughing", [[Sound\Creature\YoggSaron\UR_YoggSaron_Slay01.ogg]])
 LSM:Register("font", "NotoSans SemiCondensedBold", [[Interface\AddOns\ThreatClassic2\media\NotoSans-SemiCondensedBold.ttf]])
 LSM:Register("font", "Standard Text Font", _G.STANDARD_TEXT_FONT) -- register so it's usable as a default in config
 LSM:Register("statusbar", "TC2 Default", [[Interface\ChatFrame\ChatFrameBackground]]) -- register so it's usable as a default in config
