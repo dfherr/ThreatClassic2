@@ -45,6 +45,9 @@ local screenHeight          = floor(GetScreenHeight())
 local lastCheckStatusTime   = 0
 local callCheckStatus       = false
 
+local lastUpdateSizeTime    = 0
+local scheduleUpdateSize    = nil
+
 local announcedOutdated     = false
 local announcedIncompatible = false
 
@@ -561,20 +564,35 @@ local function OnDragStop(f)
 end
 
 local function UpdateSize(f)
-    C.frame.width = f:GetWidth() - 2
-    C.frame.height = f:GetHeight()
-
-    TC2:SetBarCount()
-
-    for i = 1, 40 do
-        if i <= C.bar.count and TC2.threatData[i] then
-            TC2.bars[i]:Show()
-        else
-            TC2.bars[i]:Hide()
+    -- rate limit update size so resizing doesn't lag
+    if(GetTime() < lastUpdateSizeTime + 0.01) then
+        if not scheduleUpdateSize then
+            scheduleUpdateSize = C_Timer.NewTimer(0.02, function() UpdateSize(f) end)
         end
-    end
+    else
+        -- reset rate limiter
+        lastUpdateSizeTime = GetTime()
+        if scheduleUpdateSize then
+            scheduleUpdateSize:Cancel()
+            scheduleUpdateSize = nil
+        end
 
-    TC2:UpdateFrame()
+        -- start updating size
+        C.frame.width = f:GetWidth() - 2
+        C.frame.height = f:GetHeight()
+
+        TC2:SetBarCount()
+
+        for i = 1, 40 do
+            if i <= C.bar.count and TC2.threatData[i] then
+                TC2.bars[i]:Show()
+            else
+                TC2.bars[i]:Hide()
+            end
+        end
+
+        TC2:UpdateFrame()
+    end
 end
 
 local function OnResizeStart(f)
