@@ -516,10 +516,10 @@ function TC2:FlashScreen()
             elapsed = self.elapsed + elapsed
             if elapsed < 2.6 then
                 local alpha = elapsed % 1.3
-                if alpha < 0.15 then
-                    self:SetAlpha(alpha / 0.15)
-                elseif alpha < 0.9 then
-                    self:SetAlpha(1 - (alpha - 0.15) / 0.6)
+                if alpha < 0.2 then
+                    self:SetAlpha(alpha / 0.2)
+                elseif alpha < 0.79 then
+                    self:SetAlpha(1 - (alpha - 0.2) / 0.6)
                 else
                     self:SetAlpha(0)
                 end
