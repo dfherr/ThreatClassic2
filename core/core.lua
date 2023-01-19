@@ -580,8 +580,12 @@ end
 local function OnResizeStart(f)
     TC2.frame.header:SetMovable(false)
     f = f:GetParent()
-    f:SetMinResize(64, C.bar.height)
-    f:SetMaxResize(512, 1024)
+    if f.SetResizeBounds then -- WoW 10.0
+        f:SetResizeBounds(64, C.bar.height, 512, 1024)
+    else
+        f:SetMinResize(64, C.bar.height)
+        f:SetMaxResize(512, 1024)
+    end
     TC2.sizing = true
     f:SetScript("OnSizeChanged", UpdateSize)
     f:StartSizing()
