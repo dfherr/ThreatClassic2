@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.47
+
+Updated for WotLK 30401
+* fixed SetMinResize / SetMaxResize renamed to SetResizeBounds
+* fixed invalid values provided to SetAlpha during screenflash
+* rate limit frame resize call to prevent lag
+* updated libs
+
 ## v2.46
 * fixed a bug that made the bar background incorrectly configurable. the backdrop texture can now be correctly configured. Changed the config settings, so you might have to reconfigure color and texture of your backdrop. Your old settings are still available as backdrop.bgTexture and backdrop.bgColor in your config file in the WTF folder.
 * added yogg laughing as an aggro warning sound
