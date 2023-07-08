@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.48
+
+Updated TOC for WotLK 30402
+
 ## v2.47
 
 Updated for WotLK 30401
