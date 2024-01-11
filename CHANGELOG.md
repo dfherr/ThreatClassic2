@@ -1,5 +1,10 @@
 # Changelog
 
+
+## v2.49
+
+Updated TOC for  Classic Era 11500
+
 ## v2.49
 
 Updated TOC for WotLK 30403 and Classic Era 11404

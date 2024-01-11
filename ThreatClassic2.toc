@@ -1,5 +1,5 @@
 ## Interface: 30403
-## Interface-Classic: 11404
+## Interface-Classic: 11500
 ## Interface-BCC: 20504
 ## Interface-Wrath: 30403
 ## Title: ThreatClassic2
@@ -8,7 +8,7 @@
 ## X-Curse-Project-ID: 355497
 ## X-WoWI-ID: 25966
 ## X-Wago-ID: pkNM1ONz
-## Version: 2.49
+## Version: 2.50
 ## SavedVariables: ThreatClassic2DB
 ## SavedVariablesPerCharacter: TC2_Options
 
