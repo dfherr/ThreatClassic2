@@ -1,12 +1,18 @@
 # Changelog
 
+## v2.52
+
+* Updated TOC for Cataclysm 40400
+* Updated TOC for Classic Era 11502
+* Updated Ace libs
+
 ## v2.51
 
-Updated TOC for  Classic Era 11501
+Updated TOC for Classic Era 11501
 
 ## v2.50
 
-Updated TOC for  Classic Era 11500
+Updated TOC for Classic Era 11500
 
 ## v2.49
 
