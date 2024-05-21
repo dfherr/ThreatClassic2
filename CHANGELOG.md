@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.53
+* fix wotlk warning in curseforge updater
+
 ## v2.52
 
 * Updated TOC for Cataclysm 40400

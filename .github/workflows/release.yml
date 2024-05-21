@@ -33,4 +33,8 @@ jobs:
         uses: BigWigsMods/packager@master
         with:
           args: -g wrath
+      - name: Package and release cata
+        uses: BigWigsMods/packager@master
+        with:
+          args: -g cata
  
