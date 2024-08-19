@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.54
+* update for classic 1.15.3
+
 ## v2.53
 * fix wotlk warning in curseforge updater
 
