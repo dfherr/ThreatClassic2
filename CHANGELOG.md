@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.55
+* update for classic 1.15.4 and cata 4.4.1
+* replaced EasyMenu with new Blizzard Menu API
+
 ## v2.54
 * update for classic 1.15.3
 
