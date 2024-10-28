@@ -35,9 +35,7 @@ local UnitIsPlayer          = _G.UnitIsPlayer
 local UnitName              = _G.UnitName
 local UnitReaction          = _G.UnitReaction
 local UnitIsUnit            = _G.UnitIsUnit
-local GetSpellInfo          = _G.GetSpellInfo
 local GetShapeshiftForm     = _G.GetShapeshiftForm
-local FindAuraByName        = AuraUtil.FindAuraByName
 
 local screenWidth           = floor(GetScreenWidth())
 local screenHeight          = floor(GetScreenHeight())
@@ -277,7 +275,7 @@ function TC2:UpdateThreatBars()
     local igniteOwner = nil
     local hasActiveIgnite = false
     if C.bar.showIgniteIndicator or C.customBarColors.igniteEnabled then
-        igniteOwner = select(7, FindAuraByName(C_Spell.GetSpellInfo(12848), TC2.playerTarget, "HARMFUL"))
+        igniteOwner = select(7, AuraUtil.FindAuraByName(C_Spell.GetSpellName(12848), TC2.playerTarget, "HARMFUL"))
     end
     -- update view
     for i = 1, C.bar.count do
@@ -470,7 +468,7 @@ function TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
             end
         elseif self.playerClass == "PALADIN" then
             -- righteous fury active
-            if FindAuraByName(GetSpellInfo(25780), "player", "HELPFUL") then
+            if AuraUtil.FindAuraByName(C_Spell.GetSpellName(25780), "player", "HELPFUL") then
                 lastWarnPercent = 100
                 return
             end

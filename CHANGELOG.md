@@ -1,8 +1,13 @@
 # Changelog
 
+## v2.56
+* live release for cata 4.4.1
+* bug fix for aura detection (fixes ignite holder)
+
 ## v2.55
 * update for classic 1.15.4 and cata 4.4.1
 * replaced EasyMenu with new Blizzard Menu API
+* This is breaking old TBC and WOTLK Interface compatibility!
 
 ## v2.54
 * update for classic 1.15.3

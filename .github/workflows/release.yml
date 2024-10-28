@@ -25,14 +25,6 @@ jobs:
         uses: BigWigsMods/packager@master
         with:
           args: -g classic
-      - name: Package and release bcc
-        uses: BigWigsMods/packager@master
-        with:
-          args: -g bcc
-      - name: Package and release wotlk
-        uses: BigWigsMods/packager@master
-        with:
-          args: -g wrath
       - name: Package and release cata
         uses: BigWigsMods/packager@master
         with:
