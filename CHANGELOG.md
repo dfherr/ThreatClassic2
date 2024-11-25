@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.57
+* bump toc for wow classic 1.15.5
+
 ## v2.56
 * live release for cata 4.4.1
 * bug fix for aura detection (fixes ignite holder)
