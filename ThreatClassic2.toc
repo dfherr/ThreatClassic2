@@ -1,5 +1,5 @@
 ## Interface: 40401
-## Interface-Vanilla: 11505
+## Interface-Vanilla: 11506
 ## Interface-TBC: 20504
 ## Interface-Cata: 40401
 ## Title: ThreatClassic2
