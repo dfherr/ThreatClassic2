@@ -1,7 +1,7 @@
-## Interface: 40401
+## Interface: 40402
 ## Interface-Vanilla: 11506
 ## Interface-TBC: 20504
-## Interface-Cata: 40401
+## Interface-Cata: 40402
 ## Title: ThreatClassic2
 ## Notes: Simple threat meter for WoW Classic to Cataclsym.
 ## Author: Dennis-Florian Herr (dfherr)
