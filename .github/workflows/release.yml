@@ -25,8 +25,8 @@ jobs:
         uses: BigWigsMods/packager@master
         with:
           args: -g classic
-      - name: Package and release cata
+      - name: Package and release mists
         uses: BigWigsMods/packager@master
         with:
-          args: -g cata
+          args: -g mists
  
