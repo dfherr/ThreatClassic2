@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.63
+* bump toc for wow cata/mop 5.5.1
+
 ## v2.62
 * bump toc for wow cata/mop 5.5.0
 
