@@ -1,5 +1,5 @@
-## Interface: 50501
-## Interface-Vanilla: 11507
+## Interface: 50502
+## Interface-Vanilla: 11508
 ## Interface-TBC: 20504
 ## Interface-Mists: 50501
 ## Title: ThreatClassic2
