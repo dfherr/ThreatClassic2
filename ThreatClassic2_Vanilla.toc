@@ -8,6 +8,8 @@
 ## Version: @project-version@
 ## SavedVariables: ThreatClassic2DB
 ## SavedVariablesPerCharacter: TC2_Options
+## IconTexture: 136080
+## Category: Combat
 
 ## OptionalDeps: LibStub, CallbackHandler-1.0, Ace3, LibSharedMedia-3.0
 ## X-Embeds: LibStub, CallbackHandler-1.0, AceAddon-3.0, AceComm-3.0, AceConfig-3.0, AceDB-3.0, AceDBOptions-3.0, AceGUI-3.0, AceGUI-3.0-SharedMediaWidgets, LibSharedMedia-3.0

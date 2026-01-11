@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.65
+* bump toc for wow cata/mop 5.5.3
+* updated for wow tbc anniversary 2.5.5
+* add category and icon
+
 ## v2.64
 * bump toc for wow cata/mop 5.5.2
 * bump toc for wow classic 1.15.8
