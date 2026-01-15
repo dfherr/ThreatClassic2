@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.66
+* fix versioning for TBC
+
 ## v2.65
 * bump toc for wow cata/mop 5.5.3
 * updated for wow tbc anniversary 2.5.5

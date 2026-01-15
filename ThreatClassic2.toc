@@ -11,7 +11,7 @@
 ## Version: @project-version@
 ## SavedVariables: ThreatClassic2DB
 ## SavedVariablesPerCharacter: TC2_Options
-## IconTexture: 136080
+## IconTexture: Interface/Addons/ThreatClassic2/tc2_thumbnail.png
 ## Category: Combat
 
 ## OptionalDeps: LibStub, CallbackHandler-1.0, Ace3, LibSharedMedia-3.0
