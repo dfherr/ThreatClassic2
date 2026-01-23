@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.67
+* fix version check for tag without "v" in front
+
 ## v2.66
 * fix versioning for TBC
 

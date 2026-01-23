@@ -809,7 +809,8 @@ end
 
 function TC2:OnCommReceived(prefix, message, distribution, sender)
     if prefix == "TC2" then
-        local cmd, value = strmatch(message, "^(.*)::(.*)$")
+        -- v? to strip out v from temporarily broken versioning scheme
+        local cmd, value = strmatch(message, "^(.*)::v?(.*)$")
         if cmd == "VERSION" then
             if self.version < value and not announcedOutdated then
                 announcedOutdated = true
