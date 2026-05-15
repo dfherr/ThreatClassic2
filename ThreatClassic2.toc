@@ -23,5 +23,3 @@
 ## X-Website: https://github.com/dfherr/ThreatClassic2
 
 ThreatClassic2.xml
-
-136080

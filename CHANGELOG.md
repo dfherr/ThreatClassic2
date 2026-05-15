@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.68
+* remove ignite indicator from tbc and up
+
 ## v2.67
 * fix version check for tag without "v" in front
 

@@ -274,7 +274,7 @@ function TC2:UpdateThreatBars()
     -- ignite
     local igniteOwner = nil
     local hasActiveIgnite = false
-    if C.bar.showIgniteIndicator or C.customBarColors.igniteEnabled then
+    if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC and (C.bar.showIgniteIndicator or C.customBarColors.igniteEnabled) then
         igniteOwner = select(7, AuraUtil.FindAuraByName(C_Spell.GetSpellName(12848), TC2.playerTarget, "HARMFUL"))
     end
     -- update view
@@ -1493,6 +1493,8 @@ TC2.configTable = {
                             name = L.bar_showIgniteIndicator,
                             desc = L.bar_showIgniteIndicator_desc,
                             type = "toggle",
+                            -- Hide this if we are NOT on Vanilla Classic
+                            hidden = WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC,
                         },
                     },
                 },
@@ -1501,7 +1503,7 @@ TC2.configTable = {
                     name = L.igniteIndicator,
                     type = "group",
                     inline = true,
-                    hidden = function() return not C.bar.showIgniteIndicator end,
+                    hidden = function() return WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC or not C.bar.showIgniteIndicator end,
                     args = {
                         size = {
                             order = 1,
@@ -1546,6 +1548,8 @@ TC2.configTable = {
                             name = L.customBarColorsIgnite_enabled,
                             desc = L.customBarColorsIgnite_desc,
                             type = "toggle",
+                            -- Hide this if we are NOT on Vanilla Classic
+                            hidden = WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC,
                         },
                         colors = {
                             order = 5,
@@ -1587,6 +1591,8 @@ TC2.configTable = {
                                     name = L.customBarColorsIgnite_color,
                                     type = "color",
                                     hasAlpha = true,
+                                    -- Hide this if we are NOT on Vanilla Classic
+                                    hidden = WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC,
                                 },
                             },
                         },
