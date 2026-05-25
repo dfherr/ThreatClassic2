@@ -321,15 +321,38 @@ function TC2:UpdateThreatBars()
             igniteOwner = select(7, AuraUtil.FindAuraByName(igniteName, TC2.playerTarget, "HARMFUL"))
         end
     end
+
+    -- prepare for pull aggro bar
+    local tankData = nil
+    local playerData = nil
+    for _, data in pairs(self.threatData) do
+        if data then
+            if data.isTanking then
+                tankData = data
+            end
+            if UnitIsUnit(data.unit, "player") then
+                playerData = data
+            end
+        end
+        if tankData and playerData then
+            break
+        end
+    end
+    local offset = 0
+    local showPullAggrobar = C.bar.showPullAggroBar and playerData and playerData.threatValue > 0 and not playerData.isTanking and tankData
+    if showPullAggrobar then
+        offset = 1 -- shift other bars
+    end
     -- update view
-    for i = 1, C.bar.count do
+    for i = 1 + offset, C.bar.count do
         -- get values out of table
-        local data = self.threatData[i]
+        local data = self.threatData[i-offset]
         local bar = self.bars[i]
         if data and data.threatValue > 0 then
             if UnitIsUnit(data.unit, "player") then
                 playerIncluded = true
             end
+
             if igniteOwner and UnitIsUnit(igniteOwner, data.unit) then
                 bar.ignite:Show()
                 bar.name:SetPoint("LEFT", bar, 5+C.igniteIndicator.size, 0)
@@ -354,36 +377,65 @@ function TC2:UpdateThreatBars()
             bar:Hide()
         end
     end
+
     -- overwrite last bar if player wasn't included above
-    if not playerIncluded then
-        for _, data in pairs(self.threatData) do
-            if data and UnitIsUnit(data.unit, "player") then
-                if data.threatValue > 0 then
-                    local bar = self.bars[C.bar.count]
-                    if igniteOwner and UnitIsUnit(igniteOwner, data.unit) then
-                        bar.ignite:Show()
-                        bar.name:SetPoint("LEFT", bar, 5+C.igniteIndicator.size, 0)
-                        hasActiveIgnite = true
-                    else
-                        bar.ignite:Hide()
-                        bar.name:SetPoint("LEFT", bar, 4, 0)
-                        hasActiveIgnite = false
-                    end
-                    bar.name:SetText(UnitName(data.unit) or UNKNOWN)
-                    bar.val:SetText(NumFormat(data.threatValue))
-                    bar.perc:SetText(floor(data.threatPercent).."%")
-                    bar:SetValue(data.threatPercent)
-                    local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
-                    -- this only runs for the player
-                    if C.filter.yourself and C.filter.desaturateOutOfMelee and data.outOfMeleeRange then
-                        color = DesaturateColor(color, C.filter.desaturateOutOfMeleeAmount)
-                    end
-                    bar:SetStatusBarColor(unpack(color))
-                    bar:Show()
-                    break
-                end
+    if not playerIncluded and playerData then
+        local data = playerData
+        if data.threatValue > 0 then
+            local bar = self.bars[C.bar.count]
+            if igniteOwner and UnitIsUnit(igniteOwner, data.unit) then
+                bar.ignite:Show()
+                bar.name:SetPoint("LEFT", bar, 5+C.igniteIndicator.size, 0)
+                hasActiveIgnite = true
+            else
+                bar.ignite:Hide()
+                bar.name:SetPoint("LEFT", bar, 4, 0)
+                hasActiveIgnite = false
             end
+            bar.name:SetText(UnitName(data.unit) or UNKNOWN)
+            bar.val:SetText(NumFormat(data.threatValue))
+            bar.perc:SetText(floor(data.threatPercent).."%")
+            bar:SetValue(data.threatPercent)
+            local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
+            -- this only runs for the player
+            if C.filter.yourself and C.filter.desaturateOutOfMelee and data.outOfMeleeRange then
+                color = DesaturateColor(color, C.filter.desaturateOutOfMeleeAmount)
+            end
+            bar:SetStatusBarColor(unpack(color))
+            bar:Show()
         end
+    end
+
+    -- add pull aggrobar
+    if showPullAggrobar then
+        local bar = self.bars[1]
+        local pullAggroThreatValue = tankData.threatValue * 1.1
+        if playerData.outOfMeleeRange then
+            pullAggroThreatValue = tankData.threatValue * 1.3
+        end
+        local threatRequired = pullAggroThreatValue - playerData.threatValue
+        local threatPercentageRequired = threatRequired * 100 / playerData.threatValue
+        
+
+        bar.ignite:Hide()
+        bar.name:SetPoint("LEFT", bar, 4, 0)
+        
+        bar.name:SetText(C.bar.pullAggroBarText)
+        bar.val:SetText("+"..NumFormat(threatRequired))
+        if threatPercentageRequired > 1000 then
+            bar.perc:SetText(">1000%")
+        else
+            bar.perc:SetText("+"..floor(threatPercentageRequired).."%")
+        end
+        
+        if C.bar.pullAggroBarGrow then
+            bar:SetValue(math.max(0, 100-threatPercentageRequired))
+        else
+            bar:SetValue(100)
+        end
+        
+        bar:SetStatusBarColor(unpack(C.bar.pullAggroBarColor))
+        bar:Show()
     end
 end
 
@@ -1543,14 +1595,63 @@ TC2.configTable = {
                             name = L.bar_showThreatPercentage,
                             type = "toggle",
                         },
-                        showIgniteIndicator = {
+                        extraOptions = {
                             order = 17,
+                            name = L.bar_extraOptions,
+                            type = "header",
+                        },
+                        showPullAggroBar = {
+                            order = 18,
+                            name = L.bar_showPullAggroBar,
+                            type = "toggle",
+                        },
+                        showIgniteIndicator = {
+                            order = 19,
                             name = L.bar_showIgniteIndicator,
                             desc = L.bar_showIgniteIndicator_desc,
                             type = "toggle",
                             -- Hide this if we are NOT on Vanilla Classic
                             hidden = WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC,
                         },
+                        pullAggroBarOptions = {
+                            order = 20,
+                            name = L.bar_pullAggroBarOptions,
+                            type = "header",
+                            hidden = function() return not C.bar.showPullAggroBar end,
+                        },
+                        pullAggroBarColor = {
+                            order = 21,
+                            name = L.bar_pullAggroBarColor,
+                            type = "color",
+                            hasAlpha = true,
+                            hidden = function() return not C.bar.showPullAggroBar end,
+                            get = function(info)
+                                return unpack(C.bar.pullAggroBarColor)
+                            end,
+                            set = function(info, r, g, b, a)
+                                local cfg = C.bar.pullAggroBarColor
+                                cfg[1] = r
+                                cfg[2] = g
+                                cfg[3] = b
+                                cfg[4] = a
+                                TC2:UpdateFrame()
+                            end,
+                        },
+                        pullAggroBarText = {
+                            order = 22,
+                            name = L.bar_pullAggroBarText,
+                            type = "input",
+                            multiline = false,
+                            hidden = function() return not C.bar.showPullAggroBar end,
+                        },
+                        pullAggroBarGrow = {
+                            order = 23,
+                            name = L.bar_pullAggroBarGrow,
+                            desc = L.bar_pullAggroBarGrow_desc,
+                            type = "toggle",
+                            hidden = function() return not C.bar.showPullAggroBar end,
+                        },
+                        
                     },
                 },
                 igniteIndicator = {
@@ -1915,11 +2016,6 @@ SlashCmdList["TC2_SLASHCMD"] = function(arg)
     elseif arg == "ver" or arg == "version" then
         print("|c00FFAA00"..TC2.addonName.." v"..TC2.version.."|r")
     else
-        -- Modern 12.0 way to open the interface settings panel
-        if TC2.configIds and TC2.configIds.general then
-            Settings.OpenToCategory(TC2.configIds.general)
-        else
-            LibStub("AceConfigDialog-3.0"):Open(TC2.addonName)
-        end
+        LibStub("AceConfigDialog-3.0"):Open(TC2.addonName)
     end
 end
