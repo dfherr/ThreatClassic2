@@ -274,8 +274,11 @@ function TC2:UpdateThreatBars()
     -- ignite
     local igniteOwner = nil
     local hasActiveIgnite = false
-    if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC and (C.bar.showIgniteIndicator or C.customBarColors.igniteEnabled) then
-        igniteOwner = select(7, AuraUtil.FindAuraByName(C_Spell.GetSpellName(12848), TC2.playerTarget, "HARMFUL"))
+    if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and (C.bar.showIgniteIndicator or C.customBarColors.igniteEnabled) then
+        local igniteName = C_Spell.GetSpellName(12848)
+        if igniteName then
+            igniteOwner = select(7, AuraUtil.FindAuraByName(igniteName, TC2.playerTarget, "HARMFUL"))
+        end
     end
     -- update view
     for i = 1, C.bar.count do
@@ -1027,11 +1030,13 @@ function TC2:SetupConfig()
 
     local ACD = LibStub("AceConfigDialog-3.0")
     self.config = {}
-    self.config.general = ACD:AddToBlizOptions(TC2.addonName, TC2.addonName, nil, "general")
-    self.config.appearance = ACD:AddToBlizOptions(TC2.addonName, L.appearance, TC2.addonName, "appearance")
-    self.config.appearance = ACD:AddToBlizOptions(TC2.addonName, L.filter, TC2.addonName, "filter")
-    self.config.warnings = ACD:AddToBlizOptions(TC2.addonName, L.warnings, TC2.addonName, "warnings")
-    self.config.profiles = ACD:AddToBlizOptions(TC2.addonName, L.profiles, TC2.addonName, "profiles")
+    self.configIds = {}
+
+    self.config.general, self.configIds.general        = ACD:AddToBlizOptions(TC2.addonName, TC2.addonName, nil, "general")
+    self.config.appearance, self.configIds.appearance  = ACD:AddToBlizOptions(TC2.addonName, L.appearance, TC2.addonName, "appearance")
+    self.config.filter, self.configIds.filter          = ACD:AddToBlizOptions(TC2.addonName, L.filter, TC2.addonName, "filter")
+    self.config.warnings, self.configIds.warnings      = ACD:AddToBlizOptions(TC2.addonName, L.warnings, TC2.addonName, "warnings")
+    self.config.profiles, self.configIds.profiles      = ACD:AddToBlizOptions(TC2.addonName, L.profiles, TC2.addonName, "profiles")
 end
 
 function TC2:RefreshProfile()
@@ -1779,6 +1784,11 @@ SlashCmdList["TC2_SLASHCMD"] = function(arg)
     elseif arg == "ver" or arg == "version" then
         print("|c00FFAA00"..TC2.addonName.." v"..TC2.version.."|r")
     else
-        LibStub("AceConfigDialog-3.0"):Open("ThreatClassic2")
+        -- Modern 12.0 way to open the interface settings panel
+        if TC2.configIds and TC2.configIds.general then
+            Settings.OpenToCategory(TC2.configIds.general)
+        else
+            LibStub("AceConfigDialog-3.0"):Open(TC2.addonName)
+        end
     end
 end
