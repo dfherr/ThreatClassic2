@@ -98,9 +98,12 @@ defaultConfig.font = {
 
 -- filter settings
 defaultConfig.filter = {
-    outOfMelee          = false,                                -- hide players out of melee range
-    useTargetList       = true,                                 -- only filter targets in list
-    targetList          = {},                                   -- list of targets to apply filters for
+    hideOutOfMelee              = false,                        -- hide players out of melee range
+    desaturateOutOfMelee        = false,                        -- desaturate out of melee range
+    desaturateOutOfMeleeAmount  = 0.5,                           -- how much to desaturate out of melee range
+    yourself                    = false,                        -- apply filter to yourself
+    useTargetList               = true,                         -- only filter targets in list
+    targetList                  = {},                           -- list of targets to apply filters for
 }
 
 -- warning settings

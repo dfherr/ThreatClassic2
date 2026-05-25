@@ -288,6 +288,25 @@ local function GetColor(unit, isTanking, hasActiveIgnite)
     end
 end
 
+local function DesaturateColor(color, desaturationAmount)
+    -- 1. Extract the RGBA values from the passed color table
+    local r, g, b, a = color[1], color[2], color[3], color[4]
+    
+    -- Safety fallback if amount is nil
+    local desat = desaturationAmount or 1.0 
+
+    -- 2. Calculate Standard RGB Luminance
+    local luminance = (r * 0.299) + (g * 0.587) + (b * 0.114)
+    
+    -- 3. Blend original color with the grayscale color
+    r = r + (luminance - r) * desat
+    g = g + (luminance - g) * desat
+    b = b + (luminance - b) * desat
+
+    -- 4. Return new table so we don't permanently taint global class colors
+    return {r, g, b, a}
+end
+
 function TC2:UpdateThreatBars()
     -- sort the threat table
     sort(self.threatData, Compare)
@@ -325,6 +344,9 @@ function TC2:UpdateThreatBars()
             bar.perc:SetText(floor(data.threatPercent).."%")
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
+            if (C.filter.yourself or not UnitIsUnit(data.unit, "player")) and C.filter.desaturateOutOfMelee and data.outOfMeleeRange then
+                color = DesaturateColor(color, C.filter.desaturateOutOfMeleeAmount)
+            end
             bar:SetStatusBarColor(unpack(color))
 
             bar:Show()
@@ -352,6 +374,10 @@ function TC2:UpdateThreatBars()
                     bar.perc:SetText(floor(data.threatPercent).."%")
                     bar:SetValue(data.threatPercent)
                     local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
+                    -- this only runs for the player
+                    if C.filter.yourself and C.filter.desaturateOutOfMelee and data.outOfMeleeRange then
+                        color = DesaturateColor(color, C.filter.desaturateOutOfMeleeAmount)
+                    end
                     bar:SetStatusBarColor(unpack(color))
                     bar:Show()
                     break
@@ -386,12 +412,13 @@ local function UpdateThreatData(unit)
         threatPercent = 100
     end
 
-    -- never filter player
-    if not UnitIsUnit(unit, "player") then
+    local outOfMeleeRange = rawThreatPercent and threatPercent > 0 and rawThreatPercent / threatPercent > 1.2
+
+    if C.filter.yourself or not UnitIsUnit(unit, "player") then
         -- target list disabled or target in filter targetlist
         if not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)] then
             -- melee range filter; threatPercent > 0 to avoid divison by zero on fucked up api response
-            if C.filter.outOfMelee and rawThreatPercent and threatPercent > 0 and rawThreatPercent / threatPercent > 1.2 then
+            if C.filter.hideOutOfMelee and outOfMeleeRange then
                 return
             end
         end
@@ -415,6 +442,7 @@ local function UpdateThreatData(unit)
         threatPercent   = threatPercent or 0,
         threatValue     = threatValue or 0,
         isTanking       = isTanking or false,
+        outOfMeleeRange = outOfMeleeRange
     })
 end
 
@@ -1559,24 +1587,29 @@ TC2.configTable = {
                             name = L.customBarColorsPlayer_enabled,
                             desc = L.customBarColorsPlayer_desc,
                             type = "toggle",
+                            width = 1.3,
                         },
                         activeTankEnabled = {
                             order = 2,
                             name = L.customBarColorsActiveTank_enabled,
                             type = "toggle",
-                        },
-                        offTankEnabled = {
-                            order = 2,
-                            name = L.customBarColorsOffTank_enabled,
-                            type = "toggle",
+                            width = "double",
                         },
                         otherUnitEnabled = {
                             order = 3,
                             name = L.customBarColorsOtherUnit_enabled,
                             type = "toggle",
+                            width = 1.3,
+                        },
+                        offTankEnabled = {
+                            order = 4,
+                            name = L.customBarColorsOffTank_enabled,
+                            desc = L.customBarColorsOffTank_desc,
+                            type = "toggle",
+                            width = "double",
                         },
                         igniteEnabled = {
-                            order = 4,
+                            order = 5,
                             name = L.customBarColorsIgnite_enabled,
                             desc = L.customBarColorsIgnite_desc,
                             type = "toggle",
@@ -1584,7 +1617,7 @@ TC2.configTable = {
                             hidden = WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC,
                         },
                         colors = {
-                            order = 5,
+                            order = 6,
                             name = L.color,
                             type = "group",
                             inline = false,
@@ -1611,18 +1644,20 @@ TC2.configTable = {
                                     name = L.customBarColorsActiveTank_color,
                                     type = "color",
                                     hasAlpha = true,
-                                },
-                                offTankColor = {
-                                    order = 3,
-                                    name = L.customBarColorsOffTank_color,
-                                    type = "color",
-                                    hasAlpha = true,
+                                    width="double",
                                 },
                                 otherUnitColor = {
-                                    order = 4,
+                                    order = 3,
                                     name = L.customBarColorsOtherUnit_color,
                                     type = "color",
                                     hasAlpha = true,
+                                },
+                                offTankColor = {
+                                    order = 4,
+                                    name = L.customBarColorsOffTank_color,
+                                    type = "color",
+                                    hasAlpha = true,
+                                    width="double",
                                 },
                                 igniteColor = {
                                     order = 5,
@@ -1692,20 +1727,83 @@ TC2.configTable = {
             type = "group",
             name = L.filter,
             args = {
-                outOfMelee = {
-                    order = 1,
+                outOfMeleeGroup = {
+                    type = "group",
                     name = L.filter_outOfMelee,
+                    inline = true, -- Draws a nice border box around these options
+                    order = 1,
+                    args = {
+                        description = {
+                            type = "description",
+                            name = L.filter_outOfMelee_desc,
+                            order = 0.5,
+                        },
+                        hideOutOfMelee = {
+                            type = "toggle",
+                            name = L.filter_hideOutOfMelee,
+                            order = 1,
+                            width = "normal", -- Keeps it on the left side
+                            get = function(info) return C.filter.hideOutOfMelee end,
+                            set = function(info, value)
+                                C.filter.hideOutOfMelee = value
+                                -- either this or desaturate
+                                if value then
+                                    C.filter.desaturateOutOfMelee = false
+                                end
+                                TC2:UpdateFrame()
+                            end,
+                        },
+                        desaturateOutOfMelee = {
+                            type = "toggle",
+                            name = L.filter_desaturateOutOfMelee,
+                            order = 2,
+                            width = "normal", -- Sits right next to the Hide toggle
+                            get = function(info) return C.filter.desaturateOutOfMelee end,
+                            set = function(info, value)
+                                C.filter.desaturateOutOfMelee = value
+                                -- either this or desaturate
+                                if value then
+                                    C.filter.hideOutOfMelee = false
+                                end
+                                TC2:UpdateFrame()
+                            end,
+                        },
+                        desaturateOutOfMeleeAmount = {
+                            type = "range",
+                            name = L.filter_desaturateStrengthOutOfMelee,
+                            desc = L.filter_desaturateStrengthOutOfMelee_desc,
+                            order = 3,
+                            min = 0,
+                            max = 100,
+                            step = 1,
+                            width = "double",
+                            -- Map the 0.0-1.0 backend value to the 0-100 UI slider
+                            get = function(info) 
+                                return (C.filter.desaturateOutOfMeleeAmount or 1.0) * 100 
+                            end,
+                            -- Convert the 0-100 UI slider back down to a 0.0-1.0 multiplier
+                            set = function(info, value)
+                                C.filter.desaturateOutOfMeleeAmount = value / 100
+                                TC2:UpdateFrame()
+                            end,
+                            hidden = function() return not C.filter.desaturateOutOfMelee end,
+                        },
+                    },
+                },
+                yourself = {
+                    order = 2,
+                    name = L.filter_yourself,
                     type = "toggle",
                     width = "full",
                 },
                 useTargetList = {
-                    order = 2,
+                    order = 3,
                     name = L.filter_useTargetList,
                     type = "toggle",
                     width = "full",
                 },
                 targetList = {
-                    order = 3,
+                    order = 4,
                     name = L.filter_targetList,
                     desc = L.filter_targetList_desc,
                     type = "input",

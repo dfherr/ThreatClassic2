@@ -105,7 +105,6 @@ L.THICKOUTLINE                      = "粗轮廓"
 L.font_shadow                       = "字体阴影"
 
 L.filter                            = "过滤器"
-L.filter_outOfMelee                 = "隐藏不在近战范围内的玩家"
 L.filter_useTargetList              = "仅针对列出的目标过滤玩家"
 L.filter_targetList                 = "过滤目标列表（Shift+Enter键来分隔）"
 L.filter_targetList_desc            = "输入要过滤的首领或其他的单位。每行一个。注意:需要添加准确的名称，例如：屠龙者格鲁尔"
