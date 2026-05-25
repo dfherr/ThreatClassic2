@@ -358,6 +358,10 @@ function TC2:UpdateThreatBars()
             end
         end
         if tankData and playerData then
+            -- small tweak for test mode otherwise playerData will always be equal to tankData as all datas are considered the player
+            if C.frame.test then
+                playerData = self.threatData[3]
+            end
             break
         end
     end
@@ -390,7 +394,7 @@ function TC2:UpdateThreatBars()
             bar.perc:SetText(floor(data.threatPercent).."%")
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
-            if (C.filter.yourself or not UnitIsUnit(data.unit, "player")) and C.filter.outOfMelee.color and data.outOfMeleeRange then
+            if (C.filter.yourself or not UnitIsUnit(data.unit, "player")) and C.filter.outOfMelee.color and data.outOfMeleeRange and (not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)]) then
                 if C.filter.outOfMelee.overwriteColorEnabled then
                     color = C.filter.outOfMelee.overwriteColor
                 end
@@ -429,7 +433,7 @@ function TC2:UpdateThreatBars()
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             -- this only runs for the player
-            if C.filter.yourself and C.filter.outOfMelee.color and data.outOfMeleeRange then
+            if C.filter.yourself and C.filter.outOfMelee.color and data.outOfMeleeRange and (not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)]) then
                 if C.filter.outOfMelee.overwriteColorEnabled then
                     color = C.filter.outOfMelee.overwriteColor
                 end
@@ -461,8 +465,8 @@ function TC2:UpdateThreatBars()
 
         bar.name:SetText(C.bar.pullAggroBarText)
         bar.val:SetText("+"..NumFormat(threatRequired))
-        if threatPercentageRequired > 1000 then
-            bar.perc:SetText(">1000%")
+        if threatPercentageRequired > 999 then
+            bar.perc:SetText(">999%")
         else
             bar.perc:SetText("+"..floor(threatPercentageRequired).."%")
         end
@@ -504,8 +508,6 @@ local function UpdateThreatData(unit)
     end
 
     local outOfMeleeRange = rawThreatPercent and threatPercent > 0 and rawThreatPercent / threatPercent > 1.2
-
-    -- easy test while tanking: outOfMeleeRange = (IsSpellInRange("Jab", TC2.playerTarget) == 0)
 
     if C.filter.yourself or not UnitIsUnit(unit, "player") then
         -- target list disabled or target in filter targetlist
@@ -938,14 +940,33 @@ function TC2:TestMode()
 
     C.frame.test = true
     wipe(TC2.threatData)
-    for i = 1, C.bar.count do
+    for i = 1, 10 do
         self.threatData[i] = {
             unit = self.playerName,
-            threatPercent = i / C.bar.count * 100,
-            threatValue = i * 1e4,
+            threatValue = floor((12-i)/10.0 * 10000),
+            threatPercent = floor((12-i)/10.0 * 10000) / 10000.0 * 100,
         }
-        tinsert(self.bars, i)
+        if i <= C.bar.count then
+            tinsert(self.bars, i)
+        end
     end
+
+    self.threatData[2].isTanking = true
+    self.threatData[1].outOfMeleeRange = true
+    self.threatData[4].outOfMeleeRange = true
+
+    if not C.general.rawPercent then
+        for i = 1, 10 do
+            if not self.threatData[i].isTanking then
+                if self.threatData[i].outOfMeleeRange then
+                    self.threatData[i].threatPercent = self.threatData[i].threatPercent / 1.3
+                else
+                    self.threatData[i].threatPercent = self.threatData[i].threatPercent / 1.1
+                end
+            end
+        end
+    end
+
     self:UpdateThreatBars()
 end
 
@@ -1217,6 +1238,12 @@ TC2.configTable = {
                     name = L.general_rawPercent,
                     type = "toggle",
                     width = "full",
+                    set = function(info, value)
+                        C[info[1]][info[2]] = value
+                        if C.frame.test then
+                            TC2:TestMode()
+                        end
+                    end,
                 },
                 downscaleThreat = {
                     order = 4,
@@ -1253,7 +1280,7 @@ TC2.configTable = {
                 },
                 --]]
                 visibility = {
-                    order = 5,
+                    order = 5.5,
                     name = L.visibility,
                     type = "header",
                 },
@@ -2006,12 +2033,22 @@ TC2.configTable = {
                     name = L.filter_yourself,
                     type = "toggle",
                     width = "full",
+                    get = function(info) return C.filter.yourself end,
+                    set = function(info, value)
+                        C.filter.yourself = value
+                        TC2:UpdateFrame()
+                    end,
                 },
                 useTargetList = {
                     order = 3,
                     name = L.filter_useTargetList,
                     type = "toggle",
                     width = "full",
+                    get = function(info) return C.filter.useTargetList end,
+                    set = function(info, value)
+                        C.filter.useTargetList = value
+                        TC2:UpdateFrame()
+                    end,
                 },
                 targetList = {
                     order = 4,
@@ -2042,6 +2079,7 @@ TC2.configTable = {
                             num = num + 1
                         end
                         C[info[1]][info[2]] = targets
+                        TC2:UpdateFrame()
                     end,
                     disabled = function() return not C.filter.useTargetList end,
                 },
