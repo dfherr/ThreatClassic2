@@ -307,6 +307,29 @@ local function DesaturateColor(color, desaturationAmount)
     return {r, g, b, a}
 end
 
+local function DarkenColor(color, darkenAmount)
+    -- 1. Extract the RGBA values from the passed color table
+    local r, g, b, a = color[1], color[2], color[3], color[4]
+
+    -- Safety fallback if amount is nil
+    local darken = darkenAmount or 1.0 
+
+    -- 2. darken color
+    r = r * (1- darken)
+    g = g * (1- darken)
+    b = b * (1- darken)
+
+    -- 3. Return new table so we don't permanently taint global class colors
+    return {r, g, b, a}
+end
+
+local function FadeBarBackdrop(bar, fadeAmount)
+    local r,g,b,a = unpack(C.backdrop.color)
+    bar:SetBackdropColor(r,g,b, a * (1-fadeAmount))
+    r,g,b,a = unpack(C.backdrop.edgeColor)
+    bar.edgeBackdrop:SetBackdropBorderColor(r,g,b, a * (1-fadeAmount))
+end
+
 function TC2:UpdateThreatBars()
     -- sort the threat table
     sort(self.threatData, Compare)
@@ -367,8 +390,16 @@ function TC2:UpdateThreatBars()
             bar.perc:SetText(floor(data.threatPercent).."%")
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
-            if (C.filter.yourself or not UnitIsUnit(data.unit, "player")) and C.filter.desaturateOutOfMelee and data.outOfMeleeRange then
-                color = DesaturateColor(color, C.filter.desaturateOutOfMeleeAmount)
+            if (C.filter.yourself or not UnitIsUnit(data.unit, "player")) and C.filter.outOfMelee.color and data.outOfMeleeRange then
+                if C.filter.outOfMelee.overwriteColorEnabled then
+                    color = C.filter.outOfMelee.overwriteColor
+                end
+                color = DesaturateColor(color, C.filter.outOfMelee.desaturate)
+                color = DarkenColor(color, C.filter.outOfMelee.darken)
+                color[4] = color[4] * (1-C.filter.outOfMelee.fade)
+                FadeBarBackdrop(bar, C.filter.outOfMelee.fade)
+            else
+                FadeBarBackdrop(bar, 0)
             end
             bar:SetStatusBarColor(unpack(color))
 
@@ -398,8 +429,16 @@ function TC2:UpdateThreatBars()
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             -- this only runs for the player
-            if C.filter.yourself and C.filter.desaturateOutOfMelee and data.outOfMeleeRange then
-                color = DesaturateColor(color, C.filter.desaturateOutOfMeleeAmount)
+            if C.filter.yourself and C.filter.outOfMelee.color and data.outOfMeleeRange then
+                if C.filter.outOfMelee.overwriteColorEnabled then
+                    color = C.filter.outOfMelee.overwriteColor
+                end
+                color = DesaturateColor(color, C.filter.outOfMelee.desaturate)
+                color = DarkenColor(color, C.filter.outOfMelee.darken)
+                color[4] = color[4] * (1-C.filter.outOfMelee.fade)
+                FadeBarBackdrop(bar, C.filter.outOfMelee.fade)
+            else
+                FadeBarBackdrop(bar, 0)
             end
             bar:SetStatusBarColor(unpack(color))
             bar:Show()
@@ -419,7 +458,7 @@ function TC2:UpdateThreatBars()
 
         bar.ignite:Hide()
         bar.name:SetPoint("LEFT", bar, 4, 0)
-        
+
         bar.name:SetText(C.bar.pullAggroBarText)
         bar.val:SetText("+"..NumFormat(threatRequired))
         if threatPercentageRequired > 1000 then
@@ -466,11 +505,13 @@ local function UpdateThreatData(unit)
 
     local outOfMeleeRange = rawThreatPercent and threatPercent > 0 and rawThreatPercent / threatPercent > 1.2
 
+    -- easy test while tanking: outOfMeleeRange = (IsSpellInRange("Jab", TC2.playerTarget) == 0)
+
     if C.filter.yourself or not UnitIsUnit(unit, "player") then
         -- target list disabled or target in filter targetlist
         if not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)] then
             -- melee range filter; threatPercent > 0 to avoid divison by zero on fucked up api response
-            if C.filter.hideOutOfMelee and outOfMeleeRange then
+            if C.filter.outOfMelee.hide and outOfMeleeRange then
                 return
             end
         end
@@ -1839,55 +1880,124 @@ TC2.configTable = {
                             name = L.filter_outOfMelee_desc,
                             order = 0.5,
                         },
-                        hideOutOfMelee = {
+                        hide = {
                             type = "toggle",
                             name = L.filter_hideOutOfMelee,
                             order = 1,
                             width = "normal", -- Keeps it on the left side
-                            get = function(info) return C.filter.hideOutOfMelee end,
+                            get = function(info) return C.filter.outOfMelee.hide end,
                             set = function(info, value)
-                                C.filter.hideOutOfMelee = value
+                                C.filter.outOfMelee.hide = value
                                 -- either this or desaturate
                                 if value then
-                                    C.filter.desaturateOutOfMelee = false
+                                    C.filter.outOfMelee.color = false
                                 end
                                 TC2:UpdateFrame()
                             end,
                         },
-                        desaturateOutOfMelee = {
+                        color = {
                             type = "toggle",
-                            name = L.filter_desaturateOutOfMelee,
+                            name = L.filter_colorOutOfMelee,
                             order = 2,
                             width = "normal", -- Sits right next to the Hide toggle
-                            get = function(info) return C.filter.desaturateOutOfMelee end,
+                            get = function(info) return C.filter.outOfMelee.color end,
                             set = function(info, value)
-                                C.filter.desaturateOutOfMelee = value
+                                C.filter.outOfMelee.color = value
                                 -- either this or desaturate
                                 if value then
-                                    C.filter.hideOutOfMelee = false
+                                    C.filter.outOfMelee.hide = false
                                 end
                                 TC2:UpdateFrame()
                             end,
                         },
-                        desaturateOutOfMeleeAmount = {
-                            type = "range",
-                            name = L.filter_desaturateStrengthOutOfMelee,
-                            desc = L.filter_desaturateStrengthOutOfMelee_desc,
+                        overwriteColorEnabled = {
                             order = 3,
+                            name = L.filter_overwriteColorEnabled,
+                            type = "toggle",
+                            hidden = function() return not C.filter.outOfMelee.color end,
+                            get = function(info) return C.filter.outOfMelee.overwriteColorEnabled end,
+                            set = function(info, value)
+                                C.filter.outOfMelee.overwriteColorEnabled = value
+                                TC2:UpdateFrame()
+                            end,
+                        },
+                        overwriteColor = {
+                            order = 4,
+                            name = L.filter_overwriteColor,
+                            type = "color",
+                            hasAlpha = true,
+                            hidden = function() return not C.filter.outOfMelee.color end,
+                            get = function(info)
+                                return unpack(C.filter.outOfMelee.overwriteColor)
+                            end,
+                            set = function(info, r, g, b, a)
+                                local cfg = C.filter.outOfMelee.overwriteColor
+                                cfg[1] = r
+                                cfg[2] = g
+                                cfg[3] = b
+                                cfg[4] = a
+                                TC2:UpdateFrame()
+                            end,
+                        },
+                        desaturate = {
+                            type = "range",
+                            name = L.filter_desaturateOutOfMelee,
+                            desc = L.filter_desaturateOutOfMelee_desc,
+                            order = 5,
                             min = 0,
                             max = 100,
                             step = 1,
                             width = "double",
                             -- Map the 0.0-1.0 backend value to the 0-100 UI slider
                             get = function(info) 
-                                return (C.filter.desaturateOutOfMeleeAmount or 1.0) * 100 
+                                return (C.filter.outOfMelee.desaturate or 1.0) * 100 
                             end,
                             -- Convert the 0-100 UI slider back down to a 0.0-1.0 multiplier
                             set = function(info, value)
-                                C.filter.desaturateOutOfMeleeAmount = value / 100
+                                C.filter.outOfMelee.desaturate = value / 100
                                 TC2:UpdateFrame()
                             end,
-                            hidden = function() return not C.filter.desaturateOutOfMelee end,
+                            hidden = function() return not C.filter.outOfMelee.color end,
+                        },
+                        darken = {
+                            type = "range",
+                            name = L.filter_darkenOutOfMelee,
+                            desc = L.filter_darkenOutOfMelee_desc,
+                            order = 6,
+                            min = 0,
+                            max = 100,
+                            step = 1,
+                            width = "double",
+                            -- Map the 0.0-1.0 backend value to the 0-100 UI slider
+                            get = function(info) 
+                                return (C.filter.outOfMelee.darken or 1.0) * 100 
+                            end,
+                            -- Convert the 0-100 UI slider back down to a 0.0-1.0 multiplier
+                            set = function(info, value)
+                                C.filter.outOfMelee.darken = value / 100
+                                TC2:UpdateFrame()
+                            end,
+                            hidden = function() return not C.filter.outOfMelee.color end,
+                        },
+                        fade = {
+                            type = "range",
+                            name = L.filter_fadeOutOfMelee,
+                            desc = L.filter_fadeOutOfMelee_desc,
+                            order = 7,
+                            min = 0,
+                            max = 100,
+                            step = 1,
+                            width = "double",
+                            -- Map the 0.0-1.0 backend value to the 0-100 UI slider
+                            get = function(info) 
+                                return (C.filter.outOfMelee.fade or 1.0) * 100 
+                            end,
+                            -- Convert the 0-100 UI slider back down to a 0.0-1.0 multiplier
+                            set = function(info, value)
+                                C.filter.outOfMelee.fade = value / 100
+                                TC2:UpdateFrame()
+                            end,
+                            hidden = function() return not C.filter.outOfMelee.color end,
                         },
                     },
                 },
