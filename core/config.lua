@@ -77,10 +77,12 @@ defaultConfig.igniteIndicator = {
 defaultConfig.customBarColors  = {
     playerEnabled       = false,                                -- enable custom color for player
     activeTankEnabled   = false,                                -- enable custom color for active tank
+    offTankEnabled      = false,                                -- enable custom color for off tank
     otherUnitEnabled    = false,                                -- enable custom color for other units
     igniteColorEnabled  = false,                                -- enable custom color for active ignite player
     playerColor         = {0.8, 0, 0, 1},                       -- custom color for player
     activeTankColor     = {0, 0.8, 0, 1},                       -- custom color for active tank
+    offTankColor        = {0, 0.5, 0, 1},                       -- custom color for off tank
     otherUnitColor      = {0.3, 0.3, 0.3, 1},                   -- custom color for other units
     igniteColor         = {1.0, 0.6, 0, 1},                     -- custom color for active ignite player
 }

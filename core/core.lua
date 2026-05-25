@@ -24,6 +24,8 @@ local wipe      = _G.table.wipe
 local GetTime               = _G.GetTime
 local GetNumGroupMembers    = _G.GetNumGroupMembers
 local GetNumSubgroupMembers = _G.GetNumSubgroupMembers
+local GetPartyAssignment    = _G.GetPartyAssignment
+local UnitGroupRolesAssigned = _G.UnitGroupRolesAssigned
 local GetInstanceInfo       = _G.GetInstanceInfo
 local IsInRaid              = _G.IsInRaid
 local UnitAffectingCombat   = _G.UnitAffectingCombat
@@ -223,6 +225,22 @@ local function TruncateString(str, i, ellipsis)
     end
 end
 
+local function IsUnitMarkedTank(unit)
+    if not unit or not UnitExists(unit) then return false end
+
+    -- 1. Check if they are assigned as Main Tank by the Raid Leader (Works everywhere)
+    if GetPartyAssignment and GetPartyAssignment("MAINTANK", unit) then
+        return true
+    end
+
+    -- 2. Check if they selected the Tank role (Cata Classic / MoP PTR / Retail only)
+    if UnitGroupRolesAssigned and UnitGroupRolesAssigned(unit) == "TANK" then
+        return true
+    end
+
+    return false
+end
+
 local function DefaultUnitColor(unit)
     local colorUnit
     if UnitIsPlayer(unit) then
@@ -245,6 +263,8 @@ local function GetColor(unit, isTanking, hasActiveIgnite)
                 return C.customBarColors.playerColor
             elseif isTanking and C.customBarColors.activeTankEnabled then
                 return C.customBarColors.activeTankColor
+            elseif IsUnitMarkedTank(unit) and C.customBarColors.offTankEnabled then
+                return C.customBarColors.offTankColor
             elseif hasActiveIgnite and C.customBarColors.igniteEnabled then
                 return C.customBarColors.igniteColor
             else
@@ -253,6 +273,8 @@ local function GetColor(unit, isTanking, hasActiveIgnite)
         else
             if isTanking and C.customBarColors.activeTankEnabled then
                 return C.customBarColors.activeTankColor
+            elseif IsUnitMarkedTank(unit) and C.customBarColors.offTankEnabled then
+                return C.customBarColors.offTankColor
             elseif hasActiveIgnite and C.customBarColors.igniteEnabled then
                 return C.customBarColors.igniteColor
             elseif C.customBarColors.otherUnitEnabled then
@@ -1543,6 +1565,11 @@ TC2.configTable = {
                             name = L.customBarColorsActiveTank_enabled,
                             type = "toggle",
                         },
+                        offTankEnabled = {
+                            order = 2,
+                            name = L.customBarColorsOffTank_enabled,
+                            type = "toggle",
+                        },
                         otherUnitEnabled = {
                             order = 3,
                             name = L.customBarColorsOtherUnit_enabled,
@@ -1585,14 +1612,20 @@ TC2.configTable = {
                                     type = "color",
                                     hasAlpha = true,
                                 },
-                                otherUnitColor = {
+                                offTankColor = {
                                     order = 3,
+                                    name = L.customBarColorsOffTank_color,
+                                    type = "color",
+                                    hasAlpha = true,
+                                },
+                                otherUnitColor = {
+                                    order = 4,
                                     name = L.customBarColorsOtherUnit_color,
                                     type = "color",
                                     hasAlpha = true,
                                 },
                                 igniteColor = {
-                                    order = 4,
+                                    order = 5,
                                     name = L.customBarColorsIgnite_color,
                                     type = "color",
                                     hasAlpha = true,
