@@ -1,46 +1,12 @@
 # Changelog
 
+## v2.70
+* improve pull aggro bar behavior
+* add options to display percentage points rather than relative threat required
+
 ## v2.69
 * fix logic error in ignite indicator update
 * add filter menu that currently supports filtering out of melee range
 * add off tank colors (off tanks are group/raid members marked as maintanks or that have the role tank, but are currently not tanking)
 * add pull aggro bar option
 
-## v2.68
-* remove ignite indicator from tbc and up
-
-## v2.67
-* fix version check for tag without "v" in front
-
-## v2.66
-* fix versioning for TBC
-
-## v2.65
-* bump toc for wow cata/mop 5.5.3
-* updated for wow tbc anniversary 2.5.5
-* add category and icon
-
-## v2.64
-* bump toc for wow cata/mop 5.5.2
-* bump toc for wow classic 1.15.8
-
-## v2.63
-* bump toc for wow cata/mop 5.5.1
-
-## v2.62
-* bump toc for wow cata/mop 5.5.0
-
-## v2.61
-* bump toc for wow classic 1.15.7
-
-## v2.60
-* bump toc for wow cata 4.4.2
-
-## v2.59
-* bump toc for wow classic 1.15.6
-
-## v2.58
-* fix broken interface version in one toc file
-
-## v2.57
-* bump toc for wow classic 1.15.5

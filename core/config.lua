@@ -69,6 +69,7 @@ defaultConfig.bar = {
     pullAggroBarColor   = {0, 0.7, 0, 1},                       -- color of pull aggro bar
     pullAggroBarText    = "Pull aggro at",                      -- text of pull aggro bar
     pullAggroBarGrow    = true,                                 -- grow the pull aggro bar when getting closer to pulling threat
+    pullAggroBarPercentage = "RELATIVE",                        -- relative vs absolute (percentage points) number for pull aggro bar
     showIgniteIndicator = true,                                 -- show ignite icon when target has ignite
 }
 

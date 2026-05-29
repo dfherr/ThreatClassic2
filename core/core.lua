@@ -366,7 +366,9 @@ function TC2:UpdateThreatBars()
         end
     end
     local offset = 0
-    local showPullAggrobar = C.bar.showPullAggroBar and playerData and playerData.threatValue > 0 and not playerData.isTanking and tankData
+    -- show the pull aggro bar if there is a tank that isn't the player
+    local playerIsNotTanking = not playerData or not playerData.isTanking -- short circuit guards against nil
+    local showPullAggrobar = C.bar.showPullAggroBar and tankData and playerIsNotTanking 
     if showPullAggrobar then
         offset = 1 -- shift other bars
     end
@@ -391,7 +393,7 @@ function TC2:UpdateThreatBars()
             end
             bar.name:SetText(UnitName(data.unit) or UNKNOWN)
             bar.val:SetText(NumFormat(data.threatValue))
-            bar.perc:SetText(floor(data.threatPercent).."%")
+            bar.perc:SetText(floor(data.threatPercent + 0.5).."%") -- floor(x + 0.5) is lua's missing round()
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             if (C.filter.yourself or not UnitIsUnit(data.unit, "player")) and C.filter.outOfMelee.color and data.outOfMeleeRange and (not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)]) then
@@ -429,7 +431,7 @@ function TC2:UpdateThreatBars()
             end
             bar.name:SetText(UnitName(data.unit) or UNKNOWN)
             bar.val:SetText(NumFormat(data.threatValue))
-            bar.perc:SetText(floor(data.threatPercent).."%")
+            bar.perc:SetText(floor(data.threatPercent + 0.5).."%")  -- floor(x + 0.5) is lua's missing round()
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             -- this only runs for the player
@@ -452,23 +454,46 @@ function TC2:UpdateThreatBars()
     -- add pull aggrobar
     if showPullAggrobar then
         local bar = self.bars[1]
-        local pullAggroThreatValue = tankData.threatValue * 1.1
-        if playerData.outOfMeleeRange then
-            pullAggroThreatValue = tankData.threatValue * 1.3
-        end
-        local threatRequired = pullAggroThreatValue - playerData.threatValue
-        local threatPercentageRequired = threatRequired * 100 / playerData.threatValue
         
+        -- If no playerData exists, we safely default to false (melee) for a stricter 110% warning
+        local isOutOfMelee = playerData and playerData.outOfMeleeRange or fa
+        local playerThreat = (playerData and playerData.threatValue) or 0
+        local currentThreatPercent = (playerData and playerData.threatPercent) or 0
+        
+        -- Calculate the exact threat value needed to pull (110% melee, 130% ranged)
+        local pullAggroThreatValue = tankData.threatValue * (isOutOfMelee and 1.3 or 1.1)
+        local threatRequired = pullAggroThreatValue - playerThreat
+        
+        local isAbsolute = (C.bar.pullAggroBarPercentage == "ABSOLUTE")
+        local threatPercentageRequired = 1000 -- Default to >999 for relative division by zero
+        
+        if isAbsolute then
+            -- ABSOLUTE: Simple subtraction based on the user's raw vs scaled setting
+            local targetPercent = 100 -- Base target if threat is scaled
+            
+            if C.general.rawPercent then
+                targetPercent = isOutOfMelee and 130 or 110
+            end
+            
+            threatPercentageRequired = targetPercent - currentThreatPercent
+        else
+            -- RELATIVE: Percentage relative to the player's current threat
+            if playerThreat > 0 then
+                threatPercentageRequired = (threatRequired / playerThreat) * 100
+            end
+        end
 
         bar.ignite:Hide()
         bar.name:SetPoint("LEFT", bar, 4, 0)
-
         bar.name:SetText(C.bar.pullAggroBarText)
-        bar.val:SetText("+"..NumFormat(threatRequired))
+        bar.val:SetText("+"..NumFormat(floor(threatRequired + 0.5)))  -- floor(x + 0.5) is lua's missing round()
+        
+        local suffix = isAbsolute and "pp" or "%"
+        
         if threatPercentageRequired > 999 then
-            bar.perc:SetText(">999%")
+            bar.perc:SetText(">999" .. suffix)
         else
-            bar.perc:SetText("+"..floor(threatPercentageRequired).."%")
+            bar.perc:SetText("+"..floor(threatPercentageRequired + 0.5)..suffix)  -- floor(x + 0.5) is lua's missing round()
         end
         
         if C.bar.pullAggroBarGrow then
@@ -1717,6 +1742,18 @@ TC2.configTable = {
                             name = L.bar_pullAggroBarGrow,
                             desc = L.bar_pullAggroBarGrow_desc,
                             type = "toggle",
+                            hidden = function() return not C.bar.showPullAggroBar end,
+                        },
+                        pullAggroBarPercentage = {
+                            order = 24,
+                            name = L.bar_pullAggroBarPercentage,
+                            desc = L.bar_pullAggroBarPercentage_desc,
+                            type = "select",
+                            values = {
+                                ["RELATIVE"] = L.bar_pullAggroBarPercentage_relative,
+                                ["ABSOLUTE"] = L.bar_pullAggroBarPercentage_absolute,
+                            },
+                            style = "dropdown",
                             hidden = function() return not C.bar.showPullAggroBar end,
                         },
                         
