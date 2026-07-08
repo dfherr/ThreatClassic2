@@ -561,23 +561,28 @@ local function UpdateTPS(guid, threatValue)
     local now = GetTime()
     local h = threatHistory[guid]
     if not h then
-        threatHistory[guid] = {value = threatValue, time = now, tps = 0}
+        threatHistory[guid] = {value = threatValue, time = now}
         return 0
     end
     local dt = now - h.time
     if dt <= 0 then
-        return h.tps
+        return h.tps or 0
     end
     if threatValue < h.value then
         -- threat dropped (feign death, threat reset, ...) -> restart from the new baseline
         h.value = threatValue
         h.time = now
-        h.tps = 0
+        h.tps = nil
         return 0
     end
-    -- exponential moving average smooths the irregular update intervals
     local instant = (threatValue - h.value) / dt
-    h.tps = h.tps + (instant - h.tps) * min(1, dt / TPS_WINDOW)
+    if h.tps then
+        -- exponential moving average smooths the irregular update intervals
+        h.tps = h.tps + (instant - h.tps) * min(1, dt / TPS_WINDOW)
+    else
+        -- seed with the first measurement instead of ramping up from zero
+        h.tps = instant
+    end
     h.value = threatValue
     h.time = now
     return h.tps
