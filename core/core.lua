@@ -36,6 +36,7 @@ local UnitIsPlayer          = _G.UnitIsPlayer
 local UnitName              = _G.UnitName
 local UnitReaction          = _G.UnitReaction
 local UnitIsUnit            = _G.UnitIsUnit
+local UnitGUID              = _G.UnitGUID
 local GetShapeshiftForm     = _G.GetShapeshiftForm
 local GetSpecialization     = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization or _G.GetSpecialization
 
@@ -57,6 +58,11 @@ local lastTankWarnPercent   = 100
 local lastTankWarnTime      = 0
 
 local currentEncounterName  = nil -- mainline only, used for the target list filter
+
+-- threat per second tracking
+local threatHistory         = {}
+local lastTargetGUID        = nil
+local TPS_WINDOW            = 4 -- seconds of exponential smoothing for TPS
 
 local FACTION_BAR_COLORS    = _G.FACTION_BAR_COLORS
 local RAID_CLASS_COLORS     = (_G.CUSTOM_CLASS_COLORS or _G.RAID_CLASS_COLORS)
@@ -178,6 +184,9 @@ local function CreateStatusBar(parent, header)
         -- Value
         bar.val = CreateFS(bar)
         bar.val:SetJustifyH("RIGHT")
+        -- TPS
+        bar.tps = CreateFS(bar)
+        bar.tps:SetJustifyH("RIGHT")
 
         bar:Hide()
     end
@@ -417,6 +426,7 @@ function TC2:UpdateThreatBars()
             bar.name:SetText(UnitName(data.unit) or UNKNOWN)
             bar.val:SetText(NumFormat(data.threatValue))
             bar.perc:SetText(floor(data.threatPercent + 0.5).."%") -- floor(x + 0.5) is lua's missing round()
+            bar.tps:SetText(NumFormat(floor((data.tps or 0) + 0.5)))
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             if (C.filter.yourself or not data.isPlayer) and C.filter.outOfMelee.color and data.outOfMeleeRange and FilterTarget() then
@@ -455,6 +465,7 @@ function TC2:UpdateThreatBars()
             bar.name:SetText(UnitName(data.unit) or UNKNOWN)
             bar.val:SetText(NumFormat(data.threatValue))
             bar.perc:SetText(floor(data.threatPercent + 0.5).."%")  -- floor(x + 0.5) is lua's missing round()
+            bar.tps:SetText(NumFormat(floor((data.tps or 0) + 0.5)))
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             -- this only runs for the player
@@ -509,6 +520,7 @@ function TC2:UpdateThreatBars()
         bar.ignite:Hide()
         bar.name:SetPoint("LEFT", bar, 4, 0)
         bar.name:SetText(C.bar.pullAggroBarText)
+        bar.tps:SetText("")
         bar.val:SetText("+"..NumFormat(floor(threatRequired + 0.5)))  -- floor(x + 0.5) is lua's missing round()
         
         local suffix = isAbsolute and "p " or "%"
@@ -545,6 +557,32 @@ local function CheckVisibility()
     end
 end
 
+local function UpdateTPS(guid, threatValue)
+    local now = GetTime()
+    local h = threatHistory[guid]
+    if not h then
+        threatHistory[guid] = {value = threatValue, time = now, tps = 0}
+        return 0
+    end
+    local dt = now - h.time
+    if dt <= 0 then
+        return h.tps
+    end
+    if threatValue < h.value then
+        -- threat dropped (feign death, threat reset, ...) -> restart from the new baseline
+        h.value = threatValue
+        h.time = now
+        h.tps = 0
+        return 0
+    end
+    -- exponential moving average smooths the irregular update intervals
+    local instant = (threatValue - h.value) / dt
+    h.tps = h.tps + (instant - h.tps) * min(1, dt / TPS_WINDOW)
+    h.value = threatValue
+    h.time = now
+    return h.tps
+end
+
 local function UpdateThreatData(unit)
     if not UnitExists(unit) then return end
     local isTanking, _, threatPercent, rawThreatPercent, threatValue = UnitDetailedThreatSituation(unit, TC2.playerTarget)
@@ -574,6 +612,11 @@ local function UpdateThreatData(unit)
         threatValue = math.floor(threatValue / 100)
     end
 
+    local tps = 0
+    if C.bar.showTPS then
+        tps = UpdateTPS(UnitGUID(unit), threatValue or 0)
+    end
+
     tinsert(TC2.threatData, {
         unit            = unit,
         isPlayer        = isPlayer,
@@ -581,6 +624,7 @@ local function UpdateThreatData(unit)
         scaledPercent   = threatPercent, -- used for warnings, nil if not on the threat table
         rawThreatPercent = rawThreatPercent,
         threatValue     = threatValue or 0,
+        tps             = tps,
         isTanking       = isTanking or false,
         outOfMeleeRange = outOfMeleeRange
     })
@@ -613,6 +657,13 @@ local function CheckStatus()
     CheckVisibility()
 
     if UnitExists(TC2.playerTarget) then
+        -- reset TPS tracking when the tracked target changes
+        local targetGUID = UnitGUID(TC2.playerTarget)
+        if targetGUID ~= lastTargetGUID then
+            lastTargetGUID = targetGUID
+            wipe(threatHistory)
+        end
+
         -- wipe
         wipe(TC2.threatData)
 
@@ -1012,40 +1063,34 @@ function TC2:UpdateBars()
         -- Name
         bar.name:SetPoint("LEFT", bar, 4, 0)
         UpdateFont(bar.name)
-        -- Value
-        -- bar.val:SetPoint("RIGHT", bar, -40, 0)
-        bar.val:SetPoint("RIGHT", bar, -(C.font.size * 3.5), 0)
         UpdateFont(bar.val)
-        if C.bar.showThreatValue then
-            bar.val:Show()
-        else
-            bar.val:Hide()
-        end
-        -- Perc
-        bar.perc:SetPoint("RIGHT", bar, -2, 0)
         UpdateFont(bar.perc)
-        if C.bar.showThreatPercentage then
-            bar.perc:Show()
-        else
-            bar.perc:Hide()
+        UpdateFont(bar.tps)
+
+        -- anchor the enabled text elements right to left: percentage, value, TPS
+        local textElements = {
+            {fontString = bar.perc, shown = C.bar.showThreatPercentage},
+            {fontString = bar.val,  shown = C.bar.showThreatValue},
+            {fontString = bar.tps,  shown = C.bar.showTPS},
+        }
+        local offset = 2
+        local leftmostShown = nil
+        for _, element in ipairs(textElements) do
+            if element.shown then
+                element.fontString:SetPoint("RIGHT", bar, -offset, 0)
+                element.fontString:Show()
+                offset = offset + C.font.size * 3.5
+                leftmostShown = element.fontString
+            else
+                element.fontString:Hide()
+            end
         end
 
-        -- Adjust anchor points
-        if C.bar.showThreatValue then
-            -- move val to the right if percentage isn't shown
-            if not C.bar.showThreatPercentage then
-                bar.val:SetPoint("RIGHT", bar, -2, 0)
-            end
-             -- right point of name is left point of value
-            bar.name:SetPoint("RIGHT", bar.val, "LEFT", -10, 0)
+        -- name fills the remaining space
+        if leftmostShown then
+            bar.name:SetPoint("RIGHT", leftmostShown, "LEFT", -10, 0)
         else
-            if C.bar.showThreatPercentage then
-                 -- right point of name is left point of perc
-                bar.name:SetPoint("RIGHT", bar.perc, "LEFT", -10, 0)
-            else
-                -- anchor to right of bar
-                bar.name:SetPoint("RIGHT", bar, "RIGHT", -10, 0)
-            end
+            bar.name:SetPoint("RIGHT", bar, "RIGHT", -10, 0)
         end
     end
     self:UpdateThreatBars()
@@ -1347,6 +1392,7 @@ function TC2:PLAYER_REGEN_ENABLED(...)
     if isForever and TC2.playerClass == "PALADIN" then
         UpdateRighteousFury()
     end
+    wipe(threatHistory)
     CheckStatus()
 end
 
@@ -1993,6 +2039,12 @@ TC2.configTable = {
                         showThreatPercentage = {
                             order = 16,
                             name = L.bar_showThreatPercentage,
+                            type = "toggle",
+                        },
+                        showTPS = {
+                            order = 16.5,
+                            name = L.bar_showTPS,
+                            desc = L.bar_showTPS_desc,
                             type = "toggle",
                         },
                         extraOptions = {

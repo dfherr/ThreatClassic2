@@ -65,6 +65,7 @@ defaultConfig.bar = {
     alpha               = 1,                                    -- statusbar alpha
     showThreatValue     = true,                                 -- show threat value in bar
     showThreatPercentage = true,                                -- show threat percentage in bar
+    showTPS             = false,                                -- show threat per second in bar
     showPullAggroBar    = false,                                -- show an extra bar indicating when aggro would be pulled
     pullAggroBarColor   = {0, 0.7, 0, 1},                       -- color of pull aggro bar
     pullAggroBarText    = "Pull aggro at",                      -- text of pull aggro bar
