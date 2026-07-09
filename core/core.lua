@@ -60,8 +60,8 @@ local lastTankWarnTime      = 0
 local currentEncounterName  = nil -- mainline only, used for the target list filter
 
 -- threat per second tracking
+-- [targetGUID] = {lastUpdate = time, units = {[unitGUID] = {value, time, tps}}}
 local threatHistory         = {}
-local lastTargetGUID        = nil
 local TPS_WINDOW            = 4 -- seconds of exponential smoothing for TPS
 
 local FACTION_BAR_COLORS    = _G.FACTION_BAR_COLORS
@@ -426,7 +426,7 @@ function TC2:UpdateThreatBars()
             bar.name:SetText(UnitName(data.unit) or UNKNOWN)
             bar.val:SetText(NumFormat(data.threatValue))
             bar.perc:SetText(floor(data.threatPercent + 0.5).."%") -- floor(x + 0.5) is lua's missing round()
-            bar.tps:SetText(NumFormat(floor((data.tps or 0) + 0.5)))
+            bar.tps:SetText(data.tps and NumFormat(floor(data.tps + 0.5)) or "-")
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             if (C.filter.yourself or not data.isPlayer) and C.filter.outOfMelee.color and data.outOfMeleeRange and FilterTarget() then
@@ -465,7 +465,7 @@ function TC2:UpdateThreatBars()
             bar.name:SetText(UnitName(data.unit) or UNKNOWN)
             bar.val:SetText(NumFormat(data.threatValue))
             bar.perc:SetText(floor(data.threatPercent + 0.5).."%")  -- floor(x + 0.5) is lua's missing round()
-            bar.tps:SetText(NumFormat(floor((data.tps or 0) + 0.5)))
+            bar.tps:SetText(data.tps and NumFormat(floor(data.tps + 0.5)) or "-")
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             -- this only runs for the player
@@ -557,23 +557,31 @@ local function CheckVisibility()
     end
 end
 
-local function UpdateTPS(guid, threatValue)
+-- returns the unit's smoothed TPS against the given target, or nil while unknown
+local function UpdateTPS(targetGUID, unitGUID, threatValue)
     local now = GetTime()
-    local h = threatHistory[guid]
+    local target = threatHistory[targetGUID]
+    if not target then
+        target = {units = {}}
+        threatHistory[targetGUID] = target
+    end
+    target.lastUpdate = now
+
+    local h = target.units[unitGUID]
     if not h then
-        threatHistory[guid] = {value = threatValue, time = now}
-        return 0
+        target.units[unitGUID] = {value = threatValue, time = now}
+        return nil
     end
     local dt = now - h.time
     if dt <= 0 then
-        return h.tps or 0
+        return h.tps
     end
     if threatValue < h.value then
         -- threat dropped (feign death, threat reset, ...) -> restart from the new baseline
         h.value = threatValue
         h.time = now
         h.tps = nil
-        return 0
+        return nil
     end
     local instant = (threatValue - h.value) / dt
     if h.tps then
@@ -617,9 +625,9 @@ local function UpdateThreatData(unit)
         threatValue = math.floor(threatValue / 100)
     end
 
-    local tps = 0
+    local tps = nil
     if C.bar.showTPS then
-        tps = UpdateTPS(UnitGUID(unit), threatValue or 0)
+        tps = UpdateTPS(UnitGUID(TC2.playerTarget), UnitGUID(unit), threatValue or 0)
     end
 
     tinsert(TC2.threatData, {
@@ -652,6 +660,15 @@ local function UpdatePlayerTarget()
     else
         TC2.playerTarget = "target"
     end
+
+    -- drop stale TPS histories, but keep recently updated ones
+    -- so quick target swapping doesn't lose the smoothed values
+    local now = GetTime()
+    for targetGUID, target in pairs(threatHistory) do
+        if now - target.lastUpdate > TPS_WINDOW then
+            threatHistory[targetGUID] = nil
+        end
+    end
 end
 
 local function CheckStatus()
@@ -662,13 +679,6 @@ local function CheckStatus()
     CheckVisibility()
 
     if UnitExists(TC2.playerTarget) then
-        -- reset TPS tracking when the tracked target changes
-        local targetGUID = UnitGUID(TC2.playerTarget)
-        if targetGUID ~= lastTargetGUID then
-            lastTargetGUID = targetGUID
-            wipe(threatHistory)
-        end
-
         -- wipe
         wipe(TC2.threatData)
 
@@ -1397,7 +1407,6 @@ function TC2:PLAYER_REGEN_ENABLED(...)
     if isForever and TC2.playerClass == "PALADIN" then
         UpdateRighteousFury()
     end
-    wipe(threatHistory)
     CheckStatus()
 end
 
