@@ -1082,7 +1082,8 @@ function TC2:UpdateBars()
         UpdateFont(bar.perc)
         UpdateFont(bar.tps)
 
-        -- anchor the enabled text elements right to left: percentage, value, TPS
+        -- handles show/hide and anchoring for all combinations of the three
+        -- optional text elements, chained right to left: percentage, value, TPS
         local textElements = {
             {fontString = bar.perc, shown = C.bar.showThreatPercentage},
             {fontString = bar.val,  shown = C.bar.showThreatValue},
