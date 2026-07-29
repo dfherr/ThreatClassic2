@@ -330,6 +330,40 @@ local function FadeBarBackdrop(bar, fadeAmount)
     bar.edgeBackdrop:SetBackdropBorderColor(r,g,b, a * (1-fadeAmount))
 end
 
+local function FindAuraByNameCompat(auraName, unit, filter)
+    if not auraName then
+        return nil
+    end
+
+    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+        for index = 1, 255 do
+            local aura = C_UnitAuras.GetAuraDataByIndex(unit, index, filter)
+            if not aura then
+                return nil
+            end
+            if aura.name == auraName then
+                return aura
+            end
+        end
+    end
+
+    if AuraUtil and AuraUtil.FindAuraByName then
+        local name, icon, applications, dispelName, duration, expirationTime, sourceUnit =
+            AuraUtil.FindAuraByName(auraName, unit, filter)
+        if name then
+            return {
+                name = name,
+                icon = icon,
+                applications = applications,
+                dispelName = dispelName,
+                duration = duration,
+                expirationTime = expirationTime,
+                sourceUnit = sourceUnit,
+            }
+        end
+    end
+end
+
 function TC2:UpdateThreatBars()
     -- sort the threat table
     sort(self.threatData, Compare)
@@ -341,7 +375,8 @@ function TC2:UpdateThreatBars()
     if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and (C.bar.showIgniteIndicator or C.customBarColors.igniteEnabled) then
         local igniteName = C_Spell.GetSpellName(12848)
         if igniteName then
-            igniteOwner = select(7, AuraUtil.FindAuraByName(igniteName, TC2.playerTarget, "HARMFUL"))
+            local igniteAura = FindAuraByNameCompat(igniteName, TC2.playerTarget, "HARMFUL")
+            igniteOwner = igniteAura and igniteAura.sourceUnit
         end
     end
 
@@ -641,7 +676,7 @@ function TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
             end
         elseif self.playerClass == "PALADIN" then
             -- righteous fury active
-            if AuraUtil.FindAuraByName(C_Spell.GetSpellName(25780), "player", "HELPFUL") then
+            if FindAuraByNameCompat(C_Spell.GetSpellName(25780), "player", "HELPFUL") then
                 lastWarnPercent = 100
                 return
             end

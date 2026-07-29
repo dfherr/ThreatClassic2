@@ -1,4 +1,4 @@
-## Interface: 20505
+## Interface: 20506
 ## Title: ThreatClassic2
 ## Notes: Simple threat meter for WoW Classic to MoP.
 ## Author: Dennis-Florian Herr (dfherr)

@@ -1,6 +1,6 @@
 ## Interface: 50504
-## Interface-Vanilla: 11508
-## Interface-TBC: 20505
+## Interface-Vanilla: 11509
+## Interface-TBC: 20506
 ## Interface-Mists: 50504
 ## Title: ThreatClassic2
 ## Notes: Simple threat meter for WoW Classic to MoP.
