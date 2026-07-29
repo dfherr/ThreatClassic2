@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.72
+* fix new aura lookup error (thanks @ngrudnitsky)
+* update toc for tbc and classic era
+
 ## v2.71
 * fix filter bug when having old outOfMelee enabled in config
 * improve pullaggrobar percentage display
