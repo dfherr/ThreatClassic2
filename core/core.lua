@@ -10,6 +10,7 @@ local unpack    = _G.unpack
 local type      = _G.type
 local floor     = _G.math.floor
 local min       = _G.math.min
+local max       = _G.math.max
 local format    = _G.string.format
 local strsub    = _G.string.sub
 local strmatch  = _G.string.match
@@ -60,9 +61,9 @@ local lastTankWarnTime      = 0
 local currentEncounterName  = nil -- mainline only, used for the target list filter
 
 -- threat per second tracking
--- [targetGUID] = {lastUpdate = time, units = {[unitGUID] = {value, time, tps}}}
+-- [targetGUID] = {lastUpdate = time, units = {[unitGUID] = {value, tps, startTime, startValue, lastAction}}}
 local threatHistory         = {}
-local TPS_WINDOW            = 4 -- seconds of exponential smoothing for TPS
+local TPS_WINDOW            = 4 -- seconds of averaging for TPS, also drops stale history
 
 local FACTION_BAR_COLORS    = _G.FACTION_BAR_COLORS
 local RAID_CLASS_COLORS     = (_G.CUSTOM_CLASS_COLORS or _G.RAID_CLASS_COLORS)
@@ -557,7 +558,12 @@ local function CheckVisibility()
     end
 end
 
--- returns the unit's smoothed TPS against the given target, or nil while unknown
+-- returns the unit's TPS against the given target
+-- the window ramps up from the first threat generated: a cumulative average until
+-- TPS_WINDOW worth of data exists, an exponential moving average afterwards. that way
+-- the value is useful from the first hit on and does not depend on the update interval.
+-- nothing but generated threat starts the average, so acquiring a target does not
+-- turn idle time into a bogus rate
 local function UpdateTPS(targetGUID, unitGUID, threatValue)
     local now = GetTime()
     local target = threatHistory[targetGUID]
@@ -569,31 +575,60 @@ local function UpdateTPS(targetGUID, unitGUID, threatValue)
 
     local h = target.units[unitGUID]
     if not h then
-        target.units[unitGUID] = {value = threatValue, time = now}
-        return nil
+        -- only a baseline so far, the unit is idle until it actually generates threat
+        target.units[unitGUID] = {value = threatValue, lastAction = now, tps = 0}
+        return 0
     end
-    local dt = now - h.time
-    if dt <= 0 then
-        return h.tps
-    end
+
     if threatValue < h.value then
         -- threat dropped (feign death, threat reset, ...) -> restart from the new baseline
-        h.value = threatValue
-        h.time = now
-        h.tps = nil
-        return nil
+        h.value      = threatValue
+        h.lastAction = now
+        h.startTime  = nil
+        h.tps        = 0
+        return 0
     end
-    local instant = (threatValue - h.value) / dt
-    if h.tps then
-        -- exponential moving average smooths the irregular update intervals
-        h.tps = h.tps + (instant - h.tps) * min(1, dt / TPS_WINDOW)
-    else
-        -- seed with the first measurement instead of ramping up from zero
-        h.tps = instant
+
+    local gained   = threatValue - h.value
+    local interval = now - h.lastAction
+
+    -- only generated threat advances the average. updates without new threat must not
+    -- enter it, otherwise the measured rate would depend on how often we look
+    -- (updateFreq, 200ms by default, in targettarget mode). interval <= 0 means another
+    -- gain in the same frame, it rolls into the next measurement
+    if gained > 0 and interval > 0 then
+        if h.startTime and interval >= TPS_WINDOW then
+            -- a full window without threat -> the burst ended, average from scratch
+            h.startTime = nil
+            h.tps       = 0
+        end
+        if not h.startTime then
+            -- first threat after being idle, the ramp up starts here
+            h.startTime  = now
+            h.startValue = h.value
+        end
+
+        local elapsed = now - h.startTime
+        if elapsed < TPS_WINDOW then
+            -- cumulative average while the window grows towards TPS_WINDOW. the first
+            -- second counts as a full second, so an opener reads as its own threat
+            -- instead of spiking on a tiny interval
+            h.tps = (threatValue - h.startValue) / max(1, elapsed)
+        else
+            -- exponential moving average over the interval between threat gains
+            h.tps = h.tps + (gained / interval - h.tps) * min(1, interval / TPS_WINDOW)
+        end
+        h.value      = threatValue
+        h.lastAction = now
     end
-    h.value = threatValue
-    h.time = now
-    return h.tps
+
+    -- the rate holds for a GCD after the last threat gain and then fades out towards
+    -- TPS_WINDOW, so a unit that stops generating threat winds down to 0 instead of
+    -- freezing on its last value. the fade only depends on the time since that gain,
+    -- never on how often we look, so it reads the same in event driven and in
+    -- targettarget mode
+    local fade = (TPS_WINDOW - (now - h.lastAction)) / (TPS_WINDOW - 1.5)
+    return h.tps * max(0, min(1, fade))
 end
 
 local function UpdateThreatData(unit)
@@ -627,6 +662,8 @@ local function UpdateThreatData(unit)
 
     local tps = nil
     if C.bar.showTPS then
+        -- a nil threatValue means the unit is not on the threat table (yet), which is the
+        -- same as 0 threat and matches the value stored in the row below
         tps = UpdateTPS(UnitGUID(TC2.playerTarget), UnitGUID(unit), threatValue or 0)
     end
 
