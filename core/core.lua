@@ -10,9 +10,7 @@ local unpack    = _G.unpack
 local type      = _G.type
 local floor     = _G.math.floor
 local min       = _G.math.min
-local strbyte   = _G.string.byte
 local format    = _G.string.format
-local strlen    = _G.string.len
 local strsub    = _G.string.sub
 local strmatch  = _G.string.match
 
@@ -55,6 +53,9 @@ local lastWarnPercent       =  100
 
 local FACTION_BAR_COLORS    = _G.FACTION_BAR_COLORS
 local RAID_CLASS_COLORS     = (_G.CUSTOM_CLASS_COLORS or _G.RAID_CLASS_COLORS)
+
+-- mainline clients (retail, forever) restrict enemy unit data (secret values), so some name based features are disabled there
+local isMainline            = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 
 
 -- other
@@ -196,33 +197,10 @@ local function NumFormat(v)
     end
 end
 
-local function TruncateString(str, i, ellipsis)
-    if not str then return end
-    local bytes = strlen(str)
-    if bytes <= i then
-        return str
-    else
-        local length, pos = 0, 1
-        while (pos <= bytes) do
-            length = length + 1
-            local c = strbyte(str, pos)
-            if c > 0 and c <= 127 then
-                pos = pos + 1
-            elseif c >= 192 and c <= 223 then
-                pos = pos + 2
-            elseif c >= 224 and c <= 239 then
-                pos = pos + 3
-            elseif c >= 240 and c <= 247 then
-                pos = pos + 4
-            end
-            if length == i then break end
-        end
-        if length == i and pos <= bytes then
-            return strsub(str, 1, pos - 1) .. (ellipsis and "..." or "")
-        else
-            return str
-        end
-    end
+-- true if the target list filter is disabled (always on mainline) or the current target is in the list
+local function FilterTarget()
+    if isMainline or not C.filter.useTargetList then return true end
+    return C.filter.targetList[UnitName(TC2.playerTarget)]
 end
 
 local function IsUnitMarkedTank(unit)
@@ -431,7 +409,7 @@ function TC2:UpdateThreatBars()
             bar.perc:SetText(floor(data.threatPercent + 0.5).."%") -- floor(x + 0.5) is lua's missing round()
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
-            if (C.filter.yourself or not UnitIsUnit(data.unit, "player")) and C.filter.outOfMelee.color and data.outOfMeleeRange and (not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)]) then
+            if (C.filter.yourself or not UnitIsUnit(data.unit, "player")) and C.filter.outOfMelee.color and data.outOfMeleeRange and FilterTarget() then
                 if C.filter.outOfMelee.overwriteColorEnabled then
                     color = C.filter.outOfMelee.overwriteColor
                 end
@@ -470,7 +448,7 @@ function TC2:UpdateThreatBars()
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             -- this only runs for the player
-            if C.filter.yourself and C.filter.outOfMelee.color and data.outOfMeleeRange and (not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)]) then
+            if C.filter.yourself and C.filter.outOfMelee.color and data.outOfMeleeRange and FilterTarget() then
                 if C.filter.outOfMelee.overwriteColorEnabled then
                     color = C.filter.outOfMelee.overwriteColor
                 end
@@ -571,7 +549,7 @@ local function UpdateThreatData(unit)
 
     if C.filter.yourself or not UnitIsUnit(unit, "player") then
         -- target list disabled or target in filter targetlist
-        if not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)] then
+        if FilterTarget() then
             -- melee range filter; threatPercent > 0 to avoid divison by zero on fucked up api response
             if C.filter.outOfMelee.hide and outOfMeleeRange then
                 return
@@ -642,8 +620,8 @@ local function CheckStatus()
         TC2:UpdateThreatBars()
 
         -- set header unit name
+        -- the fontstring clips long names. this also works with secret values on mainline
         local targetName = (": " .. UnitName(TC2.playerTarget)) or ""
-        targetName = TruncateString(targetName, floor(TC2.frame.header:GetWidth() / (C.font.size * 0.85)), true)
         TC2.frame.header.text:SetText(format("%s%s", L.gui_threat, targetName))
     else
         -- clear header text of unit name
@@ -662,7 +640,14 @@ end
 function TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
 
     if C.warnings.disableWhileTanking then
-        if self.playerClass == "WARRIOR" then
+        if isMainline then
+            -- mainline: use spec role
+            local spec = GetSpecialization()
+            if spec and GetSpecializationRole(spec) == "TANK" then
+                lastWarnPercent = 100
+                return
+            end
+        elseif self.playerClass == "WARRIOR" then
             -- def stance
             if GetShapeshiftForm() == 2 then
                 lastWarnPercent = 100
@@ -1240,7 +1225,9 @@ function TC2:SetupFrame()
 
     self.frame.header.text = CreateFS(self.frame.header)
     self.frame.header.text:SetPoint("LEFT", self.frame.header, 4, -1)
+    self.frame.header.text:SetPoint("RIGHT", self.frame.header, -4, -1)
     self.frame.header.text:SetJustifyH("LEFT")
+    self.frame.header.text:SetWordWrap(false)
 
     self:UpdateFrame()
 end
@@ -2145,6 +2132,7 @@ TC2.configTable = {
                         C.filter.useTargetList = value
                         TC2:UpdateFrame()
                     end,
+                    hidden = isMainline,
                 },
                 targetList = {
                     order = 4,
@@ -2178,6 +2166,7 @@ TC2.configTable = {
                         TC2:UpdateFrame()
                     end,
                     disabled = function() return not C.filter.useTargetList end,
+                    hidden = isMainline,
                 },
             },
         },
