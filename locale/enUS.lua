@@ -133,6 +133,7 @@ L.filter_yourself       = "Also filter yourself"
 L.filter_useTargetList  = "Filter players only for the targets listed below"
 L.filter_targetList     = "Filter target list (newline separated)"
 L.filter_targetList_desc  = "Enter the name of bosses or other units where you want to apply the filter. One per line. Use exact spelling and full names, e.g. Gruul the Dragonkiller"
+L.filter_targetList_desc_mainline = "Enter the name of boss encounters where you want to apply the filter. One per line. Use the exact encounter name as shown in the Adventure Guide. The filter applies to all enemies during the encounter."
 
 L.warnings                      = "Warnings"
 L.warnings_disableWhileTanking  = "Disable while tanking"

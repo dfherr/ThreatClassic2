@@ -26,6 +26,7 @@ local GetPartyAssignment    = _G.GetPartyAssignment
 local UnitGroupRolesAssigned = _G.UnitGroupRolesAssigned
 local GetInstanceInfo       = _G.GetInstanceInfo
 local IsInRaid              = _G.IsInRaid
+local IsEncounterInProgress = _G.IsEncounterInProgress
 local UnitAffectingCombat   = _G.UnitAffectingCombat
 local UnitClass             = _G.UnitClass
 local UnitExists            = _G.UnitExists
@@ -52,6 +53,8 @@ local announcedOutdated     = false
 local announcedIncompatible = false
 
 local lastWarnPercent       =  100
+
+local currentEncounterName  = nil -- mainline only, used for the target list filter
 
 local FACTION_BAR_COLORS    = _G.FACTION_BAR_COLORS
 local RAID_CLASS_COLORS     = (_G.CUSTOM_CLASS_COLORS or _G.RAID_CLASS_COLORS)
@@ -199,9 +202,14 @@ local function NumFormat(v)
     end
 end
 
--- true if the target list filter is disabled (always on mainline) or the current target is in the list
+-- true if the target list filter is disabled or the current target is in the list
 local function FilterTarget()
-    if isMainline or not C.filter.useTargetList then return true end
+    if not C.filter.useTargetList then return true end
+    -- mainline unit names are secret values, so match the current encounter name instead
+    if isMainline then
+        -- IsEncounterInProgress guards against a stale name from a missed ENCOUNTER_END
+        return currentEncounterName and IsEncounterInProgress() and C.filter.targetList[currentEncounterName]
+    end
     return C.filter.targetList[UnitName(TC2.playerTarget)]
 end
 
@@ -1093,6 +1101,8 @@ TC2.frame:SetScript("OnUpdate", function(self, elapsed)
 end)
 
 function TC2:PLAYER_ENTERING_WORLD(...)
+    -- loading screens, relogs and reloads can swallow ENCOUNTER_END
+    currentEncounterName = nil
     self.playerName = UnitName("player")
     self.playerClass = select(2, _G.UnitClass("player"))
     self.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
@@ -1132,6 +1142,16 @@ function TC2:PLAYER_REGEN_ENABLED(...)
     -- collectgarbage()
     C.frame.test = false
     CheckStatus()
+end
+
+function TC2:ENCOUNTER_START(event, encounterID, encounterName)
+    currentEncounterName = encounterName
+    CheckStatusDeferred()
+end
+
+function TC2:ENCOUNTER_END(...)
+    currentEncounterName = nil
+    CheckStatusDeferred()
 end
 
 function TC2:UNIT_THREAT_LIST_UPDATE(event, unitTarget)
@@ -1180,6 +1200,11 @@ function TC2:PLAYER_LOGIN()
     self.frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
     self.frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
+
+    if isMainline then
+        self.frame:RegisterEvent("ENCOUNTER_START")
+        self.frame:RegisterEvent("ENCOUNTER_END")
+    end
 
     -- Setup Config
     self:SetupConfig()
@@ -2142,12 +2167,11 @@ TC2.configTable = {
                         C.filter.useTargetList = value
                         TC2:UpdateFrame()
                     end,
-                    hidden = isMainline,
                 },
                 targetList = {
                     order = 4,
                     name = L.filter_targetList,
-                    desc = L.filter_targetList_desc,
+                    desc = isMainline and L.filter_targetList_desc_mainline or L.filter_targetList_desc,
                     type = "input",
                     width = "full",
                     multiline = 8,
@@ -2176,7 +2200,6 @@ TC2.configTable = {
                         TC2:UpdateFrame()
                     end,
                     disabled = function() return not C.filter.useTargetList end,
-                    hidden = isMainline,
                 },
             },
         },
