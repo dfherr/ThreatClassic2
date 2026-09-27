@@ -679,7 +679,7 @@ end
 
 -- warns when the player's threat gets close to pulling aggro
 function TC2:CheckDamageWarning(repeatCheck)
-    if C.frame.test or not (C.warnings.sound or C.warnings.flash) then return end
+    if not (C.warnings.sound or C.warnings.flash) then return end
     if repeatCheck and (not C.warnings.repeatWarning or GetTime() < lastWarnTime + C.warnings.cooldown) then return end
 
     local player = GetPlayerThreatData()
@@ -707,7 +707,7 @@ end
 
 -- warns while the player has aggro when another unit gets close to pulling it
 function TC2:CheckTankWarning(repeatCheck)
-    if C.frame.test or not (C.warnings.tankSound or C.warnings.tankFlash) then return end
+    if not (C.warnings.tankSound or C.warnings.tankFlash) then return end
     if repeatCheck and (not C.warnings.tankRepeatWarning or GetTime() < lastTankWarnTime + C.warnings.tankCooldown) then return end
 
     local player = GetPlayerThreatData()
@@ -1042,39 +1042,75 @@ end
 -----------------------------
 -- TEST MODE
 -----------------------------
+-- test mode: the player climbs 1% per update until taking aggro, then the old tank climbs back
+local testPlayer, testTank  = nil, nil
+
+-- emulates the threat api: percentages are relative to the unit with aggro
+local function UpdateTestPercentages()
+    local tank = testPlayer.isTanking and testPlayer or testTank
+    for _, data in pairs(TC2.threatData) do
+        if data.isTanking then
+            data.rawThreatPercent = 100
+            data.scaledPercent = 100
+        else
+            data.rawThreatPercent = data.threatValue / tank.threatValue * 100
+            data.scaledPercent = data.rawThreatPercent / (data.outOfMeleeRange and 1.3 or 1.1)
+        end
+        data.threatPercent = C.general.rawPercent and data.rawThreatPercent or data.scaledPercent
+    end
+end
+
+local function ResetTestData()
+    wipe(TC2.threatData)
+    for i = 1, 10 do
+        TC2.threatData[i] = {
+            unit = TC2.playerName,
+            threatValue = (12-i)/10.0 * 10000,
+        }
+    end
+    TC2.threatData[1].outOfMeleeRange = true
+    TC2.threatData[4].outOfMeleeRange = true
+
+    testTank = TC2.threatData[2]
+    testTank.isTanking = true
+    testPlayer = TC2.threatData[3]
+    testPlayer.isPlayer = true
+    -- start the player at 60% of the threat needed to pull aggro
+    testPlayer.threatValue = testTank.threatValue * 1.1 * 0.6
+
+    UpdateTestPercentages()
+end
+
+local function TestTick()
+    local tank = testPlayer.isTanking and testPlayer or testTank
+    local chaser = testPlayer.isTanking and testTank or testPlayer
+    -- raise the chaser by 1% of the threat needed to pull aggro
+    chaser.threatValue = chaser.threatValue + tank.threatValue * 1.1 * 0.01
+    UpdateTestPercentages()
+
+    if chaser.scaledPercent >= 100 then
+        if chaser == testTank then
+            -- the tank took aggro back, start over
+            ResetTestData()
+        else
+            tank.isTanking = false
+            chaser.isTanking = true
+            UpdateTestPercentages()
+        end
+    end
+
+    TC2:UpdateThreatBars()
+    TC2:CheckDamageWarning()
+    TC2:CheckTankWarning()
+end
+
 function TC2:TestMode()
     if UnitAffectingCombat("player") then return end
 
     C.frame.test = true
-    wipe(TC2.threatData)
-    for i = 1, 10 do
-        self.threatData[i] = {
-            unit = self.playerName,
-            threatValue = floor((12-i)/10.0 * 10000),
-            threatPercent = floor((12-i)/10.0 * 10000) / 10000.0 * 100,
-        }
-        if i <= C.bar.count then
-            tinsert(self.bars, i)
-        end
-    end
-
-    self.threatData[2].isTanking = true
-    self.threatData[3].isPlayer = true
-    self.threatData[1].outOfMeleeRange = true
-    self.threatData[4].outOfMeleeRange = true
-
-    if not C.general.rawPercent then
-        for i = 1, 10 do
-            if not self.threatData[i].isTanking then
-                if self.threatData[i].outOfMeleeRange then
-                    self.threatData[i].threatPercent = self.threatData[i].threatPercent / 1.3
-                else
-                    self.threatData[i].threatPercent = self.threatData[i].threatPercent / 1.1
-                end
-            end
-        end
-    end
-
+    lastWarnPercent = 100
+    lastTankWarnPercent = 100
+    ResetTestData()
     self:UpdateThreatBars()
 end
 
@@ -1139,6 +1175,12 @@ end)
 TC2.frame:SetScript("OnUpdate", function(self, elapsed)
     local now = GetTime()
     if now > lastCheckStatusTime + C.general.updateFreq then
+        if C.frame.test then
+            lastCheckStatusTime = now
+            TestTick()
+            return
+        end
+
         local inCombat = UnitAffectingCombat("player")
         -- always check status in interval if the playerTarget is set to targettarget (i.e. direct traget is friendly)
         -- because THREAT_LIST_UPDATE does not trigger for targettarget. Also the threat api only works in combat
