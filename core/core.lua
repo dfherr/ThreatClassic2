@@ -546,8 +546,8 @@ local function CheckVisibility()
     end
 end
 
-local function UpdateThreatData(unit)
-    if not UnitExists(unit) then return end
+-- threat api values for the player target with fixes and downscaling applied
+local function GetThreatSituation(unit)
     local isTanking, _, threatPercent, rawThreatPercent, threatValue = UnitDetailedThreatSituation(unit, TC2.playerTarget)
 
     if isTanking then
@@ -555,6 +555,18 @@ local function UpdateThreatData(unit)
         rawThreatPercent = 100
         threatPercent = 100
     end
+
+    -- mainline threat values are already 1 damage = 1 threat
+    if threatValue and C.general.downscaleThreat and not isMainline then
+        threatValue = math.floor(threatValue / 100)
+    end
+
+    return isTanking, threatPercent, rawThreatPercent, threatValue
+end
+
+local function UpdateThreatData(unit)
+    if not UnitExists(unit) then return end
+    local isTanking, threatPercent, rawThreatPercent, threatValue = GetThreatSituation(unit)
 
     local outOfMeleeRange = rawThreatPercent and threatPercent > 0 and rawThreatPercent / threatPercent > 1.2
 
@@ -566,16 +578,6 @@ local function UpdateThreatData(unit)
                 return
             end
         end
-    end
-
-    -- mainline threat values are already 1 damage = 1 threat
-    if threatValue and C.general.downscaleThreat and not isMainline then
-        threatValue = math.floor(threatValue / 100)
-    end
-
-    -- check for warnings. this always uses the scaled percentage to avoid conercases of over 100% raw threat and then aggro
-    if UnitIsUnit(unit, "player") and threatPercent then
-        TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
     end
 
     if C.general.rawPercent then
@@ -592,6 +594,8 @@ local function UpdateThreatData(unit)
 end
 
 local function UpdatePlayerTarget()
+    -- reset warning on target change
+    lastWarnPercent = 100
     -- mainline returns secret threat values for targettarget
     if isMainline then
         TC2.playerTarget = "target"
@@ -636,6 +640,7 @@ local function CheckStatus()
         end
 
         TC2:UpdateThreatBars()
+        TC2:CheckWarning()
 
         -- set header unit name
         -- the fontstring clips long names. this also works with secret values on mainline
@@ -655,7 +660,11 @@ local function CheckStatusDeferred()
     callCheckStatus = true
 end
 
-function TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
+-- warnings use the player's own threat, independent of the displayed (filtered) list
+function TC2:CheckWarning()
+    -- this always uses the scaled percentage to avoid conercases of over 100% raw threat and then aggro
+    local _, threatPercent, rawThreatPercent, threatValue = GetThreatSituation("player")
+    if not threatPercent then return end
 
     if C.warnings.disableWhileTanking then
         if isMainline then
@@ -689,15 +698,21 @@ function TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
     -- percentage is now above threshold and was below threshold before (or repeat is enabled)
     if threatPercent >= C.warnings.threshold and (C.warnings.repeatWarning or lastWarnPercent < C.warnings.threshold) and rawThreatPercent < 250 then
         lastWarnPercent = threatPercent
-        if threatValue > C.warnings.minThreatAmount and GetTime() >= lastWarnTime + C.warnings.cooldown then
-            lastWarnTime = GetTime()
-            if C.warnings.sound then PlaySoundFile(LSM:Fetch("sound", C.warnings.soundFile), C.warnings.soundChannel) end
-            if C.warnings.flash then self:FlashScreen() end
+        if threatValue > C.warnings.minThreatAmount then
+            self:PlayWarning()
         end
     -- percentage is below threshold -> reset lastWarnPercent
     elseif threatPercent < C.warnings.threshold then
         lastWarnPercent = threatPercent
     end
+end
+
+function TC2:PlayWarning()
+    local now = GetTime()
+    if now < lastWarnTime + C.warnings.cooldown then return end
+    lastWarnTime = now
+    if C.warnings.sound then PlaySoundFile(LSM:Fetch("sound", C.warnings.soundFile), C.warnings.soundChannel) end
+    if C.warnings.flash then self:FlashScreen() end
 end
 
 function TC2:FlashScreen()
@@ -1093,11 +1108,16 @@ TC2.frame:SetScript("OnEvent", function(self, event, ...)
     return TC2[event] and TC2[event](TC2, event, ...)
 end)
 TC2.frame:SetScript("OnUpdate", function(self, elapsed)
-    if GetTime() > lastCheckStatusTime + C.general.updateFreq then
+    local now = GetTime()
+    if now > lastCheckStatusTime + C.general.updateFreq then
+        local inCombat = UnitAffectingCombat("player")
         -- always check status in interval if the playerTarget is set to targettarget (i.e. direct traget is friendly)
         -- because THREAT_LIST_UPDATE does not trigger for targettarget. Also the threat api only works in combat
-        if callCheckStatus or (TC2.playerTarget == "targettarget" and UnitAffectingCombat("player")) then
-            CheckStatus()
+        if callCheckStatus or (TC2.playerTarget == "targettarget" and inCombat) then
+            CheckStatus() -- also checks warnings
+        -- threat updates only fire when threat changes, so repeating warnings check the threat data here
+        elseif inCombat and C.warnings.repeatWarning and now >= lastWarnTime + C.warnings.cooldown then
+            TC2:CheckWarning()
         end
     end
 end)
@@ -1114,8 +1134,6 @@ end
 
 function TC2:PLAYER_TARGET_CHANGED(...)
     UpdatePlayerTarget()
-    -- reset last warning on target change
-    lastWarnPercent = 100
 
     C.frame.test = false
     CheckStatus()
@@ -1135,7 +1153,6 @@ end
 
 function TC2:PLAYER_REGEN_DISABLED(...)
     UpdatePlayerTarget() -- for friendly mobs that turn hostile like vaelastrasz
-    lastWarnPercent = 100
     C.frame.test = false
     CheckStatus()
 end
