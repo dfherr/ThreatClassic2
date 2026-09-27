@@ -583,6 +583,12 @@ local function UpdateThreatData(unit)
 end
 
 local function UpdatePlayerTarget()
+    -- mainline returns secret threat values for targettarget
+    if isMainline then
+        TC2.playerTarget = "target"
+        return
+    end
+
     if UnitExists("target") and (not UnitIsFriend("player", "target") or ((UnitReaction("player", "target") or 0) <= 4 and not UnitCanAssist("player", "target"))) then
         TC2.playerTarget = "target"
     elseif UnitExists("targettarget") and (not UnitIsFriend("player", "targettarget") or ((UnitReaction("player", "targettarget") or 0) <= 4 and not UnitCanAssist("player", "targettarget"))) then
