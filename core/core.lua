@@ -498,6 +498,8 @@ function TC2:UpdateThreatBars()
         -- Calculate the exact threat value needed to pull (110% melee, 130% ranged)
         local pullAggroThreatValue = tankData.threatValue * (isOutOfMelee and 1.3 or 1.1)
         local threatRequired = pullAggroThreatValue - playerThreat
+        -- negative when the player is above the pull threshold without having aggro
+        local isAboveThreshold = threatRequired < 0
         
         local isAbsolute = (C.bar.pullAggroBarPercentage == "ABSOLUTE")
         local threatPercentageRequired = 100 -- Default to >99 for relative division by zero
@@ -524,7 +526,7 @@ function TC2:UpdateThreatBars()
         -- time to aggro: the pull threshold moves with the tank's threat, so the player
         -- closes the gap at their TPS minus the tank's TPS times the pull factor
         local timeToAggro = ""
-        if C.bar.pullAggroBarTimeToAggro and playerData and playerData.tps and tankData.tps then
+        if C.bar.pullAggroBarTimeToAggro and not isAboveThreshold and playerData and playerData.tps and tankData.tps then
             local closingRate = playerData.tps - tankData.tps * (isOutOfMelee and 1.3 or 1.1)
             -- hidden when not catching up or 100s and above
             local seconds = closingRate > 0 and floor(threatRequired / closingRate + 0.5)  -- floor(x + 0.5) is lua's missing round()
@@ -533,14 +535,18 @@ function TC2:UpdateThreatBars()
             end
         end
         bar.tps:SetText(timeToAggro)
-        bar.val:SetText("+"..NumFormat(floor(threatRequired + 0.5)))  -- floor(x + 0.5) is lua's missing round()
-        
         local suffix = isAbsolute and "p " or "%"
-        
-        if threatPercentageRequired > 99 then
-            bar.perc:SetText(">99" .. suffix)
+
+        if isAboveThreshold then
+            bar.val:SetText("")
+            bar.perc:SetText("")
         else
-            bar.perc:SetText("+"..floor(threatPercentageRequired + 0.5)..suffix)  -- floor(x + 0.5) is lua's missing round()
+            bar.val:SetText("+"..NumFormat(floor(threatRequired + 0.5)))  -- floor(x + 0.5) is lua's missing round()
+            if threatPercentageRequired > 99 then
+                bar.perc:SetText(">99" .. suffix)
+            else
+                bar.perc:SetText("+"..floor(threatPercentageRequired + 0.5)..suffix)  -- floor(x + 0.5) is lua's missing round()
+            end
         end
         
         if C.bar.pullAggroBarGrow then
