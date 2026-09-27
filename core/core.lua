@@ -36,6 +36,8 @@ local UnitName              = _G.UnitName
 local UnitReaction          = _G.UnitReaction
 local UnitIsUnit            = _G.UnitIsUnit
 local GetShapeshiftForm     = _G.GetShapeshiftForm
+local GetSpecialization     = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization or _G.GetSpecialization
+local GetSpecializationRole = _G.GetSpecializationRole
 
 local screenWidth           = floor(GetScreenWidth())
 local screenHeight          = floor(GetScreenHeight())
@@ -557,7 +559,8 @@ local function UpdateThreatData(unit)
         end
     end
 
-    if threatValue and C.general.downscaleThreat then
+    -- mainline threat values are already 1 damage = 1 threat
+    if threatValue and C.general.downscaleThreat and not isMainline then
         threatValue = math.floor(threatValue / 100)
     end
 
@@ -1322,6 +1325,7 @@ TC2.configTable = {
                     desc = L.general_downscaleThreatDesc,
                     type = "toggle",
                     width = "full",
+                    hidden = isMainline,
                 },
                 updateFreq = {
                     order = 5,
