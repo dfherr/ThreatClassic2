@@ -19,4 +19,7 @@
 ## X-License: MIT
 ## X-Website: https://github.com/dfherr/ThreatClassic2
 
+# LibDualSpec throws unsupported API errors on Classic Era, so it's not loaded there
+Libs\LibStub\LibStub.lua
+Libs\LibDualSpec-1.0\LibDualSpec-1.0.lua [ExcludeLoadGameType vanilla]
 ThreatClassic2.xml

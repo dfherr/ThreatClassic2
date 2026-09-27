@@ -1358,7 +1358,11 @@ function TC2:PLAYER_LOGIN()
     -- creates by default character specific profile, when 3rd argument is obmitted
     self.db = LibStub("AceDB-3.0"):New("ThreatClassic2DB", self.defaultConfig, true)
     -- per spec profiles. may switch the profile right away, so this runs before migrating settings
-    LibStub("LibDualSpec-1.0"):EnhanceDatabase(self.db, self.addonName)
+    -- not loaded on classic era
+    local LibDualSpec = LibStub("LibDualSpec-1.0", true)
+    if LibDualSpec then
+        LibDualSpec:EnhanceDatabase(self.db, self.addonName)
+    end
 
     -- migrate settings to new structure for backwards incompatible changes
     MigrateSettings(self.db)
@@ -1489,7 +1493,10 @@ end
 -----------------------------
 function TC2:SetupConfig()
     self.configTable.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
-    LibStub("LibDualSpec-1.0"):EnhanceOptions(self.configTable.args.profiles, self.db)
+    local LibDualSpec = LibStub("LibDualSpec-1.0", true)
+    if LibDualSpec then
+        LibDualSpec:EnhanceOptions(self.configTable.args.profiles, self.db)
+    end
     LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(TC2.addonName, self.configTable)
 
     local ACD = LibStub("AceConfigDialog-3.0")
