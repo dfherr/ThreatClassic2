@@ -1289,6 +1289,9 @@ local function ResetTestData()
         if testUnit.isTanking then testTank = TC2.threatData[i] end
         if testUnit.isPlayer then testPlayer = TC2.threatData[i] end
     end
+    -- same rates as TestTick. the tank only gains threat after losing aggro
+    testPlayer.tps = testTank.threatValue * 1.1 * TEST_PLAYER_STEP / TEST_TICK_SECONDS
+    testTank.tps = 0
     UpdateTestPercentages()
 end
 
