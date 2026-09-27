@@ -12,7 +12,11 @@ ThreatClassic2 is a threat meter for WoW Classic (Era, Anniversary, Mists) and W
 
 ### Warnings
 - Sound and/or screen flash when crossing a threat threshold.
-- Minimum threat amount, minimum time between warnings and automatic disabling while tanking.
+- Warning trigger customization:
+  - Minimum threat amount
+  - mininum time between warnings
+  - repeated warnings while above threshold
+  - disabled while tanking
 
 ### Styling
 - Fully customizable appearance via (LibSharedMedia)

@@ -686,8 +686,8 @@ function TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
         end
     end
 
-    -- percentage is now above threshold and was below threshold before
-    if threatPercent >= C.warnings.threshold and lastWarnPercent < C.warnings.threshold and rawThreatPercent < 250 then
+    -- percentage is now above threshold and was below threshold before (or repeat is enabled)
+    if threatPercent >= C.warnings.threshold and (C.warnings.repeatWarning or lastWarnPercent < C.warnings.threshold) and rawThreatPercent < 250 then
         lastWarnPercent = threatPercent
         if threatValue > C.warnings.minThreatAmount and GetTime() >= lastWarnTime + C.warnings.cooldown then
             lastWarnTime = GetTime()
@@ -2247,10 +2247,17 @@ TC2.configTable = {
                     desc = L.warnings_cooldown_desc,
                     type = "range",
                     width = "double",
-                    min = 0,
+                    min = 1,
                     max = 120,
                     softMax = 30,
                     step = 1,
+                },
+                repeatWarning = {
+                    order = 3.6,
+                    name = L.warnings_repeatWarning,
+                    desc = L.warnings_repeatWarning_desc,
+                    type = "toggle",
+                    width = "full",
                 },
                 flash = {
                     order = 4,

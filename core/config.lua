@@ -124,7 +124,8 @@ defaultConfig.warnings = {
     sound               = false,                                -- enable sound
     threshold           = 80,                                   -- alert threshold (of normalized percentage 0-100)
     minThreatAmount     = 2000,
-    cooldown            = 0,                                    -- minimum seconds between warnings, 0 = no limit
+    cooldown            = 1,                                    -- minimum seconds between warnings
+    repeatWarning       = false,                                -- keep warning while above threshold instead of only when crossing it
     soundFile           = "You Will Die!",
     soundChannel        = "SFX",
 }
