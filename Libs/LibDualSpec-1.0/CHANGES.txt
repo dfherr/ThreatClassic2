@@ -1,0 +1,18 @@
+tag e8cf40e3cc7049d077495a6d06f75449954e09c6 v1.34.0
+Author:	Kyle Buller <bullerk@gmail.com>
+Date:	Sat Sep 19 18:05:07 2026 -0500
+
+Tagging as v1.34.0
+
+commit b00ceac99030dbc6892c9c9d97f78f9bc3eb5f81
+Author: Kyle Buller <bullerk@gmail.com>
+Date:   Sat Sep 19 18:03:27 2026 -0500
+
+    Quick fix for BCC
+
+commit 5d0e9a847e2924239f0a48cf2bb7433c41737ab9
+Author: Kyle Buller <bullerk@gmail.com>
+Date:   Sat Sep 19 09:59:48 2026 -0500
+
+    Don't use the deprecated `GetSpecialization`
+
