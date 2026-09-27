@@ -13,6 +13,7 @@
     <Include file="Libs\AceGUI-3.0\AceGUI-3.0.xml"/>
     <Include file="Libs\AceGUI-3.0-SharedMediaWidgets\widget.xml"/>
     <Include file="Libs\AceConfig-3.0\AceConfig-3.0.xml"/>
+    <Script file="Libs\LibDualSpec-1.0\LibDualSpec-1.0.lua"/>
 
     <!-- Locales -->
     <Script file="locale\enUS.lua"/>
