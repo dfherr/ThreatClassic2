@@ -11,6 +11,7 @@
 * improved test mode: simulates a fight with class colors
 * fix errors when switching to an older, not yet migrated profile
 * target name in the header is now clipped at the frame edge
+* add threat per second display option and time to pull aggro option
 
 ## v2.72
 * fix new aura lookup error (thanks @ngrudnitsky)

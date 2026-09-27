@@ -65,11 +65,13 @@ defaultConfig.bar = {
     alpha               = 1,                                    -- statusbar alpha
     showThreatValue     = true,                                 -- show threat value in bar
     showThreatPercentage = true,                                -- show threat percentage in bar
+    showTPS             = false,                                -- show threat per second in bar
     showPullAggroBar    = false,                                -- show an extra bar indicating when aggro would be pulled
     pullAggroBarColor   = {0, 0.7, 0, 1},                       -- color of pull aggro bar
     pullAggroBarText    = "Pull aggro at",                      -- text of pull aggro bar
     pullAggroBarGrow    = true,                                 -- grow the pull aggro bar when getting closer to pulling threat
     pullAggroBarPercentage = "RELATIVE",                        -- relative vs absolute (percentage points) number for pull aggro bar
+    pullAggroBarTimeToAggro = false,                            -- show the time until aggro is pulled in the pull aggro bar (requires showTPS)
     showIgniteIndicator = true,                                 -- show ignite icon when target has ignite
 }
 

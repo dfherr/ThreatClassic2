@@ -10,6 +10,7 @@ local unpack    = _G.unpack
 local type      = _G.type
 local floor     = _G.math.floor
 local min       = _G.math.min
+local max       = _G.math.max
 local format    = _G.string.format
 local strsub    = _G.string.sub
 local strmatch  = _G.string.match
@@ -36,6 +37,7 @@ local UnitIsPlayer          = _G.UnitIsPlayer
 local UnitName              = _G.UnitName
 local UnitReaction          = _G.UnitReaction
 local UnitIsUnit            = _G.UnitIsUnit
+local UnitGUID              = _G.UnitGUID
 local GetShapeshiftForm     = _G.GetShapeshiftForm
 local GetSpecialization     = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization or _G.GetSpecialization
 
@@ -57,6 +59,11 @@ local lastTankWarnPercent   = 100
 local lastTankWarnTime      = 0
 
 local currentEncounterName  = nil -- mainline only, used for the target list filter
+
+-- threat per second tracking
+-- [targetGUID] = {lastUpdate = time, units = {[unitGUID] = {value, tps, startTime, startValue, lastAction}}}
+local threatHistory         = {}
+local TPS_WINDOW            = 4 -- seconds of averaging for TPS, also drops stale history
 
 local FACTION_BAR_COLORS    = _G.FACTION_BAR_COLORS
 local RAID_CLASS_COLORS     = (_G.CUSTOM_CLASS_COLORS or _G.RAID_CLASS_COLORS)
@@ -178,6 +185,9 @@ local function CreateStatusBar(parent, header)
         -- Value
         bar.val = CreateFS(bar)
         bar.val:SetJustifyH("RIGHT")
+        -- TPS
+        bar.tps = CreateFS(bar)
+        bar.tps:SetJustifyH("RIGHT")
 
         bar:Hide()
     end
@@ -417,6 +427,7 @@ function TC2:UpdateThreatBars()
             bar.name:SetText(UnitName(data.unit) or UNKNOWN)
             bar.val:SetText(NumFormat(data.threatValue))
             bar.perc:SetText(floor(data.threatPercent + 0.5).."%") -- floor(x + 0.5) is lua's missing round()
+            bar.tps:SetText(data.tps and NumFormat(floor(data.tps + 0.5)) or "-")
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             if (C.filter.yourself or not data.isPlayer) and C.filter.outOfMelee.color and data.outOfMeleeRange and FilterTarget() then
@@ -455,6 +466,7 @@ function TC2:UpdateThreatBars()
             bar.name:SetText(UnitName(data.unit) or UNKNOWN)
             bar.val:SetText(NumFormat(data.threatValue))
             bar.perc:SetText(floor(data.threatPercent + 0.5).."%")  -- floor(x + 0.5) is lua's missing round()
+            bar.tps:SetText(data.tps and NumFormat(floor(data.tps + 0.5)) or "-")
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             -- this only runs for the player
@@ -485,7 +497,9 @@ function TC2:UpdateThreatBars()
         
         -- Calculate the exact threat value needed to pull (110% melee, 130% ranged)
         local pullAggroThreatValue = tankData.threatValue * (isOutOfMelee and 1.3 or 1.1)
-        local threatRequired = pullAggroThreatValue - playerThreat
+        -- the player can be above the pull threshold without having aggro
+        local isAboveThreshold = pullAggroThreatValue < playerThreat
+        local threatRequired = max(0, pullAggroThreatValue - playerThreat)
         
         local isAbsolute = (C.bar.pullAggroBarPercentage == "ABSOLUTE")
         local threatPercentageRequired = 100 -- Default to >99 for relative division by zero
@@ -498,7 +512,7 @@ function TC2:UpdateThreatBars()
                 targetPercent = isOutOfMelee and 130 or 110
             end
             
-            threatPercentageRequired = targetPercent - currentThreatPercent
+            threatPercentageRequired = max(0, targetPercent - currentThreatPercent)
         else
             -- RELATIVE: Percentage relative to the player's current threat
             if playerThreat > 0 then
@@ -509,10 +523,21 @@ function TC2:UpdateThreatBars()
         bar.ignite:Hide()
         bar.name:SetPoint("LEFT", bar, 4, 0)
         bar.name:SetText(C.bar.pullAggroBarText)
-        bar.val:SetText("+"..NumFormat(floor(threatRequired + 0.5)))  -- floor(x + 0.5) is lua's missing round()
-        
+        -- time to aggro: the pull threshold moves with the tank's threat, so the player
+        -- closes the gap at their TPS minus the tank's TPS times the pull factor
+        local timeToAggro = ""
+        if C.bar.pullAggroBarTimeToAggro and not isAboveThreshold and playerData and playerData.tps and tankData.tps then
+            local closingRate = playerData.tps - tankData.tps * (isOutOfMelee and 1.3 or 1.1)
+            -- hidden when not catching up or 100s and above
+            local seconds = closingRate > 0 and floor(threatRequired / closingRate + 0.5)  -- floor(x + 0.5) is lua's missing round()
+            if seconds and seconds < 100 then
+                timeToAggro = seconds.."s"
+            end
+        end
+        bar.tps:SetText(timeToAggro)
         local suffix = isAbsolute and "p " or "%"
-        
+
+        bar.val:SetText("+"..NumFormat(floor(threatRequired + 0.5)))  -- floor(x + 0.5) is lua's missing round()
         if threatPercentageRequired > 99 then
             bar.perc:SetText(">99" .. suffix)
         else
@@ -545,6 +570,79 @@ local function CheckVisibility()
     end
 end
 
+-- returns the unit's TPS against the given target
+-- the window ramps up from the first threat generated: a cumulative average until
+-- TPS_WINDOW worth of data exists, an exponential moving average afterwards. that way
+-- the value is useful from the first hit on and does not depend on the update interval.
+-- nothing but generated threat starts the average, so acquiring a target does not
+-- turn idle time into a bogus rate
+local function UpdateTPS(targetGUID, unitGUID, threatValue)
+    local now = GetTime()
+    local target = threatHistory[targetGUID]
+    if not target then
+        target = {units = {}}
+        threatHistory[targetGUID] = target
+    end
+    target.lastUpdate = now
+
+    local h = target.units[unitGUID]
+    if not h then
+        -- only a baseline so far, the unit is idle until it actually generates threat
+        target.units[unitGUID] = {value = threatValue, lastAction = now, tps = 0}
+        return 0
+    end
+
+    if threatValue < h.value then
+        -- threat dropped (feign death, threat reset, ...) -> restart from the new baseline
+        h.value      = threatValue
+        h.lastAction = now
+        h.startTime  = nil
+        h.tps        = 0
+        return 0
+    end
+
+    local gained   = threatValue - h.value
+    local interval = now - h.lastAction
+
+    -- only generated threat advances the average. updates without new threat must not
+    -- enter it, otherwise the measured rate would depend on how often we look
+    -- (updateFreq, 200ms by default, in targettarget mode). interval <= 0 means another
+    -- gain in the same frame, it rolls into the next measurement
+    if gained > 0 and interval > 0 then
+        if h.startTime and interval >= TPS_WINDOW then
+            -- a full window without threat -> the burst ended, average from scratch
+            h.startTime = nil
+            h.tps       = 0
+        end
+        if not h.startTime then
+            -- first threat after being idle, the ramp up starts here
+            h.startTime  = now
+            h.startValue = h.value
+        end
+
+        local elapsed = now - h.startTime
+        if elapsed < TPS_WINDOW then
+            -- cumulative average while the window grows towards TPS_WINDOW. the first
+            -- second counts as a full second, so an opener reads as its own threat
+            -- instead of spiking on a tiny interval
+            h.tps = (threatValue - h.startValue) / max(1, elapsed)
+        else
+            -- exponential moving average over the interval between threat gains
+            h.tps = h.tps + (gained / interval - h.tps) * min(1, interval / TPS_WINDOW)
+        end
+        h.value      = threatValue
+        h.lastAction = now
+    end
+
+    -- the rate holds for a GCD after the last threat gain and then fades out towards
+    -- TPS_WINDOW, so a unit that stops generating threat winds down to 0 instead of
+    -- freezing on its last value. the fade only depends on the time since that gain,
+    -- never on how often we look, so it reads the same in event driven and in
+    -- targettarget mode
+    local fade = (TPS_WINDOW - (now - h.lastAction)) / (TPS_WINDOW - 1.5)
+    return h.tps * max(0, min(1, fade))
+end
+
 local function UpdateThreatData(unit)
     if not UnitExists(unit) then return end
     local isTanking, _, threatPercent, rawThreatPercent, threatValue = UnitDetailedThreatSituation(unit, TC2.playerTarget)
@@ -574,6 +672,13 @@ local function UpdateThreatData(unit)
         threatValue = math.floor(threatValue / 100)
     end
 
+    local tps = nil
+    if C.bar.showTPS then
+        -- a nil threatValue means the unit is not on the threat table (yet), which is the
+        -- same as 0 threat and matches the value stored in the row below
+        tps = UpdateTPS(UnitGUID(TC2.playerTarget), UnitGUID(unit), threatValue or 0)
+    end
+
     tinsert(TC2.threatData, {
         unit            = unit,
         isPlayer        = isPlayer,
@@ -581,6 +686,7 @@ local function UpdateThreatData(unit)
         scaledPercent   = threatPercent, -- used for warnings, nil if not on the threat table
         rawThreatPercent = rawThreatPercent,
         threatValue     = threatValue or 0,
+        tps             = tps,
         isTanking       = isTanking or false,
         outOfMeleeRange = outOfMeleeRange
     })
@@ -590,6 +696,16 @@ local function UpdatePlayerTarget()
     -- reset warnings on target change
     lastWarnPercent = 100
     lastTankWarnPercent = 100
+
+    -- drop stale TPS histories, but keep recently updated ones
+    -- so quick target swapping doesn't lose the smoothed values
+    local now = GetTime()
+    for targetGUID, target in pairs(threatHistory) do
+        if now - target.lastUpdate > TPS_WINDOW then
+            threatHistory[targetGUID] = nil
+        end
+    end
+
     -- mainline returns secret threat values for targettarget
     if isMainline then
         TC2.playerTarget = "target"
@@ -1012,40 +1128,35 @@ function TC2:UpdateBars()
         -- Name
         bar.name:SetPoint("LEFT", bar, 4, 0)
         UpdateFont(bar.name)
-        -- Value
-        -- bar.val:SetPoint("RIGHT", bar, -40, 0)
-        bar.val:SetPoint("RIGHT", bar, -(C.font.size * 3.5), 0)
         UpdateFont(bar.val)
-        if C.bar.showThreatValue then
-            bar.val:Show()
-        else
-            bar.val:Hide()
-        end
-        -- Perc
-        bar.perc:SetPoint("RIGHT", bar, -2, 0)
         UpdateFont(bar.perc)
-        if C.bar.showThreatPercentage then
-            bar.perc:Show()
-        else
-            bar.perc:Hide()
+        UpdateFont(bar.tps)
+
+        -- handles show/hide and anchoring for all combinations of the three
+        -- optional text elements, chained right to left: percentage, value, TPS
+        local textElements = {
+            {fontString = bar.perc, shown = C.bar.showThreatPercentage},
+            {fontString = bar.val,  shown = C.bar.showThreatValue},
+            {fontString = bar.tps,  shown = C.bar.showTPS},
+        }
+        local offset = 2
+        local leftmostShown = nil
+        for _, element in ipairs(textElements) do
+            if element.shown then
+                element.fontString:SetPoint("RIGHT", bar, -offset, 0)
+                element.fontString:Show()
+                offset = offset + C.font.size * 3.5
+                leftmostShown = element.fontString
+            else
+                element.fontString:Hide()
+            end
         end
 
-        -- Adjust anchor points
-        if C.bar.showThreatValue then
-            -- move val to the right if percentage isn't shown
-            if not C.bar.showThreatPercentage then
-                bar.val:SetPoint("RIGHT", bar, -2, 0)
-            end
-             -- right point of name is left point of value
-            bar.name:SetPoint("RIGHT", bar.val, "LEFT", -10, 0)
+        -- name fills the remaining space
+        if leftmostShown then
+            bar.name:SetPoint("RIGHT", leftmostShown, "LEFT", -10, 0)
         else
-            if C.bar.showThreatPercentage then
-                 -- right point of name is left point of perc
-                bar.name:SetPoint("RIGHT", bar.perc, "LEFT", -10, 0)
-            else
-                -- anchor to right of bar
-                bar.name:SetPoint("RIGHT", bar, "RIGHT", -10, 0)
-            end
+            bar.name:SetPoint("RIGHT", bar, "RIGHT", -10, 0)
         end
     end
     self:UpdateThreatBars()
@@ -1173,6 +1284,7 @@ local function ResetTestData()
             isTanking       = testUnit.isTanking,
             outOfMeleeRange = testUnit.outOfMeleeRange,
             threatValue     = testUnit.threatValue,
+            tps             = testUnit.threatValue / 15,
         }
         if testUnit.isTanking then testTank = TC2.threatData[i] end
         if testUnit.isPlayer then testPlayer = TC2.threatData[i] end
@@ -1185,9 +1297,11 @@ local function TestTick()
     local chaser = testPlayer.isTanking and testTank or testPlayer
     -- steps are relative to the threat needed to pull aggro from the current tank
     local pullThreat = tank.threatValue * 1.1
-    testPlayer.threatValue = testPlayer.threatValue + pullThreat * TEST_PLAYER_STEP
+    testPlayer.tps = pullThreat * TEST_PLAYER_STEP / TEST_TICK_SECONDS
+    testPlayer.threatValue = testPlayer.threatValue + testPlayer.tps * TEST_TICK_SECONDS
     if testPlayer.isTanking then
-        testTank.threatValue = testTank.threatValue + pullThreat * TEST_TANK_STEP
+        testTank.tps = pullThreat * TEST_TANK_STEP / TEST_TICK_SECONDS
+        testTank.threatValue = testTank.threatValue + testTank.tps * TEST_TICK_SECONDS
     end
     UpdateTestPercentages()
 
@@ -1995,6 +2109,12 @@ TC2.configTable = {
                             name = L.bar_showThreatPercentage,
                             type = "toggle",
                         },
+                        showTPS = {
+                            order = 16.5,
+                            name = L.bar_showTPS,
+                            desc = L.bar_showTPS_desc,
+                            type = "toggle",
+                        },
                         extraOptions = {
                             order = 17,
                             name = L.bar_extraOptions,
@@ -2062,6 +2182,14 @@ TC2.configTable = {
                             },
                             style = "dropdown",
                             hidden = function() return not C.bar.showPullAggroBar end,
+                        },
+                        pullAggroBarTimeToAggro = {
+                            order = 25,
+                            name = L.bar_pullAggroBarTimeToAggro,
+                            desc = L.bar_pullAggroBarTimeToAggro_desc,
+                            type = "toggle",
+                            hidden = function() return not C.bar.showPullAggroBar end,
+                            disabled = function() return not C.bar.showTPS end,
                         },
                         
                     },
