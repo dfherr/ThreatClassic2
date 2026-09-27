@@ -1042,8 +1042,10 @@ end
 -----------------------------
 -- TEST MODE
 -----------------------------
--- test mode: the player climbs 2% per tick until taking aggro, then the old tank climbs back
-local TEST_TICK_SECONDS     = 0.5
+-- test mode: the player climbs 2% per tick and takes aggro, then the old tank catches up at 3% per tick
+local TEST_TICK_SECONDS     = 1
+local TEST_PLAYER_STEP      = 0.02
+local TEST_TANK_STEP        = 0.03
 local testTicker            = nil
 local testPlayer, testTank  = nil, nil
 
@@ -1169,8 +1171,12 @@ end
 local function TestTick()
     local tank = testPlayer.isTanking and testPlayer or testTank
     local chaser = testPlayer.isTanking and testTank or testPlayer
-    -- raise the chaser by 2% of the threat needed to pull aggro
-    chaser.threatValue = chaser.threatValue + tank.threatValue * 1.1 * 0.02
+    -- steps are relative to the threat needed to pull aggro from the current tank
+    local pullThreat = tank.threatValue * 1.1
+    testPlayer.threatValue = testPlayer.threatValue + pullThreat * TEST_PLAYER_STEP
+    if testPlayer.isTanking then
+        testTank.threatValue = testTank.threatValue + pullThreat * TEST_TANK_STEP
+    end
     UpdateTestPercentages()
 
     if chaser.scaledPercent >= 100 then
