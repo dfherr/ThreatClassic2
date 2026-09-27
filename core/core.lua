@@ -53,6 +53,7 @@ local announcedOutdated     = false
 local announcedIncompatible = false
 
 local lastWarnPercent       =  100
+local lastWarnTime          = 0
 
 local currentEncounterName  = nil -- mainline only, used for the target list filter
 
@@ -688,7 +689,8 @@ function TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
     -- percentage is now above threshold and was below threshold before
     if threatPercent >= C.warnings.threshold and lastWarnPercent < C.warnings.threshold and rawThreatPercent < 250 then
         lastWarnPercent = threatPercent
-        if threatValue > C.warnings.minThreatAmount then
+        if threatValue > C.warnings.minThreatAmount and GetTime() >= lastWarnTime + C.warnings.cooldown then
+            lastWarnTime = GetTime()
             if C.warnings.sound then PlaySoundFile(LSM:Fetch("sound", C.warnings.soundFile), C.warnings.soundChannel) end
             if C.warnings.flash then self:FlashScreen() end
         end
@@ -2211,7 +2213,7 @@ TC2.configTable = {
                 disableWhileTanking = {
                     order = 1,
                     name = L.warnings_disableWhileTanking,
-                    desc = L.warnings_disableWhileTanking_desc,
+                    desc = isMainline and L.warnings_disableWhileTanking_desc_mainline or L.warnings_disableWhileTanking_desc,
                     type = "toggle",
                     width = "full",
                 },
@@ -2238,6 +2240,17 @@ TC2.configTable = {
                     softMax = 10000,
                     step = 1,
                     bigStep = 100,
+                },
+                cooldown = {
+                    order = 3.5,
+                    name = L.warnings_cooldown,
+                    desc = L.warnings_cooldown_desc,
+                    type = "range",
+                    width = "double",
+                    min = 0,
+                    max = 120,
+                    softMax = 30,
+                    step = 1,
                 },
                 flash = {
                     order = 4,
@@ -2271,7 +2284,6 @@ TC2.configTable = {
 }
 
 SLASH_TC2_SLASHCMD1 = "/tc2"
-SLASH_TC2_SLASHCMD2 = "/threat2"
 SLASH_TC2_SLASHCMD2 = "/threatclassic2"
 SlashCmdList["TC2_SLASHCMD"] = function(arg)
     arg = arg:lower()
