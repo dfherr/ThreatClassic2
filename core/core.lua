@@ -1042,8 +1042,97 @@ end
 -----------------------------
 -- TEST MODE
 -----------------------------
--- test mode: the player climbs 1% per update until taking aggro, then the old tank climbs back
+-- test mode: the player climbs 2% per tick until taking aggro, then the old tank climbs back
+local TEST_TICK_SECONDS     = 0.5
+local testTicker            = nil
 local testPlayer, testTank  = nil, nil
+
+-- test mode units in threat list order. the player is the real player unit, all others are mocked
+local TEST_UNITS = {
+    { unit = "mage",      class = "MAGE",    threatValue = 11000, outOfMeleeRange = true },
+    { unit = "warrior",   class = "WARRIOR", threatValue = 10000, isTanking = true, isMarkedTank = true },
+    { unit = "paladin",   class = "PALADIN", threatValue = 9000,  isMarkedTank = true }, -- off tank
+    { unit = "hunter",    class = "HUNTER",  threatValue = 8000,  outOfMeleeRange = true },
+    { unit = "rogue",     class = "ROGUE",   threatValue = 7000 },
+    { unit = "player",    isPlayer = true,   threatValue = 6600 }, -- 60% of the threat needed to pull aggro
+    { unit = "hunterpet", threatValue = 6300 }, -- pets have no class
+    { unit = "warlock",   class = "WARLOCK", threatValue = 6000,  outOfMeleeRange = true },
+    { unit = "priest",    class = "PRIEST",  threatValue = 5000 },
+    { unit = "druid",     class = "DRUID",   threatValue = 4000 },
+}
+
+-- mocked units by unit token
+local testUnits = {}
+for i = 1, #TEST_UNITS do
+    if not TEST_UNITS[i].isPlayer then
+        testUnits[TEST_UNITS[i].unit] = TEST_UNITS[i]
+    end
+end
+
+-- test mode mocks the unit api for the test units, all other units use the real api
+local realUnitApi = nil
+
+local function MockUnitApi()
+    if realUnitApi then return end
+    local real = {
+        UnitExists              = UnitExists,
+        UnitName                = UnitName,
+        UnitClass               = UnitClass,
+        UnitIsPlayer            = UnitIsPlayer,
+        UnitIsUnit              = UnitIsUnit,
+        UnitReaction            = UnitReaction,
+        GetPartyAssignment      = GetPartyAssignment,
+        UnitGroupRolesAssigned  = UnitGroupRolesAssigned,
+    }
+    realUnitApi = real
+
+    UnitExists = function(unit)
+        return testUnits[unit] ~= nil or real.UnitExists(unit)
+    end
+    UnitName = function(unit)
+        local testUnit = testUnits[unit]
+        if testUnit then return testUnit.class and LOCALIZED_CLASS_NAMES_MALE[testUnit.class] or PET end
+        return real.UnitName(unit)
+    end
+    UnitClass = function(unit)
+        local testUnit = testUnits[unit]
+        if testUnit then return testUnit.class and LOCALIZED_CLASS_NAMES_MALE[testUnit.class], testUnit.class end
+        return real.UnitClass(unit)
+    end
+    UnitIsPlayer = function(unit)
+        if testUnits[unit] then return testUnits[unit].class ~= nil end
+        return real.UnitIsPlayer(unit)
+    end
+    UnitIsUnit = function(a, b)
+        if testUnits[a] or testUnits[b] then return a == b end
+        return real.UnitIsUnit(a, b)
+    end
+    UnitReaction = function(unit, other)
+        if testUnits[unit] then return 5 end -- friendly
+        return real.UnitReaction(unit, other)
+    end
+    GetPartyAssignment = function(assignment, unit, ...)
+        if testUnits[unit] then return assignment == "MAINTANK" and testUnits[unit].isMarkedTank or false end
+        return real.GetPartyAssignment and real.GetPartyAssignment(assignment, unit, ...)
+    end
+    UnitGroupRolesAssigned = function(unit)
+        if testUnits[unit] then return testUnits[unit].isMarkedTank and "TANK" or "NONE" end
+        return real.UnitGroupRolesAssigned and real.UnitGroupRolesAssigned(unit)
+    end
+end
+
+local function RestoreUnitApi()
+    if not realUnitApi then return end
+    UnitExists              = realUnitApi.UnitExists
+    UnitName                = realUnitApi.UnitName
+    UnitClass               = realUnitApi.UnitClass
+    UnitIsPlayer            = realUnitApi.UnitIsPlayer
+    UnitIsUnit              = realUnitApi.UnitIsUnit
+    UnitReaction            = realUnitApi.UnitReaction
+    GetPartyAssignment      = realUnitApi.GetPartyAssignment
+    UnitGroupRolesAssigned  = realUnitApi.UnitGroupRolesAssigned
+    realUnitApi = nil
+end
 
 -- emulates the threat api: percentages are relative to the unit with aggro
 local function UpdateTestPercentages()
@@ -1062,30 +1151,26 @@ end
 
 local function ResetTestData()
     wipe(TC2.threatData)
-    for i = 1, 10 do
+    for i = 1, #TEST_UNITS do
+        local testUnit = TEST_UNITS[i]
         TC2.threatData[i] = {
-            unit = TC2.playerName,
-            threatValue = (12-i)/10.0 * 10000,
+            unit            = testUnit.unit,
+            isPlayer        = testUnit.isPlayer,
+            isTanking       = testUnit.isTanking,
+            outOfMeleeRange = testUnit.outOfMeleeRange,
+            threatValue     = testUnit.threatValue,
         }
+        if testUnit.isTanking then testTank = TC2.threatData[i] end
+        if testUnit.isPlayer then testPlayer = TC2.threatData[i] end
     end
-    TC2.threatData[1].outOfMeleeRange = true
-    TC2.threatData[4].outOfMeleeRange = true
-
-    testTank = TC2.threatData[2]
-    testTank.isTanking = true
-    testPlayer = TC2.threatData[3]
-    testPlayer.isPlayer = true
-    -- start the player at 60% of the threat needed to pull aggro
-    testPlayer.threatValue = testTank.threatValue * 1.1 * 0.6
-
     UpdateTestPercentages()
 end
 
 local function TestTick()
     local tank = testPlayer.isTanking and testPlayer or testTank
     local chaser = testPlayer.isTanking and testTank or testPlayer
-    -- raise the chaser by 1% of the threat needed to pull aggro
-    chaser.threatValue = chaser.threatValue + tank.threatValue * 1.1 * 0.01
+    -- raise the chaser by 2% of the threat needed to pull aggro
+    chaser.threatValue = chaser.threatValue + tank.threatValue * 1.1 * 0.02
     UpdateTestPercentages()
 
     if chaser.scaledPercent >= 100 then
@@ -1110,8 +1195,24 @@ function TC2:TestMode()
     C.frame.test = true
     lastWarnPercent = 100
     lastTankWarnPercent = 100
+    MockUnitApi()
     ResetTestData()
     self:UpdateThreatBars()
+
+    if not testTicker then
+        testTicker = C_Timer.NewTicker(TEST_TICK_SECONDS, TestTick)
+    end
+end
+
+function TC2:StopTestMode()
+    if not C.frame.test then return end
+    C.frame.test = false
+    if testTicker then
+        testTicker:Cancel()
+        testTicker = nil
+    end
+    RestoreUnitApi()
+    wipe(TC2.threatData)
 end
 
 -----------------------------
@@ -1175,12 +1276,6 @@ end)
 TC2.frame:SetScript("OnUpdate", function(self, elapsed)
     local now = GetTime()
     if now > lastCheckStatusTime + C.general.updateFreq then
-        if C.frame.test then
-            lastCheckStatusTime = now
-            TestTick()
-            return
-        end
-
         local inCombat = UnitAffectingCombat("player")
         -- always check status in interval if the playerTarget is set to targettarget (i.e. direct traget is friendly)
         -- because THREAT_LIST_UPDATE does not trigger for targettarget. Also the threat api only works in combat
@@ -1207,7 +1302,7 @@ end
 function TC2:PLAYER_TARGET_CHANGED(...)
     UpdatePlayerTarget()
 
-    C.frame.test = false
+    TC2:StopTestMode()
     CheckStatus()
 end
 
@@ -1225,13 +1320,13 @@ end
 
 function TC2:PLAYER_REGEN_DISABLED(...)
     UpdatePlayerTarget() -- for friendly mobs that turn hostile like vaelastrasz
-    C.frame.test = false
+    TC2:StopTestMode()
     CheckStatus()
 end
 
 function TC2:PLAYER_REGEN_ENABLED(...)
     -- collectgarbage()
-    C.frame.test = false
+    TC2:StopTestMode()
     CheckStatus()
 end
 
@@ -1246,7 +1341,7 @@ function TC2:ENCOUNTER_END(...)
 end
 
 function TC2:UNIT_THREAT_LIST_UPDATE(event, unitTarget)
-    C.frame.test = false
+    TC2:StopTestMode()
     if TC2.playerTarget == unitTarget then
         CheckStatusDeferred()
     end
@@ -1366,11 +1461,11 @@ function TC2.MenuGenerator(owner, rootDescription)
     )
     rootDescription:CreateCheckbox(L.frame_test, function() return C.frame.test end, 
         function()
-            C.frame.test = not C.frame.test
             if C.frame.test then
-                TC2:TestMode()
-            else
+                TC2:StopTestMode()
                 CheckStatus()
+            else
+                TC2:TestMode()
             end
         end
     )
@@ -1422,6 +1517,20 @@ TC2.configTable = {
                     order = 1,
                     name = L.general,
                     type = "header",
+                },
+                test = {
+                    order = 1.5,
+                    name = L.frame_test,
+                    desc = L.frame_test_desc,
+                    type = "execute",
+                    func = function(info, value)
+                        if C.frame.test then
+                            TC2:StopTestMode()
+                            CheckStatus()
+                        else
+                            TC2:TestMode()
+                        end
+                    end,
                 },
                 welcome = {
                     order = 2,
@@ -1551,20 +1660,6 @@ TC2.configTable = {
                     type = "group",
                     inline = true,
                     args = {
-                        test = {
-                            order = 1,
-                            name = L.frame_test,
-                            type = "execute",
-                            func = function(info, value)
-                                C.frame.test = not C.frame.test
-                                if C.frame.test then
-                                    TC2:TestMode()
-                                else
-                                    wipe(TC2.threatData)
-                                    CheckStatus()
-                                end
-                            end,
-                        },
                         locked = {
                             order = 2,
                             name = L.frame_lock,
