@@ -33,4 +33,12 @@ jobs:
         uses: BigWigsMods/packager@master
         with:
           args: -g mists
- 
+      - name: Package and release retail
+        uses: BigWigsMods/packager@master
+        with:
+          # retail builds get no suffix by default. {file template}:{upload label template}
+          args: -g retail -n "{package-name}-{project-version}{nolib}-retail:{project-version}-retail{nolib}"
+      - name: Package and release forever
+        uses: BigWigsMods/packager@master
+        with:
+          args: -g forever

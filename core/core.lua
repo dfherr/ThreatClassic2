@@ -10,9 +10,7 @@ local unpack    = _G.unpack
 local type      = _G.type
 local floor     = _G.math.floor
 local min       = _G.math.min
-local strbyte   = _G.string.byte
 local format    = _G.string.format
-local strlen    = _G.string.len
 local strsub    = _G.string.sub
 local strmatch  = _G.string.match
 
@@ -28,6 +26,7 @@ local GetPartyAssignment    = _G.GetPartyAssignment
 local UnitGroupRolesAssigned = _G.UnitGroupRolesAssigned
 local GetInstanceInfo       = _G.GetInstanceInfo
 local IsInRaid              = _G.IsInRaid
+local IsEncounterInProgress = _G.IsEncounterInProgress
 local UnitAffectingCombat   = _G.UnitAffectingCombat
 local UnitClass             = _G.UnitClass
 local UnitExists            = _G.UnitExists
@@ -38,6 +37,7 @@ local UnitName              = _G.UnitName
 local UnitReaction          = _G.UnitReaction
 local UnitIsUnit            = _G.UnitIsUnit
 local GetShapeshiftForm     = _G.GetShapeshiftForm
+local GetSpecialization     = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization or _G.GetSpecialization
 
 local screenWidth           = floor(GetScreenWidth())
 local screenHeight          = floor(GetScreenHeight())
@@ -52,9 +52,19 @@ local announcedOutdated     = false
 local announcedIncompatible = false
 
 local lastWarnPercent       =  100
+local lastWarnTime          = 0
+local lastTankWarnPercent   = 100
+local lastTankWarnTime      = 0
+
+local currentEncounterName  = nil -- mainline only, used for the target list filter
 
 local FACTION_BAR_COLORS    = _G.FACTION_BAR_COLORS
 local RAID_CLASS_COLORS     = (_G.CUSTOM_CLASS_COLORS or _G.RAID_CLASS_COLORS)
+
+-- mainline clients (retail, forever) restrict enemy unit data (secret values), so some name based features are disabled there
+local isMainline            = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+-- forever uses the mainline api, but dual spec instead of specializations (spec role is always damager)
+local isForever             = isMainline and select(4, GetBuildInfo()) < 20000
 
 
 -- other
@@ -196,33 +206,15 @@ local function NumFormat(v)
     end
 end
 
-local function TruncateString(str, i, ellipsis)
-    if not str then return end
-    local bytes = strlen(str)
-    if bytes <= i then
-        return str
-    else
-        local length, pos = 0, 1
-        while (pos <= bytes) do
-            length = length + 1
-            local c = strbyte(str, pos)
-            if c > 0 and c <= 127 then
-                pos = pos + 1
-            elseif c >= 192 and c <= 223 then
-                pos = pos + 2
-            elseif c >= 224 and c <= 239 then
-                pos = pos + 3
-            elseif c >= 240 and c <= 247 then
-                pos = pos + 4
-            end
-            if length == i then break end
-        end
-        if length == i and pos <= bytes then
-            return strsub(str, 1, pos - 1) .. (ellipsis and "..." or "")
-        else
-            return str
-        end
+-- true if the target list filter is disabled or the current target is in the list
+local function FilterTarget()
+    if not C.filter.useTargetList then return true end
+    -- mainline unit names are secret values, so match the current encounter name instead
+    if isMainline then
+        -- IsEncounterInProgress guards against a stale name from a missed ENCOUNTER_END
+        return currentEncounterName and IsEncounterInProgress() and C.filter.targetList[currentEncounterName]
     end
+    return C.filter.targetList[UnitName(TC2.playerTarget)]
 end
 
 local function IsUnitMarkedTank(unit)
@@ -388,15 +380,11 @@ function TC2:UpdateThreatBars()
             if data.isTanking then
                 tankData = data
             end
-            if UnitIsUnit(data.unit, "player") then
+            if data.isPlayer then
                 playerData = data
             end
         end
         if tankData and playerData then
-            -- small tweak for test mode otherwise playerData will always be equal to tankData as all datas are considered the player
-            if C.frame.test then
-                playerData = self.threatData[3]
-            end
             break
         end
     end
@@ -413,7 +401,7 @@ function TC2:UpdateThreatBars()
         local data = self.threatData[i-offset]
         local bar = self.bars[i]
         if data and data.threatValue > 0 then
-            if UnitIsUnit(data.unit, "player") then
+            if data.isPlayer then
                 playerIncluded = true
             end
 
@@ -431,7 +419,7 @@ function TC2:UpdateThreatBars()
             bar.perc:SetText(floor(data.threatPercent + 0.5).."%") -- floor(x + 0.5) is lua's missing round()
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
-            if (C.filter.yourself or not UnitIsUnit(data.unit, "player")) and C.filter.outOfMelee.color and data.outOfMeleeRange and (not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)]) then
+            if (C.filter.yourself or not data.isPlayer) and C.filter.outOfMelee.color and data.outOfMeleeRange and FilterTarget() then
                 if C.filter.outOfMelee.overwriteColorEnabled then
                     color = C.filter.outOfMelee.overwriteColor
                 end
@@ -470,7 +458,7 @@ function TC2:UpdateThreatBars()
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
             -- this only runs for the player
-            if C.filter.yourself and C.filter.outOfMelee.color and data.outOfMeleeRange and (not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)]) then
+            if C.filter.yourself and C.filter.outOfMelee.color and data.outOfMeleeRange and FilterTarget() then
                 if C.filter.outOfMelee.overwriteColorEnabled then
                     color = C.filter.outOfMelee.overwriteColor
                 end
@@ -568,10 +556,12 @@ local function UpdateThreatData(unit)
     end
 
     local outOfMeleeRange = rawThreatPercent and threatPercent > 0 and rawThreatPercent / threatPercent > 1.2
+    local isPlayer = UnitIsUnit(unit, "player")
 
-    if C.filter.yourself or not UnitIsUnit(unit, "player") then
+    -- filtered units are also excluded from warnings
+    if C.filter.yourself or not isPlayer then
         -- target list disabled or target in filter targetlist
-        if not C.filter.useTargetList or C.filter.targetList[UnitName(TC2.playerTarget)] then
+        if FilterTarget() then
             -- melee range filter; threatPercent > 0 to avoid divison by zero on fucked up api response
             if C.filter.outOfMelee.hide and outOfMeleeRange then
                 return
@@ -579,22 +569,17 @@ local function UpdateThreatData(unit)
         end
     end
 
-    if threatValue and C.general.downscaleThreat then
+    -- mainline threat values are already 1 damage = 1 threat
+    if threatValue and C.general.downscaleThreat and not isMainline then
         threatValue = math.floor(threatValue / 100)
-    end
-
-    -- check for warnings. this always uses the scaled percentage to avoid conercases of over 100% raw threat and then aggro
-    if UnitIsUnit(unit, "player") and threatPercent then
-        TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
-    end
-
-    if C.general.rawPercent then
-        threatPercent = rawThreatPercent
     end
 
     tinsert(TC2.threatData, {
         unit            = unit,
-        threatPercent   = threatPercent or 0,
+        isPlayer        = isPlayer,
+        threatPercent   = (C.general.rawPercent and rawThreatPercent or threatPercent) or 0, -- displayed percentage
+        scaledPercent   = threatPercent, -- used for warnings, nil if not on the threat table
+        rawThreatPercent = rawThreatPercent,
         threatValue     = threatValue or 0,
         isTanking       = isTanking or false,
         outOfMeleeRange = outOfMeleeRange
@@ -602,6 +587,15 @@ local function UpdateThreatData(unit)
 end
 
 local function UpdatePlayerTarget()
+    -- reset warnings on target change
+    lastWarnPercent = 100
+    lastTankWarnPercent = 100
+    -- mainline returns secret threat values for targettarget
+    if isMainline then
+        TC2.playerTarget = "target"
+        return
+    end
+
     if UnitExists("target") and (not UnitIsFriend("player", "target") or ((UnitReaction("player", "target") or 0) <= 4 and not UnitCanAssist("player", "target"))) then
         TC2.playerTarget = "target"
     elseif UnitExists("targettarget") and (not UnitIsFriend("player", "targettarget") or ((UnitReaction("player", "targettarget") or 0) <= 4 and not UnitCanAssist("player", "targettarget"))) then
@@ -640,12 +634,16 @@ local function CheckStatus()
         end
 
         TC2:UpdateThreatBars()
+        TC2:CheckDamageWarning()
+        TC2:CheckTankWarning()
 
         -- set header unit name
+        -- the fontstring clips long names. this also works with secret values on mainline
         local targetName = (": " .. UnitName(TC2.playerTarget)) or ""
-        targetName = TruncateString(targetName, floor(TC2.frame.header:GetWidth() / (C.font.size * 0.85)), true)
         TC2.frame.header.text:SetText(format("%s%s", L.gui_threat, targetName))
     else
+        -- no stale data for repeating warnings
+        wipe(TC2.threatData)
         -- clear header text of unit name
         TC2.frame.header.text:SetText(format("%s%s", L.gui_threat, ""))
         -- hide bars when no target
@@ -659,41 +657,102 @@ local function CheckStatusDeferred()
     callCheckStatus = true
 end
 
-function TC2:CheckWarning(threatPercent, threatValue, rawThreatPercent)
+-- tank spec on mainline, defensive stance / bear form / righteous fury on classic
+-- mainline restricts aura data in combat, so righteous fury is tracked out of combat on forever
+local playerHasRighteousFury = false
 
-    if C.warnings.disableWhileTanking then
-        if self.playerClass == "WARRIOR" then
-            -- def stance
-            if GetShapeshiftForm() == 2 then
-                lastWarnPercent = 100
-                return
-            end
-        elseif self.playerClass == "DRUID" then
-            -- bear form
-            if GetShapeshiftForm() == 1 then
-                lastWarnPercent = 100
-                return
-            end
-        elseif self.playerClass == "PALADIN" then
-            -- righteous fury active
-            if FindAuraByNameCompat(C_Spell.GetSpellName(25780), "player", "HELPFUL") then
-                lastWarnPercent = 100
-                return
-            end
-        end
+local function UpdateRighteousFury()
+    if UnitAffectingCombat("player") then return end
+    playerHasRighteousFury = FindAuraByNameCompat(C_Spell.GetSpellName(25780), "player", "HELPFUL") ~= nil
+end
+
+local function IsTankSpecOrStance()
+    if isMainline and not isForever then
+        local spec = GetSpecialization()
+        if not spec then return false end
+        local _, _, _, _, role = C_SpecializationInfo.GetSpecializationInfo(spec)
+        return role == "TANK"
+    elseif TC2.playerClass == "WARRIOR" then
+        return GetShapeshiftForm() == 2
+    elseif TC2.playerClass == "DRUID" then
+        return GetShapeshiftForm() == 1
+    elseif TC2.playerClass == "PALADIN" then
+        if isForever then return playerHasRighteousFury end
+        return FindAuraByNameCompat(C_Spell.GetSpellName(25780), "player", "HELPFUL") ~= nil
+    end
+    return false
+end
+
+local function GetPlayerThreatData()
+    for _, data in pairs(TC2.threatData) do
+        if data.isPlayer then return data end
+    end
+end
+
+-- warns when the player's threat gets close to pulling aggro
+function TC2:CheckDamageWarning(repeatCheck)
+    if not (C.warnings.sound or C.warnings.flash) then return end
+    if repeatCheck and (not C.warnings.repeatWarning or GetTime() < lastWarnTime + C.warnings.cooldown) then return end
+
+    local player = GetPlayerThreatData()
+    if not player or not player.scaledPercent then return end
+
+    if C.warnings.disableWhileTanking and IsTankSpecOrStance() then
+        lastWarnPercent = 100
+        return
     end
 
-    -- percentage is now above threshold and was below threshold before
-    if threatPercent >= C.warnings.threshold and lastWarnPercent < C.warnings.threshold and rawThreatPercent < 250 then
+    -- this always uses the scaled percentage to avoid edgecases of over 100% raw threat and then aggro
+    local threatPercent = player.scaledPercent
+    -- percentage is now above threshold and was below threshold before (or repeat is enabled)
+    if threatPercent >= C.warnings.threshold and (C.warnings.repeatWarning or lastWarnPercent < C.warnings.threshold) and player.rawThreatPercent < 250 then
         lastWarnPercent = threatPercent
-        if threatValue > C.warnings.minThreatAmount then
-            if C.warnings.sound then PlaySoundFile(LSM:Fetch("sound", C.warnings.soundFile), C.warnings.soundChannel) end
-            if C.warnings.flash then self:FlashScreen() end
+        if player.threatValue > C.warnings.minThreatAmount and GetTime() >= lastWarnTime + C.warnings.cooldown then
+            lastWarnTime = GetTime()
+            self:PlayWarning(C.warnings.sound, C.warnings.flash, C.warnings.soundFile, C.warnings.soundChannel)
         end
     -- percentage is below threshold -> reset lastWarnPercent
     elseif threatPercent < C.warnings.threshold then
         lastWarnPercent = threatPercent
     end
+end
+
+-- warns while the player has aggro when another unit gets close to pulling it
+function TC2:CheckTankWarning(repeatCheck)
+    if not (C.warnings.tankSound or C.warnings.tankFlash) then return end
+    if repeatCheck and (not C.warnings.tankRepeatWarning or GetTime() < lastTankWarnTime + C.warnings.tankCooldown) then return end
+
+    local player = GetPlayerThreatData()
+    if not player or not player.isTanking or (C.warnings.tankOnlyWhileTanking and not IsTankSpecOrStance()) then
+        lastTankWarnPercent = 100
+        return
+    end
+
+    -- highest scaled threat of all other units in the threat list
+    local highest
+    for _, data in pairs(TC2.threatData) do
+        if not data.isPlayer and data.scaledPercent and (not highest or data.scaledPercent > highest.scaledPercent) then
+            highest = data
+        end
+    end
+    local threatPercent = highest and highest.scaledPercent or 0
+
+    -- percentage is now above threshold and was below threshold before (or repeat is enabled)
+    if threatPercent >= C.warnings.tankThreshold and (C.warnings.tankRepeatWarning or lastTankWarnPercent < C.warnings.tankThreshold) then
+        lastTankWarnPercent = threatPercent
+        if highest.threatValue > C.warnings.tankMinThreatAmount and GetTime() >= lastTankWarnTime + C.warnings.tankCooldown then
+            lastTankWarnTime = GetTime()
+            self:PlayWarning(C.warnings.tankSound, C.warnings.tankFlash, C.warnings.tankSoundFile, C.warnings.tankSoundChannel)
+        end
+    -- percentage is below threshold -> reset lastTankWarnPercent
+    elseif threatPercent < C.warnings.tankThreshold then
+        lastTankWarnPercent = threatPercent
+    end
+end
+
+function TC2:PlayWarning(sound, flash, soundFile, soundChannel)
+    if sound then PlaySoundFile(LSM:Fetch("sound", soundFile), soundChannel) end
+    if flash then self:FlashScreen() end
 end
 
 function TC2:FlashScreen()
@@ -995,39 +1054,183 @@ end
 -----------------------------
 -- TEST MODE
 -----------------------------
+-- test mode: the player climbs 2% per tick and takes aggro, then the old tank catches up at 3% per tick
+local TEST_TICK_SECONDS     = 1
+local TEST_PLAYER_STEP      = 0.02
+local TEST_TANK_STEP        = 0.03
+local testTicker            = nil
+local testPlayer, testTank  = nil, nil
+
+-- test mode units in threat list order. the player is the real player unit, all others are mocked
+local TEST_UNITS = {
+    { unit = "mage",      class = "MAGE",    threatValue = 11000, outOfMeleeRange = true },
+    { unit = "warrior",   class = "WARRIOR", threatValue = 10000, isTanking = true, isMarkedTank = true },
+    { unit = "paladin",   class = "PALADIN", threatValue = 9000,  isMarkedTank = true }, -- off tank
+    { unit = "hunter",    class = "HUNTER",  threatValue = 8000,  outOfMeleeRange = true },
+    { unit = "rogue",     class = "ROGUE",   threatValue = 7000 },
+    { unit = "player",    isPlayer = true,   threatValue = 6600 }, -- 60% of the threat needed to pull aggro
+    { unit = "hunterpet", threatValue = 6300 }, -- pets have no class
+    { unit = "warlock",   class = "WARLOCK", threatValue = 6000,  outOfMeleeRange = true },
+    { unit = "priest",    class = "PRIEST",  threatValue = 5000 },
+    { unit = "druid",     class = "DRUID",   threatValue = 4000 },
+}
+
+-- mocked units by unit token
+local testUnits = {}
+for i = 1, #TEST_UNITS do
+    if not TEST_UNITS[i].isPlayer then
+        testUnits[TEST_UNITS[i].unit] = TEST_UNITS[i]
+    end
+end
+
+-- test mode mocks the unit api for the test units, all other units use the real api
+local realUnitApi = nil
+
+local function MockUnitApi()
+    if realUnitApi then return end
+    local real = {
+        UnitExists              = UnitExists,
+        UnitName                = UnitName,
+        UnitClass               = UnitClass,
+        UnitIsPlayer            = UnitIsPlayer,
+        UnitIsUnit              = UnitIsUnit,
+        UnitReaction            = UnitReaction,
+        GetPartyAssignment      = GetPartyAssignment,
+        UnitGroupRolesAssigned  = UnitGroupRolesAssigned,
+    }
+    realUnitApi = real
+
+    UnitExists = function(unit)
+        return testUnits[unit] ~= nil or real.UnitExists(unit)
+    end
+    UnitName = function(unit)
+        local testUnit = testUnits[unit]
+        if testUnit then return testUnit.class and LOCALIZED_CLASS_NAMES_MALE[testUnit.class] or PET end
+        return real.UnitName(unit)
+    end
+    UnitClass = function(unit)
+        local testUnit = testUnits[unit]
+        if testUnit then return testUnit.class and LOCALIZED_CLASS_NAMES_MALE[testUnit.class], testUnit.class end
+        return real.UnitClass(unit)
+    end
+    UnitIsPlayer = function(unit)
+        if testUnits[unit] then return testUnits[unit].class ~= nil end
+        return real.UnitIsPlayer(unit)
+    end
+    UnitIsUnit = function(a, b)
+        if testUnits[a] or testUnits[b] then return a == b end
+        return real.UnitIsUnit(a, b)
+    end
+    UnitReaction = function(unit, other)
+        if testUnits[unit] then return 5 end -- friendly
+        return real.UnitReaction(unit, other)
+    end
+    GetPartyAssignment = function(assignment, unit, ...)
+        if testUnits[unit] then return assignment == "MAINTANK" and testUnits[unit].isMarkedTank or false end
+        return real.GetPartyAssignment and real.GetPartyAssignment(assignment, unit, ...)
+    end
+    UnitGroupRolesAssigned = function(unit)
+        if testUnits[unit] then return testUnits[unit].isMarkedTank and "TANK" or "NONE" end
+        return real.UnitGroupRolesAssigned and real.UnitGroupRolesAssigned(unit)
+    end
+end
+
+local function RestoreUnitApi()
+    if not realUnitApi then return end
+    UnitExists              = realUnitApi.UnitExists
+    UnitName                = realUnitApi.UnitName
+    UnitClass               = realUnitApi.UnitClass
+    UnitIsPlayer            = realUnitApi.UnitIsPlayer
+    UnitIsUnit              = realUnitApi.UnitIsUnit
+    UnitReaction            = realUnitApi.UnitReaction
+    GetPartyAssignment      = realUnitApi.GetPartyAssignment
+    UnitGroupRolesAssigned  = realUnitApi.UnitGroupRolesAssigned
+    realUnitApi = nil
+end
+
+-- emulates the threat api: percentages are relative to the unit with aggro
+local function UpdateTestPercentages()
+    local tank = testPlayer.isTanking and testPlayer or testTank
+    for _, data in pairs(TC2.threatData) do
+        if data.isTanking then
+            data.rawThreatPercent = 100
+            data.scaledPercent = 100
+        else
+            data.rawThreatPercent = data.threatValue / tank.threatValue * 100
+            data.scaledPercent = data.rawThreatPercent / (data.outOfMeleeRange and 1.3 or 1.1)
+        end
+        data.threatPercent = C.general.rawPercent and data.rawThreatPercent or data.scaledPercent
+    end
+end
+
+local function ResetTestData()
+    wipe(TC2.threatData)
+    for i = 1, #TEST_UNITS do
+        local testUnit = TEST_UNITS[i]
+        TC2.threatData[i] = {
+            unit            = testUnit.unit,
+            isPlayer        = testUnit.isPlayer,
+            isTanking       = testUnit.isTanking,
+            outOfMeleeRange = testUnit.outOfMeleeRange,
+            threatValue     = testUnit.threatValue,
+        }
+        if testUnit.isTanking then testTank = TC2.threatData[i] end
+        if testUnit.isPlayer then testPlayer = TC2.threatData[i] end
+    end
+    UpdateTestPercentages()
+end
+
+local function TestTick()
+    local tank = testPlayer.isTanking and testPlayer or testTank
+    local chaser = testPlayer.isTanking and testTank or testPlayer
+    -- steps are relative to the threat needed to pull aggro from the current tank
+    local pullThreat = tank.threatValue * 1.1
+    testPlayer.threatValue = testPlayer.threatValue + pullThreat * TEST_PLAYER_STEP
+    if testPlayer.isTanking then
+        testTank.threatValue = testTank.threatValue + pullThreat * TEST_TANK_STEP
+    end
+    UpdateTestPercentages()
+
+    if chaser.scaledPercent >= 100 then
+        if chaser == testTank then
+            -- the tank took aggro back, start over
+            ResetTestData()
+        else
+            tank.isTanking = false
+            chaser.isTanking = true
+            UpdateTestPercentages()
+        end
+    end
+
+    TC2:UpdateThreatBars()
+    TC2:CheckDamageWarning()
+    TC2:CheckTankWarning()
+end
+
 function TC2:TestMode()
     if UnitAffectingCombat("player") then return end
 
     C.frame.test = true
-    wipe(TC2.threatData)
-    for i = 1, 10 do
-        self.threatData[i] = {
-            unit = self.playerName,
-            threatValue = floor((12-i)/10.0 * 10000),
-            threatPercent = floor((12-i)/10.0 * 10000) / 10000.0 * 100,
-        }
-        if i <= C.bar.count then
-            tinsert(self.bars, i)
-        end
-    end
-
-    self.threatData[2].isTanking = true
-    self.threatData[1].outOfMeleeRange = true
-    self.threatData[4].outOfMeleeRange = true
-
-    if not C.general.rawPercent then
-        for i = 1, 10 do
-            if not self.threatData[i].isTanking then
-                if self.threatData[i].outOfMeleeRange then
-                    self.threatData[i].threatPercent = self.threatData[i].threatPercent / 1.3
-                else
-                    self.threatData[i].threatPercent = self.threatData[i].threatPercent / 1.1
-                end
-            end
-        end
-    end
-
+    lastWarnPercent = 100
+    lastTankWarnPercent = 100
+    MockUnitApi()
+    ResetTestData()
     self:UpdateThreatBars()
+
+    if not testTicker then
+        testTicker = C_Timer.NewTicker(TEST_TICK_SECONDS, TestTick)
+    end
+end
+
+function TC2:StopTestMode()
+    if not C.frame.test then return end
+    C.frame.test = false
+    if testTicker then
+        testTicker:Cancel()
+        testTicker = nil
+    end
+    RestoreUnitApi()
+    wipe(TC2.threatData)
 end
 
 -----------------------------
@@ -1089,18 +1292,25 @@ TC2.frame:SetScript("OnEvent", function(self, event, ...)
     return TC2[event] and TC2[event](TC2, event, ...)
 end)
 TC2.frame:SetScript("OnUpdate", function(self, elapsed)
-    if GetTime() > lastCheckStatusTime + C.general.updateFreq then
+    local now = GetTime()
+    if now > lastCheckStatusTime + C.general.updateFreq then
+        local inCombat = UnitAffectingCombat("player")
         -- always check status in interval if the playerTarget is set to targettarget (i.e. direct traget is friendly)
         -- because THREAT_LIST_UPDATE does not trigger for targettarget. Also the threat api only works in combat
-        if callCheckStatus or (TC2.playerTarget == "targettarget" and UnitAffectingCombat("player")) then
-            CheckStatus()
+        if callCheckStatus or (TC2.playerTarget == "targettarget" and inCombat) then
+            CheckStatus() -- also checks warnings
+        -- threat updates only fire when threat changes, so repeating warnings are checked here
+        elseif inCombat then
+            TC2:CheckDamageWarning(true)
+            TC2:CheckTankWarning(true)
         end
     end
 end)
 
 function TC2:PLAYER_ENTERING_WORLD(...)
+    -- loading screens, relogs and reloads can swallow ENCOUNTER_END
+    currentEncounterName = nil
     self.playerName = UnitName("player")
-    self.playerClass = select(2, _G.UnitClass("player"))
     self.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
 
     CheckStatus()
@@ -1108,10 +1318,8 @@ end
 
 function TC2:PLAYER_TARGET_CHANGED(...)
     UpdatePlayerTarget()
-    -- reset last warning on target change
-    lastWarnPercent = 100
 
-    C.frame.test = false
+    TC2:StopTestMode()
     CheckStatus()
 end
 
@@ -1129,28 +1337,47 @@ end
 
 function TC2:PLAYER_REGEN_DISABLED(...)
     UpdatePlayerTarget() -- for friendly mobs that turn hostile like vaelastrasz
-    lastWarnPercent = 100
-    C.frame.test = false
+    TC2:StopTestMode()
     CheckStatus()
 end
 
 function TC2:PLAYER_REGEN_ENABLED(...)
     -- collectgarbage()
-    C.frame.test = false
+    TC2:StopTestMode()
+    if isForever and TC2.playerClass == "PALADIN" then
+        UpdateRighteousFury()
+    end
     CheckStatus()
 end
 
+function TC2:UNIT_AURA(...)
+    UpdateRighteousFury()
+end
+
+function TC2:ENCOUNTER_START(event, encounterID, encounterName)
+    currentEncounterName = encounterName
+    CheckStatusDeferred()
+end
+
+function TC2:ENCOUNTER_END(...)
+    currentEncounterName = nil
+    CheckStatusDeferred()
+end
+
 function TC2:UNIT_THREAT_LIST_UPDATE(event, unitTarget)
-    C.frame.test = false
+    TC2:StopTestMode()
     if TC2.playerTarget == unitTarget then
         CheckStatusDeferred()
     end
 end
 
 function TC2:PLAYER_LOGIN()
+    self.playerClass = select(2, _G.UnitClass("player"))
 
     -- creates by default character specific profile, when 3rd argument is obmitted
     self.db = LibStub("AceDB-3.0"):New("ThreatClassic2DB", self.defaultConfig, true)
+    -- per spec profiles. may switch the profile right away, so this runs before migrating settings
+    LibStub("LibDualSpec-1.0"):EnhanceDatabase(self.db, self.addonName)
 
     -- migrate settings to new structure for backwards incompatible changes
     MigrateSettings(self.db)
@@ -1182,10 +1409,20 @@ function TC2:PLAYER_LOGIN()
     self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
     self.frame:RegisterEvent("PLAYER_TARGET_CHANGED")
     self.frame:RegisterUnitEvent("UNIT_TARGET", "target")
+
+    if isForever and self.playerClass == "PALADIN" then
+        self.frame:RegisterUnitEvent("UNIT_AURA", "player")
+        UpdateRighteousFury()
+    end
     self.frame:RegisterEvent("PLAYER_REGEN_DISABLED")
     self.frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
     self.frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
+
+    if isMainline then
+        self.frame:RegisterEvent("ENCOUNTER_START")
+        self.frame:RegisterEvent("ENCOUNTER_END")
+    end
 
     -- Setup Config
     self:SetupConfig()
@@ -1240,7 +1477,9 @@ function TC2:SetupFrame()
 
     self.frame.header.text = CreateFS(self.frame.header)
     self.frame.header.text:SetPoint("LEFT", self.frame.header, 4, -1)
+    self.frame.header.text:SetPoint("RIGHT", self.frame.header, -4, -1)
     self.frame.header.text:SetJustifyH("LEFT")
+    self.frame.header.text:SetWordWrap(false)
 
     self:UpdateFrame()
 end
@@ -1254,11 +1493,11 @@ function TC2.MenuGenerator(owner, rootDescription)
     )
     rootDescription:CreateCheckbox(L.frame_test, function() return C.frame.test end, 
         function()
-            C.frame.test = not C.frame.test
             if C.frame.test then
-                TC2:TestMode()
-            else
+                TC2:StopTestMode()
                 CheckStatus()
+            else
+                TC2:TestMode()
             end
         end
     )
@@ -1274,6 +1513,7 @@ end
 -----------------------------
 function TC2:SetupConfig()
     self.configTable.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
+    LibStub("LibDualSpec-1.0"):EnhanceOptions(self.configTable.args.profiles, self.db)
     LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(TC2.addonName, self.configTable)
 
     local ACD = LibStub("AceConfigDialog-3.0")
@@ -1288,10 +1528,17 @@ function TC2:SetupConfig()
 end
 
 function TC2:RefreshProfile()
+    -- profiles switched to (manually or by spec) may not be migrated yet
+    MigrateSettings(self.db)
     C = self.db.profile
     CheckVisibility()
     TC2:UpdateFrame()
 end
+
+-- how tanking is detected differs between retail, forever and classic
+local tankingDesc = (isForever and L.warnings_disableWhileTanking_desc_forever)
+    or (isMainline and L.warnings_disableWhileTanking_desc_mainline)
+    or L.warnings_disableWhileTanking_desc
 
 TC2.configTable = {
     type = "group",
@@ -1310,6 +1557,20 @@ TC2.configTable = {
                     order = 1,
                     name = L.general,
                     type = "header",
+                },
+                test = {
+                    order = 1.5,
+                    name = L.frame_test,
+                    desc = L.frame_test_desc,
+                    type = "execute",
+                    func = function(info, value)
+                        if C.frame.test then
+                            TC2:StopTestMode()
+                            CheckStatus()
+                        else
+                            TC2:TestMode()
+                        end
+                    end,
                 },
                 welcome = {
                     order = 2,
@@ -1335,6 +1596,7 @@ TC2.configTable = {
                     desc = L.general_downscaleThreatDesc,
                     type = "toggle",
                     width = "full",
+                    hidden = isMainline,
                 },
                 updateFreq = {
                     order = 5,
@@ -1438,20 +1700,6 @@ TC2.configTable = {
                     type = "group",
                     inline = true,
                     args = {
-                        test = {
-                            order = 1,
-                            name = L.frame_test,
-                            type = "execute",
-                            func = function(info, value)
-                                C.frame.test = not C.frame.test
-                                if C.frame.test then
-                                    TC2:TestMode()
-                                else
-                                    wipe(TC2.threatData)
-                                    CheckStatus()
-                                end
-                            end,
-                        },
                         locked = {
                             order = 2,
                             name = L.frame_lock,
@@ -2137,7 +2385,7 @@ TC2.configTable = {
                 },
                 useTargetList = {
                     order = 3,
-                    name = L.filter_useTargetList,
+                    name = isMainline and L.filter_useTargetList_mainline or L.filter_useTargetList,
                     type = "toggle",
                     width = "full",
                     get = function(info) return C.filter.useTargetList end,
@@ -2149,7 +2397,7 @@ TC2.configTable = {
                 targetList = {
                     order = 4,
                     name = L.filter_targetList,
-                    desc = L.filter_targetList_desc,
+                    desc = isMainline and L.filter_targetList_desc_mainline or L.filter_targetList_desc,
                     type = "input",
                     width = "full",
                     multiline = 8,
@@ -2186,62 +2434,185 @@ TC2.configTable = {
             type = "group",
             name = L.warnings,
             args = {
-                disableWhileTanking = {
+                damage = {
                     order = 1,
-                    name = L.warnings_disableWhileTanking,
-                    desc = L.warnings_disableWhileTanking_desc,
-                    type = "toggle",
-                    width = "full",
+                    type = "group",
+                    name = L.warnings_damageMode,
+                    inline = true,
+                    get = function(info) return C.warnings[info[#info]] end,
+                    set = function(info, value) C.warnings[info[#info]] = value end,
+                    args = {
+                        description = {
+                            order = 0.5,
+                            type = "description",
+                            name = L.warnings_damageMode_desc,
+                        },
+                        disableWhileTanking = {
+                            order = 1,
+                            name = L.warnings_disableWhileTanking,
+                            desc = tankingDesc,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        threshold = {
+                            order = 2,
+                            name = L.warnings_threshold,
+                            desc = L.warnings_threshold_desc,
+                            type = "range",
+                            width = "double",
+                            min = 5,
+                            softMin = 50,
+                            max = 100,
+                            step = 1,
+                            bigStep = 5,
+                        },
+                        minThreatAmount = {
+                            order = 3,
+                            name = L.warnings_minThreatAmount,
+                            desc = L.warnings_minThreatAmount_desc,
+                            type = "range",
+                            width = "double",
+                            min = 1,
+                            softMin = 100,
+                            softMax = 10000,
+                            step = 1,
+                            bigStep = 100,
+                        },
+                        cooldown = {
+                            order = 4,
+                            name = L.warnings_cooldown,
+                            desc = L.warnings_cooldown_desc,
+                            type = "range",
+                            width = "double",
+                            min = 1,
+                            max = 120,
+                            softMax = 30,
+                            step = 1,
+                        },
+                        repeatWarning = {
+                            order = 5,
+                            name = L.warnings_repeatWarning,
+                            desc = L.warnings_repeatWarning_desc,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        flash = {
+                            order = 6,
+                            name = L.warnings_flash,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        sound = {
+                            order = 7,
+                            name = L.warnings_sound,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        soundFile = {
+                            type = "select", dialogControl = 'LSM30_Sound',
+                            order = 8,
+                            name = L.warnings_soundFile,
+                            values = AceGUIWidgetLSMlists.sound,
+                            disabled = function() return not C.warnings.sound end,
+                        },
+                        soundChannel = {
+                            type = "select",
+                            order = 9,
+                            name = L.warnings_soundChannel,
+                            values = SoundChannels,
+                            disabled = function() return not C.warnings.sound end,
+                        },
+                    },
                 },
-                threshold = {
+                tank = {
                     order = 2,
-                    name = L.warnings_threshold,
-                    desc = L.warnings_threshold_desc,
-                    type = "range",
-                    width = "double",
-                    min = 5,
-                    softMin = 50,
-                    max = 100,
-                    step = 1,
-                    bigStep = 5,
-                },
-                minThreatAmount = {
-                    order = 3,
-                    name = L.warnings_minThreatAmount,
-                    desc = L.warnings_minThreatAmount_desc,
-                    type = "range",
-                    width = "double",
-                    min = 1,
-                    softMin = 100,
-                    softMax = 10000,
-                    step = 1,
-                    bigStep = 100,
-                },
-                flash = {
-                    order = 4,
-                    name = L.warnings_flash,
-                    type = "toggle",
-                    width = "full",
-                },
-                sound = {
-                    order = 5,
-                    name = L.warnings_sound,
-                    type = "toggle",
-                    width = "full",
-                },
-                soundFile = {
-                    type = "select", dialogControl = 'LSM30_Sound',
-                    order = 6,
-                    name = L.warnings_soundFile,
-                    values = AceGUIWidgetLSMlists.sound,
-                    disabled = function() return not C.warnings.sound end,
-                },
-                soundChannel = {
-                    type = "select",
-                    order = 7,
-                    name = L.warnings_soundChannel,
-                    values = SoundChannels,
-                    disabled = function() return not C.warnings.sound end,
+                    type = "group",
+                    name = L.warnings_tankMode,
+                    inline = true,
+                    get = function(info) return C.warnings[info[#info]] end,
+                    set = function(info, value) C.warnings[info[#info]] = value end,
+                    args = {
+                        description = {
+                            order = 0.5,
+                            type = "description",
+                            name = L.warnings_tankMode_desc,
+                        },
+                        tankOnlyWhileTanking = {
+                            order = 1,
+                            name = L.warnings_tankOnlyWhileTanking,
+                            desc = tankingDesc,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        tankThreshold = {
+                            order = 2,
+                            name = L.warnings_threshold,
+                            desc = L.warnings_tankThreshold_desc,
+                            type = "range",
+                            width = "double",
+                            min = 5,
+                            softMin = 50,
+                            max = 100,
+                            step = 1,
+                            bigStep = 5,
+                        },
+                        tankMinThreatAmount = {
+                            order = 3,
+                            name = L.warnings_minThreatAmount,
+                            desc = L.warnings_minThreatAmount_desc,
+                            type = "range",
+                            width = "double",
+                            min = 1,
+                            softMin = 100,
+                            softMax = 10000,
+                            step = 1,
+                            bigStep = 100,
+                        },
+                        tankCooldown = {
+                            order = 4,
+                            name = L.warnings_cooldown,
+                            desc = L.warnings_cooldown_desc,
+                            type = "range",
+                            width = "double",
+                            min = 1,
+                            max = 120,
+                            softMax = 30,
+                            step = 1,
+                        },
+                        tankRepeatWarning = {
+                            order = 5,
+                            name = L.warnings_repeatWarning,
+                            desc = L.warnings_tankRepeatWarning_desc,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        tankFlash = {
+                            order = 6,
+                            name = L.warnings_flash,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        tankSound = {
+                            order = 7,
+                            name = L.warnings_sound,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        tankSoundFile = {
+                            type = "select", dialogControl = 'LSM30_Sound',
+                            order = 8,
+                            name = L.warnings_soundFile,
+                            values = AceGUIWidgetLSMlists.sound,
+                            disabled = function() return not C.warnings.tankSound end,
+                        },
+                        tankSoundChannel = {
+                            type = "select",
+                            order = 9,
+                            name = L.warnings_soundChannel,
+                            values = SoundChannels,
+                            disabled = function() return not C.warnings.tankSound end,
+                        },
+                    },
                 },
             },
         },
@@ -2249,7 +2620,6 @@ TC2.configTable = {
 }
 
 SLASH_TC2_SLASHCMD1 = "/tc2"
-SLASH_TC2_SLASHCMD2 = "/threat2"
 SLASH_TC2_SLASHCMD2 = "/threatclassic2"
 SlashCmdList["TC2_SLASHCMD"] = function(arg)
     arg = arg:lower()

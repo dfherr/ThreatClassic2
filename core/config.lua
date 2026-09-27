@@ -124,8 +124,20 @@ defaultConfig.warnings = {
     sound               = false,                                -- enable sound
     threshold           = 80,                                   -- alert threshold (of normalized percentage 0-100)
     minThreatAmount     = 2000,
+    cooldown            = 1,                                    -- minimum seconds between warnings
+    repeatWarning       = false,                                -- keep warning while above threshold instead of only when crossing it
     soundFile           = "You Will Die!",
     soundChannel        = "SFX",
+    -- tank mode: warn while having aggro when another unit gets close to pulling it
+    tankOnlyWhileTanking = false,                               -- only when in tank spec / stance
+    tankFlash           = false,
+    tankSound           = false,
+    tankThreshold       = 90,
+    tankMinThreatAmount = 2000,
+    tankCooldown        = 1,
+    tankRepeatWarning   = false,
+    tankSoundFile       = "Omen: Aoogah!",
+    tankSoundChannel    = "SFX",
 }
 
 TC2.defaultConfig = { profile = defaultConfig }

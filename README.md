@@ -1,5 +1,46 @@
 # ThreatClassic2 [!["Open Issues"](https://img.shields.io/github/issues-raw/dfherr/ThreatClassic2.svg)](https://github.com/dfherr/ThreatClassic2/issues)
-ThreatClassic2 is a threat meter for WoW Classic and TBC Classic.
+ThreatClassic2 is a threat meter for WoW Classic (Era, Anniversary, Mists) and WoW Forever.
+
+## Features
+
+### Core
+- Threat list for your target including party/raid members. You're always shown, even outside the top bars.
+- Pull aggro bar: threat needed to pull from the current tank (110% melee / 130% range), relative or absolute.
+- Healer mode: shows your target's target when you target a friendly unit (Classic only).
+- Out of melee filter: hide or change the style of players the threat API considers out of melee range 
+- Scaled (100% = aggro) or raw threat percentages (110% melee / 130% range = aggro)
+
+### Warnings
+- Sound and/or screen flash when crossing a threat threshold.
+- Tank mode: while you have aggro, warn when another unit gets close to pulling it.
+- Warning trigger customization (separately for damage and tank mode):
+  - Minimum threat amount
+  - mininum time between warnings
+  - repeated warnings while above threshold
+  - disabled while tanking (damage mode) / only when tanking (tank mode)
+
+### Styling
+- Fully customizable appearance via (LibSharedMedia)
+- Class colors or custom colors for yourself, the active tank, off-tanks and other units.
+- Supports custom class colors from !ClassColors (via `CUSTOM_CLASS_COLORS`).
+- Out of melee coloring: desaturate, darken, fade or overwrite the color.
+- Ignite owner indicator (Classic Era only).
+- Visibility: hide out of combat, solo, in PvP, in the open world or always.
+
+### Mainline (WoW Forever and Retail) differences
+
+Mainline clients restrict addon access to some combat data, so a few features work differently:
+
+- The target filter list matches **boss encounter names** instead of unit names and applies to all enemies during that encounter.
+- Healer mode (target of target) is not available. Target the enemy directly to see its threat list.
+- Tank detection (disable while tanking / only when tanking) uses your specialization role on Retail. WoW Forever uses Defensive Stance, Bear Form and Righteous Fury, but due to API restrictions 
+Righteous Fury can only be checked outside of combat.
+
+## Commands
+
+- `/tc2` opens the options
+- `/tc2 toggle` shows or hides the frame
+- `/tc2 version` prints the installed version
 
 ## Bugs and feature requests
 

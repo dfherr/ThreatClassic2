@@ -1,4 +1,16 @@
 # Changelog
+## v2.73
+* add support for WoW Forever and Retail (mainline)
+  * target filter list matches boss encounter names on mainline
+  * target of target (healer) mode is disabled on mainline
+  * tank detection uses spec role on Retail and stances/forms/Righteous Fury on Forever
+* add tank mode warnings: warns while you have aggro if another player gets close to you
+* add option for minimum time between warnings
+* add repeated warnings option
+* add spec/dual spec profiles (LibDualSpec)
+* improved test mode: simulates a fight with class colors
+* fix errors when switching to an older, not yet migrated profile
+* target name in the header is now clipped at the frame edge
 
 ## v2.72
 * fix new aura lookup error (thanks @ngrudnitsky)
