@@ -38,7 +38,6 @@ local UnitReaction          = _G.UnitReaction
 local UnitIsUnit            = _G.UnitIsUnit
 local GetShapeshiftForm     = _G.GetShapeshiftForm
 local GetSpecialization     = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization or _G.GetSpecialization
-local GetSpecializationRole = _G.GetSpecializationRole
 
 local screenWidth           = floor(GetScreenWidth())
 local screenHeight          = floor(GetScreenHeight())
@@ -64,6 +63,8 @@ local RAID_CLASS_COLORS     = (_G.CUSTOM_CLASS_COLORS or _G.RAID_CLASS_COLORS)
 
 -- mainline clients (retail, forever) restrict enemy unit data (secret values), so some name based features are disabled there
 local isMainline            = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+-- forever uses the mainline api, but dual spec instead of specializations (spec role is always damager)
+local isForever             = isMainline and select(4, GetBuildInfo()) < 20000
 
 
 -- other
@@ -657,15 +658,26 @@ local function CheckStatusDeferred()
 end
 
 -- tank spec on mainline, defensive stance / bear form / righteous fury on classic
+-- mainline restricts aura data in combat, so righteous fury is tracked out of combat on forever
+local playerHasRighteousFury = false
+
+local function UpdateRighteousFury()
+    if UnitAffectingCombat("player") then return end
+    playerHasRighteousFury = FindAuraByNameCompat(C_Spell.GetSpellName(25780), "player", "HELPFUL") ~= nil
+end
+
 local function IsTankSpecOrStance()
-    if isMainline then
+    if isMainline and not isForever then
         local spec = GetSpecialization()
-        return spec and GetSpecializationRole(spec) == "TANK"
+        if not spec then return false end
+        local _, _, _, _, role = C_SpecializationInfo.GetSpecializationInfo(spec)
+        return role == "TANK"
     elseif TC2.playerClass == "WARRIOR" then
         return GetShapeshiftForm() == 2
     elseif TC2.playerClass == "DRUID" then
         return GetShapeshiftForm() == 1
     elseif TC2.playerClass == "PALADIN" then
+        if isForever then return playerHasRighteousFury end
         return FindAuraByNameCompat(C_Spell.GetSpellName(25780), "player", "HELPFUL") ~= nil
     end
     return false
@@ -1299,7 +1311,6 @@ function TC2:PLAYER_ENTERING_WORLD(...)
     -- loading screens, relogs and reloads can swallow ENCOUNTER_END
     currentEncounterName = nil
     self.playerName = UnitName("player")
-    self.playerClass = select(2, _G.UnitClass("player"))
     self.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
 
     CheckStatus()
@@ -1333,7 +1344,14 @@ end
 function TC2:PLAYER_REGEN_ENABLED(...)
     -- collectgarbage()
     TC2:StopTestMode()
+    if isForever and TC2.playerClass == "PALADIN" then
+        UpdateRighteousFury()
+    end
     CheckStatus()
+end
+
+function TC2:UNIT_AURA(...)
+    UpdateRighteousFury()
 end
 
 function TC2:ENCOUNTER_START(event, encounterID, encounterName)
@@ -1354,6 +1372,7 @@ function TC2:UNIT_THREAT_LIST_UPDATE(event, unitTarget)
 end
 
 function TC2:PLAYER_LOGIN()
+    self.playerClass = select(2, _G.UnitClass("player"))
 
     -- creates by default character specific profile, when 3rd argument is obmitted
     self.db = LibStub("AceDB-3.0"):New("ThreatClassic2DB", self.defaultConfig, true)
@@ -1390,6 +1409,11 @@ function TC2:PLAYER_LOGIN()
     self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
     self.frame:RegisterEvent("PLAYER_TARGET_CHANGED")
     self.frame:RegisterUnitEvent("UNIT_TARGET", "target")
+
+    if isForever and self.playerClass == "PALADIN" then
+        self.frame:RegisterUnitEvent("UNIT_AURA", "player")
+        UpdateRighteousFury()
+    end
     self.frame:RegisterEvent("PLAYER_REGEN_DISABLED")
     self.frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
@@ -1510,6 +1534,11 @@ function TC2:RefreshProfile()
     CheckVisibility()
     TC2:UpdateFrame()
 end
+
+-- how tanking is detected differs between retail, forever and classic
+local tankingDesc = (isForever and L.warnings_disableWhileTanking_desc_forever)
+    or (isMainline and L.warnings_disableWhileTanking_desc_mainline)
+    or L.warnings_disableWhileTanking_desc
 
 TC2.configTable = {
     type = "group",
@@ -2421,7 +2450,7 @@ TC2.configTable = {
                         disableWhileTanking = {
                             order = 1,
                             name = L.warnings_disableWhileTanking,
-                            desc = isMainline and L.warnings_disableWhileTanking_desc_mainline or L.warnings_disableWhileTanking_desc,
+                            desc = tankingDesc,
                             type = "toggle",
                             width = "full",
                         },
@@ -2511,7 +2540,7 @@ TC2.configTable = {
                         tankOnlyWhileTanking = {
                             order = 1,
                             name = L.warnings_tankOnlyWhileTanking,
-                            desc = isMainline and L.warnings_disableWhileTanking_desc_mainline or L.warnings_disableWhileTanking_desc,
+                            desc = tankingDesc,
                             type = "toggle",
                             width = "full",
                         },
