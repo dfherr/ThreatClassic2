@@ -1,7 +1,7 @@
 ## Interface: 11509, 16001, 20506, 38002, 50504, 120100, 120105
 ## LoadOnDemand: 1
 ## Title: Lib: DualSpec-1.0
-## Version: v1.34.0
+## Version: v1.35.0
 ## X-Date: 2026-09-19T23:03:27Z
 ## Notes: Adds spec switching support to individual AceDB-3.0 databases.
 ## Author: Adirelle, Nebula

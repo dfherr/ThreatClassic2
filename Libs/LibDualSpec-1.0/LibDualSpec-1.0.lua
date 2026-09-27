@@ -31,7 +31,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --]]
 
-local MAJOR, MINOR = "LibDualSpec-1.0", 34
+local MAJOR, MINOR = "LibDualSpec-1.0", 35
 assert(LibStub, MAJOR.." requires LibStub")
 local lib, minor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
@@ -64,27 +64,30 @@ local options = lib.options
 local mixin = lib.mixin
 local upgrades = lib.upgrades
 
--- "Externals"
-local AceDB3 = LibStub('AceDB-3.0', true)
-local AceDBOptions3 = LibStub('AceDBOptions-3.0', true)
-local AceConfigRegistry3 = LibStub('AceConfigRegistry-3.0', true)
+local AceDB3 = LibStub("AceDB-3.0", true)
+local AceDBOptions3 = LibStub("AceDBOptions-3.0", true)
+local AceConfigRegistry3 = LibStub("AceConfigRegistry-3.0", true)
 
-local isForever do
+local isSpecBased = ClassicExpansionAtLeast(LE_EXPANSION_MISTS_OF_PANDARIA)
+do -- XXX ClassicExpansionAtLeast is always true in Forever, which uses Dual Specialization
 	local version = select(4, GetBuildInfo())
-	isForever = version > 16000 and version < 20000
+	if version > 16000 and version < 20000 then
+		isSpecBased = false
+	end
 end
-local isSpecBased = ClassicExpansionAtLeast(LE_EXPANSION_MISTS_OF_PANDARIA) and not isForever
+
 local numSpecs
 local specNames = {}
 if isSpecBased then
-	-- class id specialization functions don't require player data to be loaded
-	local _, classId = UnitClassBase("player")
+	-- Class id specialization functions don't require player data to be loaded
+	local _, _, classId = UnitClass("player")
 	numSpecs = C_SpecializationInfo.GetNumSpecializationsForClassID(classId)
 	for i = 1, numSpecs do
 		local _, name = GetSpecializationInfoForClassID(classId, i)
 		specNames[i] = name
 	end
-else -- Primary/secondary system
+else
+	-- Primary/secondary system
 	numSpecs = 2
 	specNames[1] = TALENT_SPEC_PRIMARY
 	specNames[2] = TALENT_SPEC_SECONDARY
@@ -276,7 +279,7 @@ end
 -- @param target (table) the AceDB-3.0 instance.
 -- @param name (string) a user-friendly name of the database (best bet is the addon name).
 function lib:EnhanceDatabase(target, name)
-	AceDB3 = AceDB3 or LibStub('AceDB-3.0', true)
+	AceDB3 = AceDB3 or LibStub("AceDB-3.0", true)
 	if type(target) ~= "table" then
 		error("Usage: LibDualSpec:EnhanceDatabase(target, name): target should be a table.", 2)
 	elseif type(name) ~= "string" then
@@ -329,13 +332,18 @@ options.choose = {
 
 options.enabled = {
 	type = "toggle",
-	name = "|cffffd200"..L_ENABLED.."|r",
+	name = function()
+		if lib.currentSpec == 0 then
+			return L_ENABLED
+		end
+		return "|cffffd200"..L_ENABLED.."|r"
+	end,
 	desc = function()
 		local desc = L_ENABLED_DESC
 		if lib.currentSpec == 0 then
 			if isSpecBased then
 				local _, reason = C_SpecializationInfo.CanPlayerUseTalentUI()
-				if reason == "" then
+				if not reason or reason == "" or reason == "LEVEL_TOO_LOW" then
 					reason = TALENT_MICRO_BUTTON_NO_SPEC -- You have not chosen a class specialization.
 				end
 				desc = desc .. "\n\n" .. RED_FONT_COLOR:WrapTextInColorCode(reason)
@@ -415,8 +423,8 @@ end
 -- @param optionTable (table) The option table returned by AceDBOptions-3.0.
 -- @param target (table) The AceDB-3.0 the options operate on.
 function lib:EnhanceOptions(optionTable, target)
-	AceDBOptions3 = AceDBOptions3 or LibStub('AceDBOptions-3.0', true)
-	AceConfigRegistry3 = AceConfigRegistry3 or LibStub('AceConfigRegistry-3.0', true)
+	AceDBOptions3 = AceDBOptions3 or LibStub("AceDBOptions-3.0", true)
+	AceConfigRegistry3 = AceConfigRegistry3 or LibStub("AceConfigRegistry-3.0", true)
 	if type(optionTable) ~= "table" then
 		error("Usage: LibDualSpec:EnhanceOptions(optionTable, target): optionTable should be a table.", 2)
 	elseif type(target) ~= "table" then
@@ -489,18 +497,37 @@ end
 -- Switching logic
 -- ----------------------------------------------------------------------------
 
-local function eventHandler(self, event)
-	local spec = 0
+local GetProfileSpecialization do
 	if isSpecBased then
-		spec = C_SpecializationInfo.GetSpecialization()
-		if not spec or not C_SpecializationInfo.CanPlayerUseTalentUI() or spec > GetNumSpecializations() then
-			-- loading, can't use talents, or is initial spec
-			spec = 0
+		function GetProfileSpecialization()
+			local spec = C_SpecializationInfo.GetSpecialization()
+			if not spec or not C_SpecializationInfo.CanPlayerUseTalentUI() or spec > GetNumSpecializations() then
+				-- Player is loading, can't use talents, or is in initial spec.
+				spec = 0
+			end
+			return spec
 		end
-	elseif WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC or GetNumSpecGroups() > 1 then
-		-- has dual specialization
-		spec = C_SpecializationInfo.GetActiveSpecGroup()
+	elseif ClassicExpansionAtMost(LE_EXPANSION_CATACLYSM) then
+		function GetProfileSpecialization()
+			if GetNumTalentGroups() > 1 then
+				-- Player has dual specialization unlocked.
+				return C_SpecializationInfo.GetActiveSpecGroup()
+			end
+			return 0
+		end
+	else -- Forever
+		function GetProfileSpecialization()
+			if GetNumSpecGroups() > 1 then
+				-- Player has dual specialization unlocked.
+				return C_SpecializationInfo.GetActiveSpecGroup()
+			end
+			return 0
+		end
 	end
+end
+
+local function OnEvent(self, event)
+	local spec = GetProfileSpecialization()
 	lib.currentSpec = spec
 
 	if event == "PLAYER_LOGIN" then
@@ -536,10 +563,9 @@ local function eventHandler(self, event)
 	end
 end
 
-lib.eventFrame:SetScript("OnEvent", eventHandler)
+lib.eventFrame:SetScript("OnEvent", OnEvent)
 if IsLoggedIn() then
-	eventHandler(lib.eventFrame, "PLAYER_LOGIN")
+	OnEvent(lib.eventFrame, "PLAYER_LOGIN")
 else
 	lib.eventFrame:RegisterEvent("PLAYER_LOGIN")
 end
-
