@@ -684,6 +684,16 @@ local function UpdatePlayerTarget()
     -- reset warnings on target change
     lastWarnPercent = 100
     lastTankWarnPercent = 100
+
+    -- drop stale TPS histories, but keep recently updated ones
+    -- so quick target swapping doesn't lose the smoothed values
+    local now = GetTime()
+    for targetGUID, target in pairs(threatHistory) do
+        if now - target.lastUpdate > TPS_WINDOW then
+            threatHistory[targetGUID] = nil
+        end
+    end
+
     -- mainline returns secret threat values for targettarget
     if isMainline then
         TC2.playerTarget = "target"
@@ -696,15 +706,6 @@ local function UpdatePlayerTarget()
         TC2.playerTarget = "targettarget"
     else
         TC2.playerTarget = "target"
-    end
-
-    -- drop stale TPS histories, but keep recently updated ones
-    -- so quick target swapping doesn't lose the smoothed values
-    local now = GetTime()
-    for targetGUID, target in pairs(threatHistory) do
-        if now - target.lastUpdate > TPS_WINDOW then
-            threatHistory[targetGUID] = nil
-        end
     end
 end
 
@@ -1271,6 +1272,7 @@ local function ResetTestData()
             isTanking       = testUnit.isTanking,
             outOfMeleeRange = testUnit.outOfMeleeRange,
             threatValue     = testUnit.threatValue,
+            tps             = testUnit.threatValue / 15,
         }
         if testUnit.isTanking then testTank = TC2.threatData[i] end
         if testUnit.isPlayer then testPlayer = TC2.threatData[i] end
@@ -1283,9 +1285,11 @@ local function TestTick()
     local chaser = testPlayer.isTanking and testTank or testPlayer
     -- steps are relative to the threat needed to pull aggro from the current tank
     local pullThreat = tank.threatValue * 1.1
-    testPlayer.threatValue = testPlayer.threatValue + pullThreat * TEST_PLAYER_STEP
+    testPlayer.tps = pullThreat * TEST_PLAYER_STEP / TEST_TICK_SECONDS
+    testPlayer.threatValue = testPlayer.threatValue + testPlayer.tps * TEST_TICK_SECONDS
     if testPlayer.isTanking then
-        testTank.threatValue = testTank.threatValue + pullThreat * TEST_TANK_STEP
+        testTank.tps = pullThreat * TEST_TANK_STEP / TEST_TICK_SECONDS
+        testTank.threatValue = testTank.threatValue + testTank.tps * TEST_TICK_SECONDS
     end
     UpdateTestPercentages()
 
