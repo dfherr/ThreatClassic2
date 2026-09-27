@@ -526,13 +526,10 @@ function TC2:UpdateThreatBars()
         local timeToAggro = ""
         if C.bar.pullAggroBarTimeToAggro and playerData and playerData.tps and tankData.tps then
             local closingRate = playerData.tps - tankData.tps * (isOutOfMelee and 1.3 or 1.1)
-            local seconds = closingRate > 0 and threatRequired / closingRate
+            -- hidden when not catching up or 100s and above
+            local seconds = closingRate > 0 and floor(threatRequired / closingRate + 0.5)  -- floor(x + 0.5) is lua's missing round()
             if seconds and seconds < 100 then
-                timeToAggro = floor(seconds + 0.5).."s"  -- floor(x + 0.5) is lua's missing round()
-            elseif seconds and seconds < 600 then
-                timeToAggro = floor(seconds / 60).."m"
-            else
-                timeToAggro = "∞"
+                timeToAggro = seconds.."s"
             end
         end
         bar.tps:SetText(timeToAggro)

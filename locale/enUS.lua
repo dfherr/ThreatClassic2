@@ -80,7 +80,7 @@ L.bar_pullAggroBarPercentage_desc = "Select how the remaining threat required to
 L.bar_pullAggroBarPercentage_relative = "Relative"
 L.bar_pullAggroBarPercentage_absolute = "Absolute"
 L.bar_pullAggroBarTimeToAggro = "Show Time to Aggro"
-L.bar_pullAggroBarTimeToAggro_desc = "Displays the seconds until you pull aggro at your and the tank's current TPS. Shows ∞ if you are not catching up or it would take 10 minutes or longer. Requires '" .. L.bar_showTPS .. "'."
+L.bar_pullAggroBarTimeToAggro_desc = "Displays the seconds until you pull aggro at your and the tank's current TPS. Hidden if you are not catching up or it would take 100 seconds or longer. Requires '" .. L.bar_showTPS .. "'."
 L.bar_showIgniteIndicator = "Show Ignite Indicator"
 L.bar_showIgniteIndicator_desc = "Displays a small ignite icon next to the players name, who currently owns ignite"
 

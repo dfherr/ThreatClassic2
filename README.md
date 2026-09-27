@@ -6,6 +6,7 @@ ThreatClassic2 is a threat meter for WoW Classic (Era, Anniversary, Mists) and W
 ### Core
 - Threat list for your target including party/raid members. You're always shown, even outside the top bars.
 - Pull aggro bar: threat needed to pull from the current tank (110% melee / 130% range), relative or absolute.
+- Threat per second option and time to pull aggro estimation
 - Healer mode: shows your target's target when you target a friendly unit (Classic only).
 - Out of melee filter: hide or change the style of players the threat API considers out of melee range 
 - Scaled (100% = aggro) or raw threat percentages (110% melee / 130% range = aggro)
