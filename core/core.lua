@@ -521,7 +521,21 @@ function TC2:UpdateThreatBars()
         bar.ignite:Hide()
         bar.name:SetPoint("LEFT", bar, 4, 0)
         bar.name:SetText(C.bar.pullAggroBarText)
-        bar.tps:SetText("")
+        -- time to aggro: the pull threshold moves with the tank's threat, so the player
+        -- closes the gap at their TPS minus the tank's TPS times the pull factor
+        local timeToAggro = ""
+        if C.bar.pullAggroBarTimeToAggro and playerData and playerData.tps and tankData.tps then
+            local closingRate = playerData.tps - tankData.tps * (isOutOfMelee and 1.3 or 1.1)
+            local seconds = closingRate > 0 and threatRequired / closingRate
+            if seconds and seconds < 100 then
+                timeToAggro = floor(seconds + 0.5).."s"  -- floor(x + 0.5) is lua's missing round()
+            elseif seconds and seconds < 600 then
+                timeToAggro = floor(seconds / 60).."m"
+            else
+                timeToAggro = "∞"
+            end
+        end
+        bar.tps:SetText(timeToAggro)
         bar.val:SetText("+"..NumFormat(floor(threatRequired + 0.5)))  -- floor(x + 0.5) is lua's missing round()
         
         local suffix = isAbsolute and "p " or "%"
@@ -2170,6 +2184,14 @@ TC2.configTable = {
                             },
                             style = "dropdown",
                             hidden = function() return not C.bar.showPullAggroBar end,
+                        },
+                        pullAggroBarTimeToAggro = {
+                            order = 25,
+                            name = L.bar_pullAggroBarTimeToAggro,
+                            desc = L.bar_pullAggroBarTimeToAggro_desc,
+                            type = "toggle",
+                            hidden = function() return not C.bar.showPullAggroBar end,
+                            disabled = function() return not C.bar.showTPS end,
                         },
                         
                     },

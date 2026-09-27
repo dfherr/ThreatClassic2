@@ -71,6 +71,7 @@ defaultConfig.bar = {
     pullAggroBarText    = "Pull aggro at",                      -- text of pull aggro bar
     pullAggroBarGrow    = true,                                 -- grow the pull aggro bar when getting closer to pulling threat
     pullAggroBarPercentage = "RELATIVE",                        -- relative vs absolute (percentage points) number for pull aggro bar
+    pullAggroBarTimeToAggro = false,                            -- show the time until aggro is pulled in the pull aggro bar (requires showTPS)
     showIgniteIndicator = true,                                 -- show ignite icon when target has ignite
 }
 
