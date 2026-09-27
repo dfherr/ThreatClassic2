@@ -2159,7 +2159,7 @@ TC2.configTable = {
                 },
                 useTargetList = {
                     order = 3,
-                    name = L.filter_useTargetList,
+                    name = isMainline and L.filter_useTargetList_mainline or L.filter_useTargetList,
                     type = "toggle",
                     width = "full",
                     get = function(info) return C.filter.useTargetList end,
