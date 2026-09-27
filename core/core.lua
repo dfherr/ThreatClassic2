@@ -54,6 +54,8 @@ local announcedIncompatible = false
 
 local lastWarnPercent       =  100
 local lastWarnTime          = 0
+local lastTankWarnPercent   = 100
+local lastTankWarnTime      = 0
 
 local currentEncounterName  = nil -- mainline only, used for the target list filter
 
@@ -377,15 +379,11 @@ function TC2:UpdateThreatBars()
             if data.isTanking then
                 tankData = data
             end
-            if UnitIsUnit(data.unit, "player") then
+            if data.isPlayer then
                 playerData = data
             end
         end
         if tankData and playerData then
-            -- small tweak for test mode otherwise playerData will always be equal to tankData as all datas are considered the player
-            if C.frame.test then
-                playerData = self.threatData[3]
-            end
             break
         end
     end
@@ -402,7 +400,7 @@ function TC2:UpdateThreatBars()
         local data = self.threatData[i-offset]
         local bar = self.bars[i]
         if data and data.threatValue > 0 then
-            if UnitIsUnit(data.unit, "player") then
+            if data.isPlayer then
                 playerIncluded = true
             end
 
@@ -420,7 +418,7 @@ function TC2:UpdateThreatBars()
             bar.perc:SetText(floor(data.threatPercent + 0.5).."%") -- floor(x + 0.5) is lua's missing round()
             bar:SetValue(data.threatPercent)
             local color = GetColor(data.unit, data.isTanking, hasActiveIgnite)
-            if (C.filter.yourself or not UnitIsUnit(data.unit, "player")) and C.filter.outOfMelee.color and data.outOfMeleeRange and FilterTarget() then
+            if (C.filter.yourself or not data.isPlayer) and C.filter.outOfMelee.color and data.outOfMeleeRange and FilterTarget() then
                 if C.filter.outOfMelee.overwriteColorEnabled then
                     color = C.filter.outOfMelee.overwriteColor
                 end
@@ -546,8 +544,8 @@ local function CheckVisibility()
     end
 end
 
--- threat api values for the player target with fixes and downscaling applied
-local function GetThreatSituation(unit)
+local function UpdateThreatData(unit)
+    if not UnitExists(unit) then return end
     local isTanking, _, threatPercent, rawThreatPercent, threatValue = UnitDetailedThreatSituation(unit, TC2.playerTarget)
 
     if isTanking then
@@ -556,21 +554,11 @@ local function GetThreatSituation(unit)
         threatPercent = 100
     end
 
-    -- mainline threat values are already 1 damage = 1 threat
-    if threatValue and C.general.downscaleThreat and not isMainline then
-        threatValue = math.floor(threatValue / 100)
-    end
-
-    return isTanking, threatPercent, rawThreatPercent, threatValue
-end
-
-local function UpdateThreatData(unit)
-    if not UnitExists(unit) then return end
-    local isTanking, threatPercent, rawThreatPercent, threatValue = GetThreatSituation(unit)
-
     local outOfMeleeRange = rawThreatPercent and threatPercent > 0 and rawThreatPercent / threatPercent > 1.2
+    local isPlayer = UnitIsUnit(unit, "player")
 
-    if C.filter.yourself or not UnitIsUnit(unit, "player") then
+    -- filtered units are also excluded from warnings
+    if C.filter.yourself or not isPlayer then
         -- target list disabled or target in filter targetlist
         if FilterTarget() then
             -- melee range filter; threatPercent > 0 to avoid divison by zero on fucked up api response
@@ -580,13 +568,17 @@ local function UpdateThreatData(unit)
         end
     end
 
-    if C.general.rawPercent then
-        threatPercent = rawThreatPercent
+    -- mainline threat values are already 1 damage = 1 threat
+    if threatValue and C.general.downscaleThreat and not isMainline then
+        threatValue = math.floor(threatValue / 100)
     end
 
     tinsert(TC2.threatData, {
         unit            = unit,
-        threatPercent   = threatPercent or 0,
+        isPlayer        = isPlayer,
+        threatPercent   = (C.general.rawPercent and rawThreatPercent or threatPercent) or 0, -- displayed percentage
+        scaledPercent   = threatPercent, -- used for warnings, nil if not on the threat table
+        rawThreatPercent = rawThreatPercent,
         threatValue     = threatValue or 0,
         isTanking       = isTanking or false,
         outOfMeleeRange = outOfMeleeRange
@@ -594,8 +586,9 @@ local function UpdateThreatData(unit)
 end
 
 local function UpdatePlayerTarget()
-    -- reset warning on target change
+    -- reset warnings on target change
     lastWarnPercent = 100
+    lastTankWarnPercent = 100
     -- mainline returns secret threat values for targettarget
     if isMainline then
         TC2.playerTarget = "target"
@@ -640,13 +633,16 @@ local function CheckStatus()
         end
 
         TC2:UpdateThreatBars()
-        TC2:CheckWarning()
+        TC2:CheckDamageWarning()
+        TC2:CheckTankWarning()
 
         -- set header unit name
         -- the fontstring clips long names. this also works with secret values on mainline
         local targetName = (": " .. UnitName(TC2.playerTarget)) or ""
         TC2.frame.header.text:SetText(format("%s%s", L.gui_threat, targetName))
     else
+        -- no stale data for repeating warnings
+        wipe(TC2.threatData)
         -- clear header text of unit name
         TC2.frame.header.text:SetText(format("%s%s", L.gui_threat, ""))
         -- hide bars when no target
@@ -660,46 +656,48 @@ local function CheckStatusDeferred()
     callCheckStatus = true
 end
 
--- warnings use the player's own threat, independent of the displayed (filtered) list
-function TC2:CheckWarning()
-    -- this always uses the scaled percentage to avoid conercases of over 100% raw threat and then aggro
-    local _, threatPercent, rawThreatPercent, threatValue = GetThreatSituation("player")
-    if not threatPercent then return end
+-- tank spec on mainline, defensive stance / bear form / righteous fury on classic
+local function IsTankSpecOrStance()
+    if isMainline then
+        local spec = GetSpecialization()
+        return spec and GetSpecializationRole(spec) == "TANK"
+    elseif TC2.playerClass == "WARRIOR" then
+        return GetShapeshiftForm() == 2
+    elseif TC2.playerClass == "DRUID" then
+        return GetShapeshiftForm() == 1
+    elseif TC2.playerClass == "PALADIN" then
+        return FindAuraByNameCompat(C_Spell.GetSpellName(25780), "player", "HELPFUL") ~= nil
+    end
+    return false
+end
 
-    if C.warnings.disableWhileTanking then
-        if isMainline then
-            -- mainline: use spec role
-            local spec = GetSpecialization()
-            if spec and GetSpecializationRole(spec) == "TANK" then
-                lastWarnPercent = 100
-                return
-            end
-        elseif self.playerClass == "WARRIOR" then
-            -- def stance
-            if GetShapeshiftForm() == 2 then
-                lastWarnPercent = 100
-                return
-            end
-        elseif self.playerClass == "DRUID" then
-            -- bear form
-            if GetShapeshiftForm() == 1 then
-                lastWarnPercent = 100
-                return
-            end
-        elseif self.playerClass == "PALADIN" then
-            -- righteous fury active
-            if FindAuraByNameCompat(C_Spell.GetSpellName(25780), "player", "HELPFUL") then
-                lastWarnPercent = 100
-                return
-            end
-        end
+local function GetPlayerThreatData()
+    for _, data in pairs(TC2.threatData) do
+        if data.isPlayer then return data end
+    end
+end
+
+-- warns when the player's threat gets close to pulling aggro
+function TC2:CheckDamageWarning(repeatCheck)
+    if C.frame.test or not (C.warnings.sound or C.warnings.flash) then return end
+    if repeatCheck and (not C.warnings.repeatWarning or GetTime() < lastWarnTime + C.warnings.cooldown) then return end
+
+    local player = GetPlayerThreatData()
+    if not player or not player.scaledPercent then return end
+
+    if C.warnings.disableWhileTanking and IsTankSpecOrStance() then
+        lastWarnPercent = 100
+        return
     end
 
+    -- this always uses the scaled percentage to avoid edgecases of over 100% raw threat and then aggro
+    local threatPercent = player.scaledPercent
     -- percentage is now above threshold and was below threshold before (or repeat is enabled)
-    if threatPercent >= C.warnings.threshold and (C.warnings.repeatWarning or lastWarnPercent < C.warnings.threshold) and rawThreatPercent < 250 then
+    if threatPercent >= C.warnings.threshold and (C.warnings.repeatWarning or lastWarnPercent < C.warnings.threshold) and player.rawThreatPercent < 250 then
         lastWarnPercent = threatPercent
-        if threatValue > C.warnings.minThreatAmount then
-            self:PlayWarning()
+        if player.threatValue > C.warnings.minThreatAmount and GetTime() >= lastWarnTime + C.warnings.cooldown then
+            lastWarnTime = GetTime()
+            self:PlayWarning(C.warnings.sound, C.warnings.flash, C.warnings.soundFile, C.warnings.soundChannel)
         end
     -- percentage is below threshold -> reset lastWarnPercent
     elseif threatPercent < C.warnings.threshold then
@@ -707,12 +705,42 @@ function TC2:CheckWarning()
     end
 end
 
-function TC2:PlayWarning()
-    local now = GetTime()
-    if now < lastWarnTime + C.warnings.cooldown then return end
-    lastWarnTime = now
-    if C.warnings.sound then PlaySoundFile(LSM:Fetch("sound", C.warnings.soundFile), C.warnings.soundChannel) end
-    if C.warnings.flash then self:FlashScreen() end
+-- warns while the player has aggro when another unit gets close to pulling it
+function TC2:CheckTankWarning(repeatCheck)
+    if C.frame.test or not (C.warnings.tankSound or C.warnings.tankFlash) then return end
+    if repeatCheck and (not C.warnings.tankRepeatWarning or GetTime() < lastTankWarnTime + C.warnings.tankCooldown) then return end
+
+    local player = GetPlayerThreatData()
+    if not player or not player.isTanking or (C.warnings.tankOnlyWhileTanking and not IsTankSpecOrStance()) then
+        lastTankWarnPercent = 100
+        return
+    end
+
+    -- highest scaled threat of all other units in the threat list
+    local highest
+    for _, data in pairs(TC2.threatData) do
+        if not data.isPlayer and data.scaledPercent and (not highest or data.scaledPercent > highest.scaledPercent) then
+            highest = data
+        end
+    end
+    local threatPercent = highest and highest.scaledPercent or 0
+
+    -- percentage is now above threshold and was below threshold before (or repeat is enabled)
+    if threatPercent >= C.warnings.tankThreshold and (C.warnings.tankRepeatWarning or lastTankWarnPercent < C.warnings.tankThreshold) then
+        lastTankWarnPercent = threatPercent
+        if highest.threatValue > C.warnings.tankMinThreatAmount and GetTime() >= lastTankWarnTime + C.warnings.tankCooldown then
+            lastTankWarnTime = GetTime()
+            self:PlayWarning(C.warnings.tankSound, C.warnings.tankFlash, C.warnings.tankSoundFile, C.warnings.tankSoundChannel)
+        end
+    -- percentage is below threshold -> reset lastTankWarnPercent
+    elseif threatPercent < C.warnings.tankThreshold then
+        lastTankWarnPercent = threatPercent
+    end
+end
+
+function TC2:PlayWarning(sound, flash, soundFile, soundChannel)
+    if sound then PlaySoundFile(LSM:Fetch("sound", soundFile), soundChannel) end
+    if flash then self:FlashScreen() end
 end
 
 function TC2:FlashScreen()
@@ -1031,6 +1059,7 @@ function TC2:TestMode()
     end
 
     self.threatData[2].isTanking = true
+    self.threatData[3].isPlayer = true
     self.threatData[1].outOfMeleeRange = true
     self.threatData[4].outOfMeleeRange = true
 
@@ -1115,9 +1144,10 @@ TC2.frame:SetScript("OnUpdate", function(self, elapsed)
         -- because THREAT_LIST_UPDATE does not trigger for targettarget. Also the threat api only works in combat
         if callCheckStatus or (TC2.playerTarget == "targettarget" and inCombat) then
             CheckStatus() -- also checks warnings
-        -- threat updates only fire when threat changes, so repeating warnings check the threat data here
-        elseif inCombat and C.warnings.repeatWarning and now >= lastWarnTime + C.warnings.cooldown then
-            TC2:CheckWarning()
+        -- threat updates only fire when threat changes, so repeating warnings are checked here
+        elseif inCombat then
+            TC2:CheckDamageWarning(true)
+            TC2:CheckTankWarning(true)
         end
     end
 end)
@@ -2227,80 +2257,185 @@ TC2.configTable = {
             type = "group",
             name = L.warnings,
             args = {
-                disableWhileTanking = {
+                damage = {
                     order = 1,
-                    name = L.warnings_disableWhileTanking,
-                    desc = isMainline and L.warnings_disableWhileTanking_desc_mainline or L.warnings_disableWhileTanking_desc,
-                    type = "toggle",
-                    width = "full",
+                    type = "group",
+                    name = L.warnings_damageMode,
+                    inline = true,
+                    get = function(info) return C.warnings[info[#info]] end,
+                    set = function(info, value) C.warnings[info[#info]] = value end,
+                    args = {
+                        description = {
+                            order = 0.5,
+                            type = "description",
+                            name = L.warnings_damageMode_desc,
+                        },
+                        disableWhileTanking = {
+                            order = 1,
+                            name = L.warnings_disableWhileTanking,
+                            desc = isMainline and L.warnings_disableWhileTanking_desc_mainline or L.warnings_disableWhileTanking_desc,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        threshold = {
+                            order = 2,
+                            name = L.warnings_threshold,
+                            desc = L.warnings_threshold_desc,
+                            type = "range",
+                            width = "double",
+                            min = 5,
+                            softMin = 50,
+                            max = 100,
+                            step = 1,
+                            bigStep = 5,
+                        },
+                        minThreatAmount = {
+                            order = 3,
+                            name = L.warnings_minThreatAmount,
+                            desc = L.warnings_minThreatAmount_desc,
+                            type = "range",
+                            width = "double",
+                            min = 1,
+                            softMin = 100,
+                            softMax = 10000,
+                            step = 1,
+                            bigStep = 100,
+                        },
+                        cooldown = {
+                            order = 4,
+                            name = L.warnings_cooldown,
+                            desc = L.warnings_cooldown_desc,
+                            type = "range",
+                            width = "double",
+                            min = 1,
+                            max = 120,
+                            softMax = 30,
+                            step = 1,
+                        },
+                        repeatWarning = {
+                            order = 5,
+                            name = L.warnings_repeatWarning,
+                            desc = L.warnings_repeatWarning_desc,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        flash = {
+                            order = 6,
+                            name = L.warnings_flash,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        sound = {
+                            order = 7,
+                            name = L.warnings_sound,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        soundFile = {
+                            type = "select", dialogControl = 'LSM30_Sound',
+                            order = 8,
+                            name = L.warnings_soundFile,
+                            values = AceGUIWidgetLSMlists.sound,
+                            disabled = function() return not C.warnings.sound end,
+                        },
+                        soundChannel = {
+                            type = "select",
+                            order = 9,
+                            name = L.warnings_soundChannel,
+                            values = SoundChannels,
+                            disabled = function() return not C.warnings.sound end,
+                        },
+                    },
                 },
-                threshold = {
+                tank = {
                     order = 2,
-                    name = L.warnings_threshold,
-                    desc = L.warnings_threshold_desc,
-                    type = "range",
-                    width = "double",
-                    min = 5,
-                    softMin = 50,
-                    max = 100,
-                    step = 1,
-                    bigStep = 5,
-                },
-                minThreatAmount = {
-                    order = 3,
-                    name = L.warnings_minThreatAmount,
-                    desc = L.warnings_minThreatAmount_desc,
-                    type = "range",
-                    width = "double",
-                    min = 1,
-                    softMin = 100,
-                    softMax = 10000,
-                    step = 1,
-                    bigStep = 100,
-                },
-                cooldown = {
-                    order = 3.5,
-                    name = L.warnings_cooldown,
-                    desc = L.warnings_cooldown_desc,
-                    type = "range",
-                    width = "double",
-                    min = 1,
-                    max = 120,
-                    softMax = 30,
-                    step = 1,
-                },
-                repeatWarning = {
-                    order = 3.6,
-                    name = L.warnings_repeatWarning,
-                    desc = L.warnings_repeatWarning_desc,
-                    type = "toggle",
-                    width = "full",
-                },
-                flash = {
-                    order = 4,
-                    name = L.warnings_flash,
-                    type = "toggle",
-                    width = "full",
-                },
-                sound = {
-                    order = 5,
-                    name = L.warnings_sound,
-                    type = "toggle",
-                    width = "full",
-                },
-                soundFile = {
-                    type = "select", dialogControl = 'LSM30_Sound',
-                    order = 6,
-                    name = L.warnings_soundFile,
-                    values = AceGUIWidgetLSMlists.sound,
-                    disabled = function() return not C.warnings.sound end,
-                },
-                soundChannel = {
-                    type = "select",
-                    order = 7,
-                    name = L.warnings_soundChannel,
-                    values = SoundChannels,
-                    disabled = function() return not C.warnings.sound end,
+                    type = "group",
+                    name = L.warnings_tankMode,
+                    inline = true,
+                    get = function(info) return C.warnings[info[#info]] end,
+                    set = function(info, value) C.warnings[info[#info]] = value end,
+                    args = {
+                        description = {
+                            order = 0.5,
+                            type = "description",
+                            name = L.warnings_tankMode_desc,
+                        },
+                        tankOnlyWhileTanking = {
+                            order = 1,
+                            name = L.warnings_tankOnlyWhileTanking,
+                            desc = isMainline and L.warnings_disableWhileTanking_desc_mainline or L.warnings_disableWhileTanking_desc,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        tankThreshold = {
+                            order = 2,
+                            name = L.warnings_threshold,
+                            desc = L.warnings_tankThreshold_desc,
+                            type = "range",
+                            width = "double",
+                            min = 5,
+                            softMin = 50,
+                            max = 100,
+                            step = 1,
+                            bigStep = 5,
+                        },
+                        tankMinThreatAmount = {
+                            order = 3,
+                            name = L.warnings_minThreatAmount,
+                            desc = L.warnings_minThreatAmount_desc,
+                            type = "range",
+                            width = "double",
+                            min = 1,
+                            softMin = 100,
+                            softMax = 10000,
+                            step = 1,
+                            bigStep = 100,
+                        },
+                        tankCooldown = {
+                            order = 4,
+                            name = L.warnings_cooldown,
+                            desc = L.warnings_cooldown_desc,
+                            type = "range",
+                            width = "double",
+                            min = 1,
+                            max = 120,
+                            softMax = 30,
+                            step = 1,
+                        },
+                        tankRepeatWarning = {
+                            order = 5,
+                            name = L.warnings_repeatWarning,
+                            desc = L.warnings_tankRepeatWarning_desc,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        tankFlash = {
+                            order = 6,
+                            name = L.warnings_flash,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        tankSound = {
+                            order = 7,
+                            name = L.warnings_sound,
+                            type = "toggle",
+                            width = "full",
+                        },
+                        tankSoundFile = {
+                            type = "select", dialogControl = 'LSM30_Sound',
+                            order = 8,
+                            name = L.warnings_soundFile,
+                            values = AceGUIWidgetLSMlists.sound,
+                            disabled = function() return not C.warnings.tankSound end,
+                        },
+                        tankSoundChannel = {
+                            type = "select",
+                            order = 9,
+                            name = L.warnings_soundChannel,
+                            values = SoundChannels,
+                            disabled = function() return not C.warnings.tankSound end,
+                        },
+                    },
                 },
             },
         },
