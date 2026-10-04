@@ -1,4 +1,8 @@
 # Changelog
+
+## v2.74
+* use WOW_PROJECT_CAMELOT to identify WoW Forever
+
 ## v2.73
 * add support for WoW Forever and Retail (mainline)
   * target filter list matches boss encounter names on mainline
