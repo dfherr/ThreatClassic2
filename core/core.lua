@@ -68,10 +68,10 @@ local TPS_WINDOW            = 4 -- seconds of averaging for TPS, also drops stal
 local FACTION_BAR_COLORS    = _G.FACTION_BAR_COLORS
 local RAID_CLASS_COLORS     = (_G.CUSTOM_CLASS_COLORS or _G.RAID_CLASS_COLORS)
 
--- mainline clients (retail, forever) restrict enemy unit data (secret values), so some name based features are disabled there
+-- mainline (retail) and forever clients restrict enemy unit data (secret values), so some name based features are disabled there
 local isMainline            = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 -- forever uses the mainline api, but dual spec instead of specializations (spec role is always damager)
-local isForever             = isMainline and select(4, GetBuildInfo()) < 20000
+local isForever             = WOW_PROJECT_ID == WOW_PROJECT_CAMELOT
 
 
 -- other
@@ -220,7 +220,7 @@ end
 local function FilterTarget()
     if not C.filter.useTargetList then return true end
     -- mainline unit names are secret values, so match the current encounter name instead
-    if isMainline then
+    if isMainline or isForever then
         -- IsEncounterInProgress guards against a stale name from a missed ENCOUNTER_END
         return currentEncounterName and IsEncounterInProgress() and C.filter.targetList[currentEncounterName]
     end
@@ -668,7 +668,7 @@ local function UpdateThreatData(unit)
     end
 
     -- mainline threat values are already 1 damage = 1 threat
-    if threatValue and C.general.downscaleThreat and not isMainline then
+    if threatValue and C.general.downscaleThreat and not (isMainline or isForever) then
         threatValue = math.floor(threatValue / 100)
     end
 
@@ -707,7 +707,7 @@ local function UpdatePlayerTarget()
     end
 
     -- mainline returns secret threat values for targettarget
-    if isMainline then
+    if isMainline or isForever then
         TC2.playerTarget = "target"
         return
     end
@@ -783,7 +783,7 @@ local function UpdateRighteousFury()
 end
 
 local function IsTankSpecOrStance()
-    if isMainline and not isForever then
+    if isMainline then
         local spec = GetSpecialization()
         if not spec then return false end
         local _, _, _, _, role = C_SpecializationInfo.GetSpecializationInfo(spec)
@@ -1536,7 +1536,7 @@ function TC2:PLAYER_LOGIN()
 
     self.frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
 
-    if isMainline then
+    if isMainline or isForever then
         self.frame:RegisterEvent("ENCOUNTER_START")
         self.frame:RegisterEvent("ENCOUNTER_END")
     end
@@ -1713,7 +1713,7 @@ TC2.configTable = {
                     desc = L.general_downscaleThreatDesc,
                     type = "toggle",
                     width = "full",
-                    hidden = isMainline,
+                    hidden = isMainline or isForever,
                 },
                 updateFreq = {
                     order = 5,
@@ -2516,7 +2516,7 @@ TC2.configTable = {
                 },
                 useTargetList = {
                     order = 3,
-                    name = isMainline and L.filter_useTargetList_mainline or L.filter_useTargetList,
+                    name = (isMainline or isForever) and L.filter_useTargetList_mainline or L.filter_useTargetList,
                     type = "toggle",
                     width = "full",
                     get = function(info) return C.filter.useTargetList end,
@@ -2528,7 +2528,7 @@ TC2.configTable = {
                 targetList = {
                     order = 4,
                     name = L.filter_targetList,
-                    desc = isMainline and L.filter_targetList_desc_mainline or L.filter_targetList_desc,
+                    desc = (isMainline or isForever) and L.filter_targetList_desc_mainline or L.filter_targetList_desc,
                     type = "input",
                     width = "full",
                     multiline = 8,
