@@ -1,15 +1,9 @@
 ------------------------------------------------------------------------
-r176 | funkehdude | 2026-08-19 01:12:23 +0000 (Wed, 19 Aug 2026) | 1 line
+r181 | funkehdude | 2026-10-10 15:15:08 +0000 (Sat, 10 Oct 2026) | 1 line
 Changed paths:
    M /trunk/.luacheckrc
    M /trunk/LibSharedMedia-3.0/LibSharedMedia-3.0.lua
 
-Validate media (that uses string paths) exists before registering it
-------------------------------------------------------------------------
-r175 | funkehdude | 2026-08-19 00:53:24 +0000 (Wed, 19 Aug 2026) | 1 line
-Changed paths:
-   M /trunk/LibSharedMedia-3.0.toc
-
-Bump toc
+Convert to a soft error for now
 ------------------------------------------------------------------------
 

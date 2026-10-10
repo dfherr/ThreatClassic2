@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.75
+* update libs
+* use FileDataID format to register sound files
+
 ## v2.74
 * use WOW_PROJECT_CAMELOT to identify WoW Forever
 
