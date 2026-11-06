@@ -15,6 +15,9 @@ assignees: dfherr
 ### What version of ThreatClassic2 are you using? (Stating 'latest' is not useful)
 
 
+### What game version were you playing when the bug happened?
+
+
 ### Do you have an error log of what happened?
 
 
