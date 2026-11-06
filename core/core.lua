@@ -38,6 +38,7 @@ local UnitName              = _G.UnitName
 local UnitReaction          = _G.UnitReaction
 local UnitIsUnit            = _G.UnitIsUnit
 local UnitGUID              = _G.UnitGUID
+local issecretvalue         = _G.issecretvalue
 local GetShapeshiftForm     = _G.GetShapeshiftForm
 local GetSpecialization     = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization or _G.GetSpecialization
 
@@ -62,6 +63,7 @@ local currentEncounterName  = nil -- mainline only, used for the target list fil
 
 -- threat per second tracking
 -- [targetGUID] = {lastUpdate = time, units = {[unitGUID] = {value, tps, startTime, startValue, lastAction}}}
+-- .current tracks the selected target independently, including when its GUID is secret
 local threatHistory         = {}
 local TPS_WINDOW            = 4 -- seconds of averaging for TPS, also drops stale history
 
@@ -577,13 +579,7 @@ end
 -- the value is useful from the first hit on and does not depend on the update interval.
 -- nothing but generated threat starts the average, so acquiring a target does not
 -- turn idle time into a bogus rate
-local function UpdateTPS(targetGUID, unitGUID, threatValue)
-    local now = GetTime()
-    local target = threatHistory[targetGUID]
-    if not target then
-        target = {units = {}}
-        threatHistory[targetGUID] = target
-    end
+local function UpdateTPSHistory(target, unitGUID, threatValue, now)
     target.lastUpdate = now
 
     local h = target.units[unitGUID]
@@ -642,6 +638,27 @@ local function UpdateTPS(targetGUID, unitGUID, threatValue)
     -- targettarget mode
     local fade = (TPS_WINDOW - (now - h.lastAction)) / (TPS_WINDOW - 1.5)
     return h.tps * max(0, min(1, fade))
+end
+
+local function UpdateTPS(targetGUID, unitGUID, threatValue)
+    local secretTarget = issecretvalue and issecretvalue(targetGUID)
+    if not unitGUID or (not secretTarget and not targetGUID) then return nil end
+
+    local now = GetTime()
+    if not threatHistory.current then
+        threatHistory.current = {units = {}}
+    end
+    -- Always carry current history along, so a GUID becoming secret mid-target
+    -- does not interrupt TPS. It starts fresh on each target change.
+    local currentTPS = UpdateTPSHistory(threatHistory.current, unitGUID, threatValue, now)
+    if secretTarget then return currentTPS end
+
+    local target = threatHistory[targetGUID]
+    if not target then
+        target = {units = {}}
+        threatHistory[targetGUID] = target
+    end
+    return UpdateTPSHistory(target, unitGUID, threatValue, now)
 end
 
 local function UpdateThreatData(unit)
@@ -1435,12 +1452,14 @@ function TC2:PLAYER_ENTERING_WORLD(...)
 end
 
 function TC2:PLAYER_TARGET_CHANGED(...)
+    threatHistory.current = nil
     UpdatePlayerTarget()
 
     TC2:StopTestMode()
     CheckStatus()
 end
 
+-- Only registered on clients with target-of-target mode; Retail and Forever do not use this alias.
 TC2.UNIT_TARGET = TC2.PLAYER_TARGET_CHANGED
 
 function TC2:GROUP_ROSTER_UPDATE(...)
@@ -1526,7 +1545,11 @@ function TC2:PLAYER_LOGIN()
     self.frame:RegisterEvent("GROUP_ROSTER_UPDATE")
     self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
     self.frame:RegisterEvent("PLAYER_TARGET_CHANGED")
-    self.frame:RegisterUnitEvent("UNIT_TARGET", "target")
+    -- Retail and Forever disable target-of-target mode, so the mob changing
+    -- victims must not trigger this handler and reset current TPS history.
+    if not (isMainline or isForever) then
+        self.frame:RegisterUnitEvent("UNIT_TARGET", "target")
+    end
 
     if isForever and self.playerClass == "PALADIN" then
         self.frame:RegisterUnitEvent("UNIT_AURA", "player")

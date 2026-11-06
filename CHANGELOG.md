@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.76
+* implemented a TPS fallback if targetGUIDs are secret
+
 ## v2.75
 * update libs
 * use FileDataID format to register sound files
