@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.77
+* fix a Righteous Fury aura lookup error in battlegrounds on WoW Forever
+
 ## v2.76
 * implemented a TPS fallback if targetGUIDs are secret
 

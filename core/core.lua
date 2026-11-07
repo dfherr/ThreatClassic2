@@ -792,12 +792,19 @@ local function CheckStatusDeferred()
 end
 
 -- tank spec on mainline, defensive stance / bear form / righteous fury on classic
--- mainline restricts aura data in combat, so righteous fury is tracked out of combat on forever
+-- Forever tracks Righteous Fury out of combat when the aura is readable.
 local playerHasRighteousFury = false
 
 local function UpdateRighteousFury()
     if UnitAffectingCombat("player") then return end
-    playerHasRighteousFury = FindAuraByNameCompat(C_Spell.GetSpellName(25780), "player", "HELPFUL") ~= nil
+    local spellID = 25780
+    -- some situations can restrict auras even out of combat (e.g. pvp).
+    -- Preserve the cached state when Righteous Fury itself cannot be read.
+    if C_Secrets and C_Secrets.ShouldSpellAuraBeSecret and C_Secrets.ShouldSpellAuraBeSecret(spellID) then
+        return
+    end
+    -- A lookup by spell ID avoids scanning other auras that may be secret.
+    playerHasRighteousFury = C_UnitAuras.GetPlayerAuraBySpellID(spellID) ~= nil
 end
 
 local function IsTankSpecOrStance()
@@ -1448,6 +1455,9 @@ function TC2:PLAYER_ENTERING_WORLD(...)
     self.playerName = UnitName("player")
     self.numGroupMembers = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
 
+    if isForever and self.playerClass == "PALADIN" then
+        UpdateRighteousFury()
+    end
     CheckStatus()
 end
 
@@ -1553,7 +1563,6 @@ function TC2:PLAYER_LOGIN()
 
     if isForever and self.playerClass == "PALADIN" then
         self.frame:RegisterUnitEvent("UNIT_AURA", "player")
-        UpdateRighteousFury()
     end
     self.frame:RegisterEvent("PLAYER_REGEN_DISABLED")
     self.frame:RegisterEvent("PLAYER_REGEN_ENABLED")
