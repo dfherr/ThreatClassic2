@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Clone project
         uses:
-          actions/checkout@v2
+          actions/checkout@v7
         with:
           fetch-depth: 20
       - name: Package and release classic
