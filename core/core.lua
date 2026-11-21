@@ -238,7 +238,7 @@ local function IsUnitMarkedTank(unit)
         return true
     end
 
-    -- 2. Check if they selected the Tank role (Cata Classic / MoP PTR / Retail only)
+    -- 2. Check if they selected the Tank role, when supported by the client.
     if UnitGroupRolesAssigned and UnitGroupRolesAssigned(unit) == "TANK" then
         return true
     end
@@ -791,7 +791,8 @@ local function CheckStatusDeferred()
     callCheckStatus = true
 end
 
--- tank spec on mainline, defensive stance / bear form / righteous fury on classic
+-- Assigned role on Retail and Forever, with spec or stance/form/aura fallbacks.
+-- Other Classic clients use defensive stance / bear form / righteous fury.
 -- Forever tracks Righteous Fury out of combat when the aura is readable.
 local playerHasRighteousFury = false
 
@@ -808,6 +809,9 @@ local function UpdateRighteousFury()
 end
 
 local function IsTankSpecOrStance()
+    if (isMainline or isForever) and UnitGroupRolesAssigned and UnitGroupRolesAssigned("player") == "TANK" then
+        return true
+    end
     if isMainline then
         local spec = GetSpecialization()
         if not spec then return false end

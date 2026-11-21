@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.78
+* recognize the assigned Tank role for warning tank detection on Retail and WoW Forever
+
 ## v2.77
 * fix a Righteous Fury aura lookup error in battlegrounds on WoW Forever
 

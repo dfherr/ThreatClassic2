@@ -34,7 +34,7 @@ Mainline clients restrict addon access to some combat data, so a few features wo
 
 - The target filter list matches **boss encounter names** instead of unit names and applies to all enemies during that encounter.
 - Healer mode (target of target) is not available. Target the enemy directly to see its threat list.
-- Tank detection (disable while tanking / only when tanking) uses your specialization role on Retail. WoW Forever uses Defensive Stance, Bear Form and Righteous Fury, but due to API restrictions 
+- Tank detection (disable while tanking / only when tanking) uses your assigned Tank role or specialization role on Retail. WoW Forever uses your assigned Tank role, Defensive Stance, Bear Form and Righteous Fury, but due to API restrictions
 Righteous Fury can only be checked outside of combat.
 
 ## Commands
