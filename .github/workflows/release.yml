@@ -41,4 +41,5 @@ jobs:
       - name: Package and release forever
         uses: BigWigsMods/packager@master
         with:
-          args: -g forever
+          # WoWInterface has no Forever game type; skip its upload for this build.
+          args: -g forever -w 0
