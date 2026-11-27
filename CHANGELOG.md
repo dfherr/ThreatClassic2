@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.79
+* fix long names in the threat list wrapping onto multiple lines instead of truncating
+
 ## v2.78
 * recognize the assigned Tank role for warning tank detection on Retail and WoW Forever
 

@@ -182,6 +182,8 @@ local function CreateStatusBar(parent, header)
         -- Name
         bar.name = CreateFS(bar)
         bar.name:SetJustifyH("LEFT")
+        -- Let the fontstring truncate long names within the available width.
+        bar.name:SetWordWrap(false)
         -- Perc
         bar.perc = CreateFS(bar)
         bar.perc:SetJustifyH("RIGHT")
